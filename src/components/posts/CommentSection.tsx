@@ -17,6 +17,7 @@ import {
 import { Loader2, Play, Send } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { CommentItem } from './CommentItem';
+import { MoreFromUser } from './MoreFromUser';
 
 interface Post {
   id: string;
@@ -236,6 +237,19 @@ export const CommentSection = ({
                 </Button>
               </div>
             </form>
+
+            {/* More From User Section */}
+            {post && (
+              <div className="px-4 pb-4">
+                <MoreFromUser
+                  userId={post.user_id}
+                  username={post.user.username}
+                  displayName={post.user.displayName}
+                  avatar={post.user.avatar}
+                  currentPostId={postId || memeId}
+                />
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

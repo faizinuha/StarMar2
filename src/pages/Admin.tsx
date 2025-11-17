@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EditUserModal } from "@/components/admin/EditUserModal";
 import UserActivityChart from "@/components/admin/UserActivityChart";
 import { MaintenanceBannersTab } from "@/pages/MaintenanceBannersTab";
+import { ReportsTab } from "@/components/admin/ReportsTab";
 import { useMaintenanceTasks, useExecuteMaintenanceTask, useSystemHealth } from "@/hooks/useMaintenanceTasks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -317,9 +318,10 @@ const AdminContent = () => {
         <StatCard title="New Users Today" value={stats.newUsersToday.toLocaleString()} icon={<UserPlus className="h-4 w-4 text-muted-foreground" />} description="Users that signed up today" />
       </div>
       <Tabs defaultValue="users" className="space-y-4">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
         </TabsList>
         <TabsContent value="users" className="space-y-4">
@@ -392,10 +394,15 @@ const AdminContent = () => {
             </CardContent>
           </Card>
         </TabsContent>
+        
         <TabsContent value="analytics" className="space-y-4">
           <UserActivityChart />
-          {/* You can add more charts here, e.g., PostsActivityChart */}
         </TabsContent>
+        
+        <TabsContent value="reports" className="space-y-4">
+          <ReportsTab />
+        </TabsContent>
+        
         <TabsContent value="maintenance" className="space-y-4">
           <MaintenanceTab />
         </TabsContent>
