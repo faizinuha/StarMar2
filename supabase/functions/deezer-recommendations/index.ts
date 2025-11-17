@@ -1,4 +1,7 @@
-import { serve } from "https://deno.land/std/http/server.ts";
+// @ts-ignore: Deno deploy global
+const serve = Deno.serve || ((handler: any) => {
+  console.log('Fallback serve');
+});
 
 // Fungsi untuk menangani CORS
 function handleCors() {

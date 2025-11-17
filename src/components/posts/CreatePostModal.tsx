@@ -204,7 +204,7 @@ export const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
               }));
 
               const { error: relationError } = await supabase
-                .from('post_hashtag')
+                .from('post_hashtags')
                 .insert(postHashtagRelations);
 
               if (relationError) throw relationError;
