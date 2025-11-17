@@ -32,6 +32,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useConversations } from '@/hooks/useConversations';
+import { useNotifications } from '@/hooks/useNotifications';
 import { CreatePostModal } from '@/components/posts/CreatePostModal';
 import { AccountSwitcher } from './AccountSwitcher';
 import { NavigationSkeleton } from '@/components/skeletons/NavigationSkeleton';
@@ -40,7 +41,7 @@ export const Navigation = () => {
   const { user, loading: authLoading } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { totalUnread } = useConversations();
-  const [notifications] = useState(3);
+  const { unreadCount } = useNotifications();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const navigate = useNavigate();
@@ -90,7 +91,7 @@ export const Navigation = () => {
       icon: Heart,
       label: 'Notifications',
       path: '/notifications',
-      badge: notifications, // Original notifications
+      badge: unreadCount > 0 ? unreadCount : null,
       active: location.pathname === '/notifications',
     },
     {

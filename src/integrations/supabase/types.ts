@@ -683,6 +683,9 @@ export type Database = {
           caption: string | null
           comments_count: number | null
           created_at: string
+          delete_reason: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           is_repost: boolean | null
           isBookmarked: string | null
@@ -697,6 +700,9 @@ export type Database = {
           caption?: string | null
           comments_count?: number | null
           created_at?: string
+          delete_reason?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           is_repost?: boolean | null
           isBookmarked?: string | null
@@ -711,6 +717,9 @@ export type Database = {
           caption?: string | null
           comments_count?: number | null
           created_at?: string
+          delete_reason?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           is_repost?: boolean | null
           isBookmarked?: string | null
@@ -1026,6 +1035,27 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
       }
       user_sessions: {
         Row: {

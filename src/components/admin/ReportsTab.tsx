@@ -19,11 +19,15 @@ import {
 } from '@/components/ui/select';
 import { useReports } from '@/hooks/useReports';
 import { format } from 'date-fns';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, ExternalLink, Trash2 } from 'lucide-react';
+import { DeletePostDialog } from './DeletePostDialog';
+import { useNavigate } from 'react-router-dom';
 
 export const ReportsTab = () => {
   const { reports, isLoading, updateReportStatus } = useReports();
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [deleteDialog, setDeleteDialog] = useState<{ postId: string; reportId: string; reportedUserId: string } | null>(null);
+  const navigate = useNavigate();
 
   const filteredReports = reports.filter((report) =>
     filterStatus === 'all' ? true : report.status === filterStatus
@@ -91,6 +95,7 @@ export const ReportsTab = () => {
                 <TableHead>Type</TableHead>
                 <TableHead>Reason</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>View</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -120,22 +125,48 @@ export const ReportsTab = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Select
-                      value={report.status}
-                      onValueChange={(value) =>
-                        handleStatusChange(report.id, value)
-                      }
-                      disabled={updateReportStatus.isPending}
-                    >
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {report.post_id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/?post=${report.post_id}`)}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={report.status}
+                        onValueChange={(value) =>
+                          handleStatusChange(report.id, value)
+                        }
+                        disabled={updateReportStatus.isPending}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="resolved">Resolved</SelectItem>
+                          <SelectItem value="rejected">Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {report.post_id && report.status === 'pending' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setDeleteDialog({
+                            postId: report.post_id!,
+                            reportId: report.id,
+                            reportedUserId: report.reported_user_id!
+                          })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -143,6 +174,15 @@ export const ReportsTab = () => {
           </Table>
         )}
       </CardContent>
+      {deleteDialog && (
+        <DeletePostDialog
+          isOpen={!!deleteDialog}
+          onClose={() => setDeleteDialog(null)}
+          postId={deleteDialog.postId}
+          reportId={deleteDialog.reportId}
+          reportedUserId={deleteDialog.reportedUserId}
+        />
+      )}
     </Card>
   );
 };

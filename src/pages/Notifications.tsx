@@ -17,11 +17,13 @@ import {
   MessageCircle,
   UserPlus,
   Info,
+  Trash2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { type Tables } from '@/integrations/supabase/types';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useNotifications } from '@/hooks/useNotifications';
 
 // Define PostForModal type
 interface PostForModal {
@@ -59,6 +61,7 @@ export const Notifications = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [selectedPost, setSelectedPost] = useState<PostForModal | null>(null);
+  const { deleteNotification, markAsRead: markSingleAsRead } = useNotifications();
 
   // 🔹 Fetch notifications dari Supabase
   const { data: notifications, isLoading } = useQuery({
@@ -381,9 +384,8 @@ export const Notifications = () => {
             {notifications?.map((notification) => (
               <Card
                 key={notification.id}
-                className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors ${!notification.is_read ? 'border-primary/20 bg-primary/5' : ''
+                className={`p-4 hover:bg-muted/50 transition-colors ${!notification.is_read ? 'border-primary/20 bg-primary/5' : ''
                   }`}
-                onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex items-start gap-4">
                   {notification.from_user ? (
@@ -403,7 +405,10 @@ export const Notifications = () => {
                     </div>
                   )}
 
-                  <div className="flex-1 min-w-0">
+                  <div 
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => handleNotificationClick(notification)}
+                  >
                     <div className="flex items-center gap-2 mb-1">
                       {notification.from_user && getNotificationIcon(notification.type)}
                       <div className="text-sm">
@@ -417,7 +422,6 @@ export const Notifications = () => {
                         )}
                       </div>
                       {!notification.is_read && (
-                        // Gunakan ml-auto untuk mendorong badge ke kanan
                         <Badge variant="secondary" className="text-xs ml-auto flex-shrink-0">
                           New
                         </Badge>
@@ -433,6 +437,20 @@ export const Notifications = () => {
                       </span>
                     </div>
                   </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteNotification.mutate({
+                        id: notification.id,
+                        type: 'from_user_id' in notification ? 'standard' : 'system'
+                      });
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </Card>
             ))}
