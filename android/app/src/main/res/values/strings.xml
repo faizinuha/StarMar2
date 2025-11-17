@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">StarMar</string>
+    <string name="title_activity_main">StarMar</string>
+    <string name="package_name">com.StarMar</string>
+    <string name="custom_url_scheme">com.StarMar</string>
+</resources>
