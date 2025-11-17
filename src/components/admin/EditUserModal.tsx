@@ -16,66 +16,93 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export const EditUserModal = ({ user, isOpen, onClose }) => {
-  const [role, setRole] = useState('user');
+  const [roles, setRoles] = useState<string[]>([]);
   const [isVerified, setIsVerified] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    const fetchUserRoles = async () => {
+      if (user?.user_id) {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.user_id);
+        
+        if (data) {
+          setRoles(data.map(r => r.role));
+        }
+      }
+    };
+
     if (user) {
-      setRole(user.role || 'user');
+      fetchUserRoles();
       setIsVerified(user.is_verified === 'verified');
     }
   }, [user]);
+
+  const handleRoleToggle = (role: string, checked: boolean) => {
+    if (checked) {
+      setRoles([...roles, role]);
+    } else {
+      setRoles(roles.filter(r => r !== role));
+    }
+  };
 
   const handleSave = async () => {
     if (!user || !user.user_id) return;
 
     setIsSaving(true);
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({
-        role,
-        is_verified: isVerified ? 'verified' : null,
-      })
-      .eq('user_id', user.user_id)
-      .select()
-      .single();
-
-    // Check if the first attempt failed because the row was not found
-    if (error && error.code === 'PGRST116') {
-      console.warn(`Update with user_id failed, retrying with id for user: ${user.username}`);
-      // Retry with the primary key 'id' as a fallback
-      const { data: retryData, error: retryError } = await supabase
+    try {
+      // Update verification status in profiles
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update({ role, is_verified: isVerified ? 'verified' : null })
-        .eq('id', user.id) // Fallback to 'id'
-        .select()
-        .single();
+        .update({ is_verified: isVerified ? 'verified' : null })
+        .eq('user_id', user.user_id);
 
-      if (retryError) {
-        console.error('Error updating user on retry:', retryError);
-        toast({ title: 'Error updating user', description: retryError.message, variant: 'destructive' });
-      } else if (retryData) {
-        toast({ title: 'User updated successfully', description: `Role and verification status for @${retryData.username} have been updated.` });
-        onClose(retryData); // Pass updated data back
+      if (profileError) throw profileError;
+
+      // Delete all existing roles
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', user.user_id);
+
+      // Insert new roles
+      if (roles.length > 0) {
+        const { error: rolesError } = await supabase
+          .from('user_roles')
+          .insert(roles.map(role => ({ 
+            user_id: user.user_id, 
+            role: role as 'admin' | 'moderator' | 'user'
+          })));
+
+        if (rolesError) throw rolesError;
       }
-    } else if (error) {
-      console.error('Error updating user:', error);
-      toast({ title: 'Error updating user', description: error.message, variant: 'destructive' });
-    } else if (data) {
-      toast({ title: 'User updated successfully', description: `Role and verification status for @${data.username} have been updated.` });
-      onClose(data); // Pass updated data back
-    }
 
-    setIsSaving(false);
+      toast({ 
+        title: 'User updated successfully', 
+        description: `Roles and verification status for @${user.username} have been updated.` 
+      });
+      
+      onClose({ ...user, is_verified: isVerified ? 'verified' : null });
+    } catch (error: any) {
+      console.error('Error updating user:', error);
+      toast({ 
+        title: 'Error updating user', 
+        description: error.message, 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
 
@@ -90,20 +117,40 @@ export const EditUserModal = ({ user, isOpen, onClose }) => {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="role" className="text-right">
-              Role
-            </Label>
-            <Select value={role} onValueChange={setRole}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="admin">admin</SelectItem>
-                <SelectItem value="moderator">Moderator</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-4">
+            <Label>Roles</Label>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="role-user"
+                  checked={roles.includes('user')}
+                  onCheckedChange={(checked) => handleRoleToggle('user', checked as boolean)}
+                />
+                <label htmlFor="role-user" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  User
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="role-moderator"
+                  checked={roles.includes('moderator')}
+                  onCheckedChange={(checked) => handleRoleToggle('moderator', checked as boolean)}
+                />
+                <label htmlFor="role-moderator" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Moderator
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="role-admin"
+                  checked={roles.includes('admin')}
+                  onCheckedChange={(checked) => handleRoleToggle('admin', checked as boolean)}
+                />
+                <label htmlFor="role-admin" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Admin
+                </label>
+              </div>
+            </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="verified" className="text-right">
