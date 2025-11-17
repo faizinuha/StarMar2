@@ -818,26 +818,35 @@ export type Database = {
         Row: {
           album_title: string | null
           artist: string | null
+          audio: string | null
           created_at: string
           id: string
           image_url: string | null
+          music_url: string | null
           name: string | null
+          preview: string | null
         }
         Insert: {
           album_title?: string | null
           artist?: string | null
+          audio?: string | null
           created_at?: string
           id?: string
           image_url?: string | null
+          music_url?: string | null
           name?: string | null
+          preview?: string | null
         }
         Update: {
           album_title?: string | null
           artist?: string | null
+          audio?: string | null
           created_at?: string
           id?: string
           image_url?: string | null
+          music_url?: string | null
           name?: string | null
+          preview?: string | null
         }
         Relationships: []
       }
@@ -916,27 +925,6 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
-      }
-      user_roles: {
-        Row: {
-          created_at: string | null
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
       }
       user_sessions: {
         Row: {
@@ -1036,24 +1024,32 @@ export type Database = {
         Args: { user_id: string }
         Returns: undefined
       }
-      decrement_likes_count: {
-        Args: { post_id: string }
-        Returns: undefined
-      }
-      delete_post: {
-        Args: { p_post_id: string }
-        Returns: undefined
-      }
-      delete_user_data: {
-        Args: { target_user_id: string }
-        Returns: undefined
-      }
+      decrement_likes_count: { Args: { post_id: string }; Returns: undefined }
+      delete_post: { Args: { p_post_id: string }; Returns: undefined }
+      delete_user_data: { Args: { target_user_id: string }; Returns: undefined }
       extract_and_store_hashtags: {
         Args: { post_content: string; post_id: string }
         Returns: undefined
       }
+      get_all_notifications_for_user: {
+        Args: { p_user_id: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          display_name: string
+          from_user_id: string
+          id: string
+          is_read: boolean
+          message: string
+          post_id: string
+          title: string
+          type: string
+          user_id: string
+          username: string
+        }[]
+      }
       get_all_posts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           avatar_url: string
           caption: string
@@ -1068,8 +1064,22 @@ export type Database = {
           username: string
         }[]
       }
+      get_conversations_with_details: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          is_group: boolean
+          last_message: string
+          last_message_at: string
+          last_message_sender: string
+          members: Json
+          name: string
+          unread_count: number
+        }[]
+      }
       get_memes_with_badges: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           badges: Json[]
           caption: string
@@ -1131,18 +1141,12 @@ export type Database = {
         Args: { user_id: string }
         Returns: undefined
       }
-      increment_likes_count: {
-        Args: { post_id: string }
-        Returns: undefined
-      }
+      increment_likes_count: { Args: { post_id: string }; Returns: undefined }
       is_conversation_member: {
         Args: { p_conversation_id: string; p_user_id: string }
         Returns: boolean
       }
-      is_member_of_group: {
-        Args: { _group_id: string }
-        Returns: boolean
-      }
+      is_member_of_group: { Args: { _group_id: string }; Returns: boolean }
       send_message: {
         Args: { p_content: string; p_conversation_id: string }
         Returns: string

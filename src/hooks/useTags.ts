@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ReactNode } from "react";
 
 export interface TrendingTag {
-  name: ReactNode;
+  name: string;
   post_count: number;
 }
 
