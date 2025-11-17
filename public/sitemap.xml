@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+  <loc>https://starmar2.vercel.app/</loc>
+  <lastmod>2025-11-16</lastmod>
+  <priority>1</priority>
+</url>
+<url>
+  <loc>https://starmar2.vercel.app/auth</loc>
+  <lastmod>2025-11-15</lastmod>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://starmar2.vercel.app/profile</loc>
+  <lastmod>2025-11-10</lastmod>
+  <priority>0.6</priority>
+</url>
+</urlset>

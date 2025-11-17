@@ -1,0 +1,259 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* StarMar Design System - Modern social media platform with blue-magenta theme */
+
+@layer base {
+  :root {
+    /* Core theme colors */
+    --background: 0 0% 100%;
+    --foreground: 225 15% 15%;
+    
+    /* Surface colors */
+    --card: 0 0% 100%;
+    --card-foreground: 225 15% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 225 15% 15%;
+    
+    /* Brand colors - StarMar blue-magenta theme */
+    --primary: 259 94% 71%; /* #6C6CE5 - Electric blue */
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 259 94% 85%;
+    --primary-dark: 259 94% 55%;
+    
+    --accent: 318 100% 70%; /* #FF4D9D - Magenta pink */
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 318 100% 85%;
+    --accent-dark: 318 100% 55%;
+    
+    /* Gradient combinations */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    --gradient-subtle: linear-gradient(135deg, hsl(var(--primary-light)), hsl(var(--accent-light)));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100% / 0.8), hsl(0 0% 100% / 0.4));
+    
+    /* Neutral system */
+    --secondary: 225 10% 96%;
+    --secondary-foreground: 225 15% 25%;
+    --muted: 225 10% 96%;
+    --muted-foreground: 225 10% 45%;
+    
+    /* Interactive states */
+    --border: 225 20% 90%;
+    --input: 225 20% 90%;
+    --ring: 259 94% 71%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Glass morphism */
+    --glass: 0 0% 100% / 0.1;
+    --glass-border: 0 0% 100% / 0.2;
+    
+    /* Shadows */
+    --shadow-soft: 0 4px 6px -1px hsl(225 15% 15% / 0.1), 0 2px 4px -1px hsl(225 15% 15% / 0.06);
+    --shadow-medium: 0 10px 15px -3px hsl(225 15% 15% / 0.1), 0 4px 6px -2px hsl(225 15% 15% / 0.05);
+    --shadow-large: 0 25px 50px -12px hsl(225 15% 15% / 0.25);
+    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.3);
+    
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark theme - StarMar */
+    --background: 225 25% 8%;
+    --foreground: 225 10% 95%;
+    
+    /* Surface colors */
+    --card: 225 25% 12%;
+    --card-foreground: 225 10% 95%;
+    --popover: 225 25% 12%;
+    --popover-foreground: 225 10% 95%;
+    
+    /* Brand colors maintain vibrancy in dark */
+    --primary: 259 94% 75%;
+    --primary-foreground: 225 25% 8%;
+    --primary-light: 259 94% 85%;
+    --primary-dark: 259 94% 65%;
+    
+    --accent: 318 100% 75%;
+    --accent-foreground: 225 25% 8%;
+    --accent-light: 318 100% 85%;
+    --accent-dark: 318 100% 65%;
+    
+    /* Updated gradients for dark mode */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    --gradient-subtle: linear-gradient(135deg, hsl(var(--primary-dark)), hsl(var(--accent-dark)));
+    --gradient-card: linear-gradient(135deg, hsl(225 25% 12% / 0.8), hsl(225 25% 16% / 0.4));
+    
+    /* Neutral system for dark */
+    --secondary: 225 25% 16%;
+    --secondary-foreground: 225 10% 85%;
+    --muted: 225 25% 16%;
+    --muted-foreground: 225 10% 65%;
+    
+    /* Interactive states */
+    --border: 225 25% 20%;
+    --input: 225 25% 20%;
+    --ring: 259 94% 75%;
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 225 10% 95%;
+    
+    /* Glass morphism for dark */
+    --glass: 225 25% 20% / 0.2;
+    --glass-border: 225 10% 50% / 0.1;
+    
+    /* Dark shadows */
+    --shadow-soft: 0 4px 6px -1px hsl(225 25% 5% / 0.3), 0 2px 4px -1px hsl(225 25% 5% / 0.2);
+    --shadow-medium: 0 10px 15px -3px hsl(225 25% 5% / 0.4), 0 4px 6px -2px hsl(225 25% 5% / 0.3);
+    --shadow-large: 0 25px 50px -12px hsl(225 25% 5% / 0.6);
+    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.4);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* StarMar Component Styles */
+  .starmar-gradient {
+    background: var(--gradient-primary);
+  }
+  
+  .starmar-gradient-subtle {
+    background: var(--gradient-subtle);
+  }
+  
+  .glass-card {
+    background: hsl(var(--glass));
+    backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+  
+  .post-card {
+    @apply bg-card border border-border rounded-3xl overflow-hidden transition-all duration-300;
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .post-card:hover {
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-2px);
+  }
+  
+  .gradient-button {
+    @apply text-white font-medium rounded-full px-6 py-3 transition-all duration-300;
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .gradient-button:hover {
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-1px);
+  }
+  
+  .like-animation {
+    animation: heartBeat 0.3s ease-in-out;
+  }
+  
+  .notification-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes heartBeat {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0; 
+    transform: translateX(-20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+}
+
+@keyframes scaleIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.9); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+  /* Animation keyframes */
+  @keyframes heart-beat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+  
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 10px hsl(var(--primary) / 0.3); }
+    50% { box-shadow: 0 0 20px hsl(var(--primary) / 0.6); }
+  }
+
+  .animate-heart-beat {
+    animation: heart-beat 0.6s ease-in-out;
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.4s ease-out;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}

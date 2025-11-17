@@ -1,0 +1,23 @@
+[alias]
+  # ✨ Sync ke StarMar2
+  ##sync-star = "!git fetch starmar && git pull starmar main && git push starmar main"
+
+  # 💞 Sync ke WigsStar
+  #sync-wigs = "!git fetch origin && git pull origin main && git push origin main"
+
+  # ⚡ Quick push/pull biar ringkas
+  #fp = "!git fetch && git pull && git push"
+
+  # 🌸 Lihat daftar remote dan branch dengan cepat
+  #remotes = "!git remote -v && echo && git branch -vv"
+
+ # ⚡ Supabase database tools
+  db-pull = "!supabase db dump --linked -f supabase-full.sql"
+  db-push = "!supabase db restore --linked -f supabase-full.sql"
+
+    # 🧠 Function & Logic backup
+  db-func = "!supabase db dump --linked --include-functions --include-policies --include-triggers -f supabase-functions.sql"
+
+  # ⚡ Edge Function backup
+  edge-pull = "!supabase functions download --project-ref $(supabase link status --json | jq -r .project_ref) --dir ./supabase/functions"
+  edge-push = "!supabase functions deploy --project-ref $(supabase link status --json | jq -r .project_ref) --all"
