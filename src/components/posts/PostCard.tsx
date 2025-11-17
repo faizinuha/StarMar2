@@ -23,11 +23,14 @@ import {
   Play,
   Repeat,
   Share,
+  Flag,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { CommentSection } from './CommentSection';
 import { EditPostModal } from './EditPostModal';
-import { PostCaption } from './PostCaption'; // Import the new component
+import { PostCaption } from './PostCaption';
+import { BookmarkFolderDialog } from './BookmarkFolderDialog';
+import { ReportDialog } from './ReportDialog';
 
 interface PostMedia {
   media_url: string;
@@ -125,6 +128,8 @@ export const PostCard = ({ post }: PostCardProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -174,8 +179,8 @@ export const PostCard = ({ post }: PostCardProps) => {
       await deleteBookmark.mutateAsync(post.id);
       toast({ title: 'Bookmark removed' });
     } else {
-      await createBookmark.mutateAsync(post.id);
-      toast({ title: 'Post saved to bookmarks' });
+      // Open folder selection dialog
+      setShowBookmarkDialog(true);
     }
   };
 
@@ -257,20 +262,14 @@ export const PostCard = ({ post }: PostCardProps) => {
                 </DropdownMenuItem>
               </>
             ) : (
-              <DropdownMenuItem>Follow @{post.user.username}</DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleCopyLink}>
-              Copy link
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleShare}>
-              Share to...
-            </DropdownMenuItem>
-            <DropdownMenuItem>Repost</DropdownMenuItem>
-            {!isOwnPost && (
-              <DropdownMenuItem className="text-destructive">
-                Report
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem>Follow @{post.user.username}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowReportDialog(true)} className="text-destructive">
+                  <Flag className="h-4 w-4 mr-2" />
+                  Report
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -501,6 +500,19 @@ export const PostCard = ({ post }: PostCardProps) => {
           post={post}
         />
       )}
+      
+      <BookmarkFolderDialog
+        isOpen={showBookmarkDialog}
+        onClose={() => setShowBookmarkDialog(false)}
+        postId={post.id}
+      />
+
+      <ReportDialog
+        isOpen={showReportDialog}
+        onClose={() => setShowReportDialog(false)}
+        postId={post.id}
+        userId={post.user_id}
+      />
     </>
   );
 };

@@ -32,26 +32,60 @@ export type Database = {
         }
         Relationships: []
       }
+      bookmark_folders: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bookmarks: {
         Row: {
           created_at: string | null
+          folder_id: string | null
           id: number
           post_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
+          folder_id?: string | null
           id?: number
           post_id?: string | null
           user_id?: string
         }
         Update: {
           created_at?: string | null
+          folder_id?: string | null
           id?: number
           post_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bookmarks_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "bookmark_folders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookmarks_post_id_fkey"
             columns: ["post_id"]
@@ -757,6 +791,73 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      reports: {
+        Row: {
+          comment_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          meme_id: string | null
+          post_id: string | null
+          reason: string
+          reported_user_id: string | null
+          reporter_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string | null
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          meme_id?: string | null
+          post_id?: string | null
+          reason: string
+          reported_user_id?: string | null
+          reporter_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          meme_id?: string | null
+          post_id?: string | null
+          reason?: string
+          reported_user_id?: string | null
+          reporter_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_meme_id_fkey"
+            columns: ["meme_id"]
+            isOneToOne: false
+            referencedRelation: "memes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stories: {
         Row: {

@@ -26,18 +26,41 @@ export const useBookmarks = () => {
 
   // Mutasi untuk membuat bookmark baru
   const createBookmark = useMutation({
-    mutationFn: async (postId: string) => {
+    mutationFn: async ({ postId, folderId }: { postId: string; folderId?: string }) => {
       if (!user) return;
+      
+      // If no folder specified, get or create default folder
+      let targetFolderId = folderId;
+      if (!targetFolderId) {
+        const { data: folders } = await supabase
+          .from('bookmark_folders')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('name', 'Default')
+          .single();
+        
+        if (folders) {
+          targetFolderId = folders.id;
+        } else {
+          const { data: newFolder } = await supabase
+            .from('bookmark_folders')
+            .insert([{ user_id: user.id, name: 'Default' }])
+            .select()
+            .single();
+          targetFolderId = newFolder?.id;
+        }
+      }
+
       const { data, error } = await supabase
         .from('bookmarks')
-        .insert([{ user_id: user.id, post_id: postId }]);
+        .insert([{ user_id: user.id, post_id: postId, folder_id: targetFolderId }]);
 
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookmarks', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] }); // Invalidate daftar postingan untuk memperbarui status bookmark
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 
