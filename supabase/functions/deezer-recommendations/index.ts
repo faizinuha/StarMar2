@@ -41,7 +41,7 @@ serve(async (req) => {
     }
 
     // Olah data, pastikan semua properti yang dibutuhkan ada
-    const tracks = json.data.map((t) => ({
+    const tracks = json.data.map((t: any) => ({
       id: t.id.toString(),
       name: t.title || "Unknown Title",
       artist: t.artist?.name || "Unknown Artist",
@@ -63,7 +63,7 @@ serve(async (req) => {
   } catch (err) {
     // Tangani error dengan lebih informatif
     return new Response(JSON.stringify({
-      error: err.message,
+      error: err instanceof Error ? err.message : 'Unknown error',
     }), {
       status: 500,
       headers: {

@@ -204,6 +204,52 @@ export function useCreateComment() {
   });
 }
 
+export function useDeleteComment() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (commentId: string) => {
+      if (!user) throw new Error("User not authenticated");
+
+      const { error } = await supabase
+        .from("comments")
+        .delete()
+        .eq("id", commentId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments"] });
+    },
+  });
+}
+
+export function useUpdateComment() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ commentId, content }: { commentId: string; content: string }) => {
+      if (!user) throw new Error("User not authenticated");
+
+      const { error } = await supabase
+        .from("comments")
+        .update({ content, updated_at: new Date().toISOString() })
+        .eq("id", commentId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments"] });
+    },
+  });
+}
+
 export function useToggleCommentLike() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -214,7 +260,7 @@ export function useToggleCommentLike() {
 
       if (isLiked) {
         // Remove like
-        const result = await (supabase as any)
+        const result = await supabase
           .from("likes")
           .delete()
           .eq("user_id", user.id)
@@ -223,7 +269,7 @@ export function useToggleCommentLike() {
         if (result.error) throw result.error;
       } else {
         // Add like
-        const result = await (supabase as any)
+        const result = await supabase
           .from("likes")
           .insert({
             user_id: user.id,

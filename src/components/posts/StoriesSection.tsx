@@ -81,7 +81,7 @@ export const StoriesSection = () => {
                 <Avatar className="w-full h-full rounded-2xl">
                   <AvatarImage 
                     src={group.user.avatar} 
-                    className="object-cover"
+                    className="object-cover w-full h-full"
                   />
                   <AvatarFallback className="rounded-2xl text-lg">
                     {group.user.displayName?.[0] || group.user.username?.[0]}
