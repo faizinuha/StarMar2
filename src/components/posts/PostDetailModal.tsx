@@ -30,6 +30,7 @@ interface PostDetailModalProps {
   post: Post | null;
   isOpen: boolean;
   onClose: () => void;
+  showMoreFrom?: boolean;
 }
 
 // A simple component to render a single comment item, extracted from CommentSection.tsx logic
@@ -76,6 +77,7 @@ export const PostDetailModal = ({
   post,
   isOpen,
   onClose,
+  showMoreFrom = true,
 }: PostDetailModalProps) => {
   const { user } = useAuth();
   const [newComment, setNewComment] = useState('');

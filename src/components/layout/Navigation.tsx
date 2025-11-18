@@ -190,29 +190,32 @@ export const Navigation = () => {
                 </Button>
               );
             })}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start space-x-3 h-12 text-base"
-                >
-                  <Menu className="h-6 w-6" />
-                  <span>More</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64" side="right" align="start">
-                {profile?.role === 'admin' && (
-                  <DropdownMenuItem onClick={() => navigate('/Admin_Dashbord')}>
-                    <Home className="mr-2 h-4 w-4" />
-                    <span>Dashboard Admin</span>
+            {/* More menu - only show if there are items to show */}
+            {(profile?.role === 'admin' || true) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start space-x-3 h-12 text-base"
+                  >
+                    <Menu className="h-6 w-6" />
+                    <span>More</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64" side="right" align="start">
+                  {profile?.role === 'admin' && (
+                    <DropdownMenuItem onClick={() => navigate('/Admin_Dashbord')}>
+                      <Home className="mr-2 h-4 w-4" />
+                      <span>Dashboard Admin</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={handleSettingsClick}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={handleSettingsClick}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 
