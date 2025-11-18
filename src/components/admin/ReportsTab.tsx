@@ -94,89 +94,82 @@ export const ReportsTab = () => {
                 <TableHead>Date</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Reason</TableHead>
-                <TableHead>Description</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
+                <TableHead>View</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredReports.map((report) => {
-                const reportType = report.post_id
-                  ? 'Post'
-                  : report.comment_id
-                  ? 'Comment'
-                  : report.meme_id
-                  ? 'Meme'
-                  : 'User';
-
-                return (
-                  <TableRow key={report.id}>
-                    <TableCell>
-                      {format(new Date(report.created_at), 'MMM dd, yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{reportType}</Badge>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">{report.reason}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {report.description || '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(report.status)}>
-                        {report.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2 justify-center flex-wrap">
-                        {report.post_id && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/?postId=${report.post_id}`)}
-                          >
-                            <ExternalLink className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-                        )}
-                        
-                        {report.status === 'pending' && report.post_id && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() =>
-                              setDeleteDialog({
-                                postId: report.post_id!,
-                                reportId: report.id,
-                                reportedUserId: report.reported_user_id || '',
-                              })
-                            }
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
-                          </Button>
-                        )}
-
-                        <Select
-                          value={report.status}
-                          onValueChange={(value) =>
-                            handleStatusChange(report.id, value)
-                          }
-                          disabled={updateReportStatus.isPending}
+              {filteredReports.map((report) => (
+                <TableRow key={report.id}>
+                  <TableCell className="text-sm">
+                    {format(new Date(report.created_at), 'MMM dd, yyyy')}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {report.post_id
+                        ? 'Post'
+                        : report.comment_id
+                        ? 'Comment'
+                        : report.meme_id
+                        ? 'Meme'
+                        : 'User'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {report.reason}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(report.status)}>
+                      {report.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {report.post_id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/?post=${report.post_id}`)}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={report.status}
+                        onValueChange={(value) =>
+                          handleStatusChange(report.id, value)
+                        }
+                        disabled={updateReportStatus.isPending}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="resolved">Resolved</SelectItem>
+                          <SelectItem value="rejected">Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {report.post_id && report.status === 'pending' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setDeleteDialog({
+                            postId: report.post_id!,
+                            reportId: report.id,
+                            reportedUserId: report.reported_user_id!
+                          })}
                         >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="resolved">Resolved</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         )}

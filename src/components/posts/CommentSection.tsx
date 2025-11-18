@@ -238,7 +238,18 @@ export const CommentSection = ({
               </div>
             </form>
 
-            {/* Removed "More From User" section */}
+            {/* More From User Section */}
+            {post && (
+              <div className="px-4 pb-4">
+                <MoreFromUser
+                  userId={post.user_id}
+                  username={post.user.username}
+                  displayName={post.user.displayName}
+                  avatar={post.user.avatar}
+                  currentPostId={postId || memeId}
+                />
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

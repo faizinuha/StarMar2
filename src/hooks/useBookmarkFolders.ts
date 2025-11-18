@@ -34,19 +34,6 @@ export const useBookmarkFolders = () => {
   const createFolder = useMutation({
     mutationFn: async (name: string) => {
       if (!user) throw new Error('Not authenticated');
-      
-      // Check if folder name already exists
-      const { data: existing } = await supabase
-        .from('bookmark_folders')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('name', name)
-        .single();
-      
-      if (existing) {
-        throw new Error('Folder name already exists');
-      }
-      
       const { data, error } = await supabase
         .from('bookmark_folders')
         .insert([{ user_id: user.id, name }])
@@ -61,7 +48,7 @@ export const useBookmarkFolders = () => {
       toast.success('Folder created successfully');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to create folder');
+      toast.error(`Failed to create folder: ${error.message}`);
     },
   });
 
