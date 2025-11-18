@@ -158,7 +158,7 @@ export const Navigation = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <img
-              src="/assets/Logo/StarMar-.png"
+              src="../../assets/Logo/StarMar-.png"
               alt="StarMar"
               className="w-10 h-10 object-contain"
             />
@@ -250,7 +250,7 @@ export const Navigation = () => {
         <header className="fixed top-0 left-0 right-0 bg-card border-b border-border p-4 flex items-center justify-between z-50">
           <div className="flex items-center space-x-3">
             <img
-              src="/assets/Logo/StarMar.png"
+              src="../../assets/Logo/StarMar.png"
               alt="StarMar"
               className="w-8 h-8 object-contain"
             />
