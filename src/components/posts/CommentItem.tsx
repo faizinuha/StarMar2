@@ -2,11 +2,18 @@ import { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heart, MoreHorizontal } from "lucide-react";
-import { Comment, useCreateComment } from "@/hooks/useComments";
+import { Heart, MoreHorizontal, Trash2, Edit } from "lucide-react";
+import { Comment, useCreateComment, useDeleteComment, useUpdateComment } from "@/hooks/useComments";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { useLikes } from "@/hooks/useLikes";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CommentItemProps {
   comment: Comment;
@@ -20,8 +27,12 @@ interface CommentItemProps {
 export const CommentItem = ({ comment, postId, memeId, level = 0, postOwnerId, memeOwnerId }: CommentItemProps) => {
   const { user } = useAuth();
   const [showReplyInput, setShowReplyInput] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [replyContent, setReplyContent] = useState("");
+  const [editContent, setEditContent] = useState(comment.content);
   const { mutate: createComment, isPending: isCreatingComment } = useCreateComment();
+  const { mutate: deleteComment } = useDeleteComment();
+  const { mutate: updateComment } = useUpdateComment();
   const { likesCount, isLiked, toggleLike } = useLikes('comment', comment.id, comment.user_id);
 
   const handleReply = () => {
@@ -46,8 +57,36 @@ export const CommentItem = ({ comment, postId, memeId, level = 0, postOwnerId, m
   };
 
   const handleLike = () => {
-    if (!user) return; // Or show toast
+    if (!user) return;
     toggleLike();
+  };
+
+  const handleDelete = () => {
+    if (!user) return;
+    deleteComment(comment.id, {
+      onSuccess: () => {
+        toast.success("Comment deleted");
+      },
+      onError: () => {
+        toast.error("Failed to delete comment");
+      }
+    });
+  };
+
+  const handleUpdate = () => {
+    if (!editContent.trim()) return;
+    updateComment(
+      { commentId: comment.id, content: editContent },
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+          toast.success("Comment updated");
+        },
+        onError: () => {
+          toast.error("Failed to update comment");
+        }
+      }
+    );
   };
 
   return (
@@ -68,7 +107,22 @@ export const CommentItem = ({ comment, postId, memeId, level = 0, postOwnerId, m
             {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
           </span>
         </div>
-        <p className="text-sm mt-0.5">{comment.content}</p>
+        {isEditing ? (
+          <div className="flex gap-2 mt-2">
+            <Input
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="h-8 text-sm"
+            />
+            <Button size="sm" onClick={handleUpdate}>Save</Button>
+            <Button size="sm" variant="ghost" onClick={() => {
+              setIsEditing(false);
+              setEditContent(comment.content);
+            }}>Cancel</Button>
+          </div>
+        ) : (
+          <p className="text-sm mt-0.5">{comment.content}</p>
+        )}
 
         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
           <button
@@ -86,9 +140,25 @@ export const CommentItem = ({ comment, postId, memeId, level = 0, postOwnerId, m
             Reply
           </button>
 
-          <Button variant="ghost" size="sm" className="h-auto p-0 hover:bg-transparent">
-            <MoreHorizontal className="h-3 w-3" />
-          </Button>
+          {user?.id === comment.user_id && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-auto p-0 hover:bg-transparent">
+                  <MoreHorizontal className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  <Edit className="h-3 w-3 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                  <Trash2 className="h-3 w-3 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         {showReplyInput && (

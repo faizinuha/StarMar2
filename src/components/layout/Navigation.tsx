@@ -97,9 +97,15 @@ export const Navigation = () => {
     {
       icon: Music,
       label: 'MyMusic',
-      path: '/mymusic/music',
-      active: location.pathname === '/mymusic/music',
-    }
+      path: '/play',
+      active: location.pathname === '/play',
+    },
+    {
+      icon: User,
+      label: 'Profile',
+      path: '/profile',
+      active: location.pathname === '/profile',
+    },
   ];
 
   // Mobile bottom navbar items (only 4 items: Home, Explore, Create, Memes)

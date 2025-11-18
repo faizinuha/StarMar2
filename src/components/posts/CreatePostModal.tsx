@@ -188,12 +188,25 @@ export const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
             try {
               // 1. Upsert hashtags to ensure they exist and get their IDs
               const upsertedTags = await Promise.all(uniqueHashtags.map(async (tag) => {
-                const { data: hashtagData, error: upsertError } = await supabase
+                // First check if hashtag exists
+                const { data: existing } = await supabase
                   .from('hashtags')
-                  .upsert({ name: tag }, { onConflict: 'name' })
+                  .select('id')
+                  .eq('name', tag)
+                  .single();
+                
+                if (existing) {
+                  return existing;
+                }
+                
+                // If not, insert new hashtag
+                const { data: hashtagData, error: insertError } = await supabase
+                  .from('hashtags')
+                  .insert({ name: tag })
                   .select('id')
                   .single();
-                if (upsertError) throw upsertError;
+                  
+                if (insertError) throw insertError;
                 return hashtagData;
               }));
 
