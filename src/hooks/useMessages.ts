@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 
 export interface Message {
-  parent_message: any;
   id: string;
   conversation_id: string;
   sender_id: string;
@@ -12,6 +11,8 @@ export interface Message {
   created_at: string;
   attachment_url?: string;
   attachment_type?: string;
+  parent_message_id?: string | null;
+  parent_message?: Message | null;
   sender: {
     user_id: string;
     username: string;
@@ -37,8 +38,11 @@ export const useMessages = (conversationId: string | undefined) => {
 
       if (error) throw error;
 
-      // Get unique sender IDs
+      // Get unique sender IDs and parent message IDs
       const senderIds = [...new Set(messagesData.map((m) => m.sender_id))];
+      const parentMessageIds = messagesData
+        .map((m) => m.parent_message_id)
+        .filter((id): id is string => !!id);
 
       // Fetch sender profiles
       const { data: profiles } = await supabase
@@ -46,8 +50,20 @@ export const useMessages = (conversationId: string | undefined) => {
         .select('user_id, username, display_name, avatar_url')
         .in('user_id', senderIds);
 
-      // Map profiles to messages
-      const profilesMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
+      // Fetch parent messages if any
+      const parentMessages = parentMessageIds.length > 0 
+        ? await supabase
+            .from('messages')
+            .select('*')
+            .in('id', parentMessageIds)
+        : { data: [] };
+
+      // Map profiles to messages  
+      const profilesMap = new Map<string, any>();
+      profiles?.forEach((p) => profilesMap.set(p.user_id, p));
+      
+      const parentMessagesMap = new Map<string, any>();
+      parentMessages.data?.forEach((m: any) => parentMessagesMap.set(m.id, m));
 
       const messagesWithSender = messagesData.map((msg) => ({
         ...msg,
@@ -57,6 +73,7 @@ export const useMessages = (conversationId: string | undefined) => {
           display_name: 'Anonymous',
           avatar_url: '',
         },
+        parent_message: msg.parent_message_id ? parentMessagesMap.get(msg.parent_message_id) : null,
       }));
 
       return messagesWithSender as Message[];
@@ -119,10 +136,12 @@ export const useSendMessage = () => {
       conversationId,
       content,
       file,
+      parentMessageId,
     }: {
       conversationId: string;
       content: string;
       file?: File;
+      parentMessageId?: string;
     }) => {
       let attachmentUrl: string | undefined;
       let attachmentType: string | undefined;
@@ -151,6 +170,7 @@ export const useSendMessage = () => {
           content: content || '',
           attachment_url: attachmentUrl,
           attachment_type: attachmentType,
+          parent_message_id: parentMessageId || null,
         })
         .select()
         .single();
