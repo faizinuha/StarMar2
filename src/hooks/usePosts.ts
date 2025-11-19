@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export interface Post {
+  comments_count: number;
   id: string;
   user_id: string;
   content: string;

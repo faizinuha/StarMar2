@@ -24,13 +24,12 @@ import {
 import { useLikes } from '@/hooks/useLikes';
 
 import { Post } from '@/hooks/usePosts';
-import { MorePosts } from './MorePosts';
+// import { MorePosts } from './MorePosts';
 
 interface PostDetailModalProps {
   post: Post | null;
   isOpen: boolean;
   onClose: () => void;
-  showMoreFrom?: boolean;
 }
 
 // A simple component to render a single comment item, extracted from CommentSection.tsx logic
@@ -77,7 +76,6 @@ export const PostDetailModal = ({
   post,
   isOpen,
   onClose,
-  showMoreFrom = true,
 }: PostDetailModalProps) => {
   const { user } = useAuth();
   const [newComment, setNewComment] = useState('');
@@ -183,8 +181,8 @@ export const PostDetailModal = ({
                 )}
               </div>
 
-              {/* More Posts Section */}
-              <MorePosts userId={post.user_id} currentPostId={post.id} />
+              {/* More Posts Section
+              <MorePosts userId={post.user_id} currentPostId={post.id} /> */}
             </ScrollArea>
 
             {/* Actions and Likes (Moved outside ScrollArea) */}

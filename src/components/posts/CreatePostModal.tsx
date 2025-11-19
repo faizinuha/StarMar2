@@ -193,34 +193,25 @@ export const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
                   .upsert({ name: tag }, { onConflict: 'name' })
                   .select('id')
                   .single();
-                if (upsertError) {
-                  console.error(`Hashtag upsert error for ${tag}:`, upsertError);
-                  return null;
-                }
+                if (upsertError) throw upsertError;
                 return hashtagData;
               }));
 
-              // Filter out null values
-              const validTags = upsertedTags.filter(tag => tag !== null);
-
               // 2. Create the post-hashtag relationships
-              if (validTags.length > 0) {
-                const postHashtagRelations = validTags.map(tag => ({
-                  post_id: post.id,
-                  hashtag_id: tag.id
-                }));
+              const postHashtagRelations = upsertedTags.map(tag => ({
+                post_id: post.id,
+                hashtag_id: tag.id,
+              }));
 
-                const { error: relationError } = await supabase
-                  .from('post_hashtags')
-                  .insert(postHashtagRelations);
+              const { error: relationError } = await supabase
+                .from('post_hashtags')
+                .insert(postHashtagRelations);
 
-                if (relationError) {
-                  console.error('Hashtag relation error:', relationError);
-                }
-              }
+              if (relationError) throw relationError;
+
             } catch (e) {
               console.error('Error processing hashtags:', e);
-              // Don't throw - post was created successfully
+              // We don't re-throw here, as failing to add hashtags shouldn't block post creation
             }
           }
         }
@@ -228,7 +219,9 @@ export const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
       }
 
       toast({
-        title: `${activeTab === 'meme' ? 'Meme' : 'Post'} created successfully!`,
+        title: `${
+          activeTab === 'meme' ? 'Meme' : 'Post'
+        } created successfully!`,
       });
       resetFormAndClose();
     } catch (error: any) {

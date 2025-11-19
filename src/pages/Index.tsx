@@ -1,20 +1,17 @@
 import { useState } from "react";
-import { PostCard } from "@/components/posts/PostCard";
-import { PostGrid } from "@/components/posts/PostGrid";
 import { PostDetailModal } from "@/components/posts/PostDetailModal";
 import { SuggestedFriends } from "@/components/posts/SuggestedFriends";
 import { StoriesSection } from "@/components/posts/StoriesSection";
 import { CreatePost } from "@/components/posts/CreatePost";
 import { Navigation } from "@/components/layout/Navigation";
-import { TrendingTags } from "@/components/posts/TrendingTags";
 import { useAllPosts, Post } from "@/hooks/usePosts";
 import { useAuth } from "@/contexts/AuthContext";
 import { Grid3X3, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PostCardSkeleton } from "@/components/skeletons/PostCardSkeleton";
-import { PostGridSkeleton } from "@/components/skeletons/PostGridSkeleton";
 import { SuggestedFriendsSkeleton } from "@/components/skeletons/SuggestedFriendsSkeleton";
 import { StoriesSkeleton } from "@/components/skeletons/StoriesSkeleton";
+import { PostCard } from "@/components/posts/PostCard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const Index = () => {
@@ -111,27 +108,7 @@ const Index = () => {
               
               {/* View Mode Toggle */}
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Posts</h2>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={viewMode === 'feed' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setViewMode('feed')}
-                  >
-                    <LayoutGrid className="h-4 w-4 mr-2" />
-                    Feed
-                  </Button>
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                  >
-                    <Grid3X3 className="h-4 w-4 mr-2" />
-                    Grid
-                  </Button>
-                </div>
               </div>
-              
               {/* Content based on view mode */}
               <ErrorBoundary>
                 {viewMode === 'feed' ? (
@@ -142,12 +119,7 @@ const Index = () => {
                       </ErrorBoundary>
                     ))}
                   </div>
-                ) : (
-                  <PostGrid
-                    posts={posts}
-                    onPostClick={(post) => setSelectedPost(post)}
-                  />
-                )}
+                ) : null}
               </ErrorBoundary>
               
               {posts.length === 0 && (
@@ -166,9 +138,6 @@ const Index = () => {
               <div className="sticky top-8 space-y-6">
                 <ErrorBoundary>
                   <SuggestedFriends />
-                </ErrorBoundary>
-                <ErrorBoundary>
-                  <TrendingTags />
                 </ErrorBoundary>
               </div>
             </div>

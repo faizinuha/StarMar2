@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 
 export interface Message {
+  parent_message: any;
   id: string;
   conversation_id: string;
   sender_id: string;

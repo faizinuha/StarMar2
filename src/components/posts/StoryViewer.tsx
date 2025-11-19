@@ -88,21 +88,19 @@ export const StoryViewer = ({
           </div>
 
           {/* Story Content */}
-          <div className="h-full w-full flex items-center justify-center bg-black">
+          <div className="h-full w-full flex items-center justify-center">
             {currentStory.media_type.startsWith('image/') ? (
               <img
                 src={currentStory.media_url}
                 alt="Story"
-                className="h-full w-full object-contain"
-                style={{ maxHeight: '100%', maxWidth: '100%' }}
+                className="max-h-full max-w-full object-contain"
               />
             ) : (
               <video
                 src={currentStory.media_url}
                 autoPlay
                 muted
-                className="h-full w-full object-contain"
-                style={{ maxHeight: '100%', maxWidth: '100%' }}
+                className="max-h-full max-w-full object-contain"
                 onEnded={onNext}
               />
             )}

@@ -1,7 +1,6 @@
-import { useUserPosts } from '@/hooks/usePosts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card } from '@/components/ui/card';
-import { Grid3X3, Play } from 'lucide-react';
+import { useUserPosts } from '@/hooks/usePosts';
+import { Grid3X3, Heart, MessageCircle, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface MoreFromUserProps {
@@ -29,7 +28,7 @@ export const MoreFromUser = ({
   if (filteredPosts.length === 0) return null;
 
   return (
-    <div className="mt-8 border-t pt-6">
+    <div className="mt-8 border-t pt-6 px-4 pb-4">
       <div className="flex items-center gap-3 mb-4">
         <Avatar className="h-10 w-10">
           <AvatarImage src={avatar} alt={displayName} />
@@ -51,12 +50,13 @@ export const MoreFromUser = ({
         {filteredPosts.map((post) => {
           const firstMedia = post.media?.[0];
           const isVideo = firstMedia?.media_type === 'video';
+          const mediaUrl = firstMedia?.media_url || post.image_url;
 
           return (
             <Link
               key={post.id}
               to={`/post/${post.id}`}
-              className="relative aspect-square group overflow-hidden rounded-sm"
+              className="relative aspect-square group overflow-hidden rounded-md"
             >
               {firstMedia ? (
                 <>
@@ -85,7 +85,18 @@ export const MoreFromUser = ({
                 </div>
               )}
               {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <div className="flex items-center space-x-4 text-white font-semibold">
+                  <div className="flex items-center space-x-1">
+                    <Heart className="h-4 w-4" />
+                    <span className="text-xs">{post.likes_count ?? 0}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <MessageCircle className="h-4 w-4" />
+                    <span className="text-xs">{post.comments_count ?? 0}</span>
+                  </div>
+                </div>
+              </div>
             </Link>
           );
         })}

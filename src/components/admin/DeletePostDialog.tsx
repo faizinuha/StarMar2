@@ -38,19 +38,7 @@ export const DeletePostDialog = ({ isOpen, onClose, postId, reportId, reportedUs
     setIsDeleting(true);
 
     try {
-      // Get post owner info
-      const { data: post } = await supabase
-        .from('posts')
-        .select('user_id')
-        .eq('id', postId)
-        .single();
-
-      if (!post) {
-        toast({ title: 'Error', description: 'Post not found', variant: 'destructive' });
-        return;
-      }
-
-      // Update post with deletion info (soft delete)
+      // Mark post as deleted with reason
       const { error: postError } = await supabase
         .from('posts')
         .update({
@@ -78,23 +66,15 @@ export const DeletePostDialog = ({ isOpen, onClose, postId, reportId, reportedUs
       const { error: notifError } = await supabase
         .from('user_notifications')
         .insert({
-          user_id: post.user_id,
-          title: 'Post Removed by Admin',
+          user_id: reportedUserId,
+          title: 'Post Removed',
           message: `Your post has been removed by an admin. Reason: ${reason}`,
           type: 'warning',
         });
 
       if (notifError) throw notifError;
 
-      // Log warning on server
-      await supabase.from('user_logs').insert({
-        user_id: post.user_id,
-        action: `Post deleted by admin: ${reason}`,
-        ip_address: null,
-        user_agent: navigator.userAgent,
-      });
-
-      toast({ title: 'Success', description: 'Post deleted, user notified, and warning logged' });
+      toast({ title: 'Success', description: 'Post deleted and user notified' });
       onClose();
     } catch (error: any) {
       console.error('Error deleting post:', error);

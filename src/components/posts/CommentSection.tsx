@@ -15,9 +15,9 @@ import {
   usePostComments,
 } from '@/hooks/useComments';
 import { Loader2, Play, Send } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, FormEvent } from 'react';
 import { CommentItem } from './CommentItem';
-import { MoreFromUser } from './MoreFromUser';
+// import { MoreFromUser } from './MoreFromUser';
 
 interface Post {
   id: string;
@@ -115,7 +115,7 @@ export const CommentSection = ({
     );
   }
 
-  return (
+  return ( 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl md:max-w-5xl lg:max-w-6xl h-[90vh] p-0 gap-0 overflow-hidden">
         <div className="flex h-full flex-col md:flex-row overflow-hidden">
@@ -171,7 +171,9 @@ export const CommentSection = ({
           {/* Kolom Kanan: Komentar dan Detail */}
           <div
             className={`flex flex-col min-h-0 overflow-hidden ${
-              post?.image_url ? 'w-full md:w-1/3 h-[60vh] md:h-full' : 'w-full h-full'
+              post?.image_url
+                ? 'w-full md:w-1/3 h-[60vh] md:h-full'
+                : 'w-full h-full'
             }`}
           >
             <DialogHeader className="p-4 border-b flex-shrink-0">
@@ -207,9 +209,17 @@ export const CommentSection = ({
             </ScrollArea>
 
             {/* Form Tambah Komentar */}
-            <form onSubmit={handleSubmit} className="flex gap-3 p-4 border-t flex-shrink-0 bg-background">
+            <form
+              onSubmit={handleSubmit}
+              className="flex gap-3 p-4 border-t flex-shrink-0 bg-background"
+            >
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.user_metadata?.avatar_url} />
+                <AvatarImage
+                  src={
+                    user?.user_metadata?.avatar_url ||
+                    '../../assets/placeholder/cewek.png'
+                  }
+                />
                 <AvatarFallback className="text-sm">
                   {user?.user_metadata?.display_name?.[0] ||
                     user?.email?.[0] ||
@@ -239,7 +249,7 @@ export const CommentSection = ({
             </form>
 
             {/* More From User Section */}
-            {post && (
+            {/* {post && (
               <div className="px-4 pb-4">
                 <MoreFromUser
                   userId={post.user_id}
@@ -249,7 +259,7 @@ export const CommentSection = ({
                   currentPostId={postId || memeId}
                 />
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </DialogContent>

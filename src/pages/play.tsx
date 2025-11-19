@@ -4,7 +4,7 @@ import { useMusic } from '@/contexts/Music';
 import { MusicSkeleton } from '@/components/skeletons/MusicSkeleton';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-// import { Navigation } from "@/components/layout/Navigation";
+import { Navigation } from "@/components/layout/Navigation";
 
 // Komponen untuk menampilkan satu item lagu dalam daftar
 const TrackItem = ({ track, onTrackSelect, isCurrent, isPlaying }: { track: Track, onTrackSelect: () => void, isCurrent: boolean, isPlaying: boolean }) => (
@@ -112,37 +112,35 @@ export default function PlayPage() {
   }
 
   return (
-    <div className="bg-black min-h-screen text-white p-8 pb-40">
-      <header className="mb-8 mt-8">
-      {/* <Navigation /> */}
-        <h1 className="text-4xl font-bold">Rekomendasi Lagu</h1>
-        <p className="text-gray-400">Lagu-lagu pilihan yang mungkin Anda suka.</p>
-        <p className="text-gray-400">Mohon Maaf Jika music kami sediakan 30 detik | Update</p>
-        
-        <div className="mt-6 flex flex-col sm:flex-row gap-4">
-          <Input
-            type="text"
-            placeholder="Cari lagu atau artis..."
-            className="w-full sm:w-72 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Select value={sortOrder} onValueChange={setSortOrder}>
-            <SelectTrigger className="w-full sm:w-48 bg-gray-800 border-gray-700 text-white">
-              <SelectValue placeholder="Urutkan" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700 text-white">
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="title-asc">Judul (A-Z)</SelectItem>
-              <SelectItem value="artist-asc">Artis (A-Z)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </header>
+    <div className="bg-black text-white">
+      <Navigation />
+      <main className="md:ml-72 min-h-screen p-8 pb-40">
+        <header className="mb-8 mt-8">
+          <h1 className="text-4xl font-bold">Rekomendasi Lagu</h1>
+          <p className="text-gray-400">Lagu-lagu pilihan yang mungkin Anda suka.</p>
+          <p className="text-gray-400">Mohon Maaf Jika music kami sediakan 30 detik | Update</p>
+          
+          <div className="mt-6 flex flex-col sm:flex-row gap-4">
+            <Input
+              type="text"
+              placeholder="Cari lagu atau artis..."
+              className="w-full sm:w-72 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger className="w-full sm:w-48 bg-gray-800 border-gray-700 text-white">
+                <SelectValue placeholder="Urutkan" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700 text-white">
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="title-asc">Judul (A-Z)</SelectItem>
+                <SelectItem value="artist-asc">Artis (A-Z)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </header>
 
-      <main>
-        {error && !loading && <p className="text-center text-red-500 mt-4">Error: {error}</p>}
-        
         <div className="space-y-2">
           {filteredAndSortedTracks.map((track, i) => {
             // The ref for infinite scroll is only attached if there's no search term

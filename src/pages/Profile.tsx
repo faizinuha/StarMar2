@@ -1,38 +1,17 @@
 import { Navigation } from '@/components/layout/Navigation';
 import { PostDetailModal } from '@/components/posts/PostDetailModal';
 import { PostGrid } from '@/components/posts/PostGrid';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { FollowListModal } from '@/components/profile/FollowListModal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { useFollowStatus, useToggleFollow } from '@/hooks/useFollow';
-import { FollowListModal } from '@/components/profile/FollowListModal';
-import {
-  Post,
-  useDeletePost,
-  useTogglePostLike,
-  useUserPosts,
-} from '@/hooks/usePosts';
-import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { useCreateConversation } from '@/hooks/useConversations';
+import { useFollowStatus, useToggleFollow } from '@/hooks/useFollow';
+import { Post, useUserPosts } from '@/hooks/usePosts';
+import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -49,125 +28,9 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useBookmarks } from '../hooks/useBookmarks';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-
-const PostCard = ({ post, authUser }) => {
-  const [isLiked, setIsLiked] = useState(post.isLiked);
-  const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked);
-  const { mutate: deletePost } = useDeletePost();
-  const { mutate: toggleLike } = useTogglePostLike();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  const isOwnPost = authUser?.id === post.user_id;
-
-  const handleLike = () => {
-    toggleLike({ postId: post.id, isLiked });
-    setIsLiked(!isLiked);
-  };
-
-  return (
-    <Card className="p-4 md:p-6 space-y-4 animate-fade-in">
-      <div className="flex items-center space-x-4">
-        <Avatar className="w-12 h-12">
-          <AvatarImage src={post.user.avatar} alt={post.user.displayName} />
-          <AvatarFallback className="text-2xl">
-            {post.user.displayName?.charAt(0) || ''}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <h4 className="font-semibold">{post.user.displayName}</h4>
-          <p className="text-sm text-muted-foreground">
-            @{post.user.username} · {post.timestamp}
-          </p>
-        </div>
-        {isOwnPost ? (
-          <AlertDialog
-            open={showDeleteDialog}
-            onOpenChange={setShowDeleteDialog}
-          >
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  className="text-red-500 focus:text-red-500 focus:bg-red-50"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your post.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-red-500 hover:bg-red-600"
-                  onClick={() => deletePost(post.id)}
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        ) : (
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-
-      <div>
-        {post.content && (
-          <p className="text-foreground leading-relaxed whitespace-pre-line mb-4">
-            {post.content}
-          </p>
-        )}
-        {post.image_url && (
-          <img
-            src={post.image_url}
-            alt="Post"
-            className="w-full h-auto object-cover rounded-lg"
-          />
-        )}
-      </div>
-
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <div className="flex items-center space-x-4">
-          <button onClick={handleLike} className="flex items-center space-x-1">
-            <Heart
-              fill={isLiked ? 'currentColor' : 'none'}
-              className={`h-4 w-4 transition-colors ${isLiked ? 'text-red-500' : ''
-                }`}
-            />
-            <span>{post.likes}</span>
-          </button>
-          <div className="flex items-center space-x-1">
-            <MessageCircle className="h-4 w-4" />
-            <span>{post.comments}</span>
-          </div>
-        </div>
-        <button onClick={() => setIsBookmarked(!isBookmarked)}>
-          <Bookmark
-            fill={isBookmarked ? 'currentColor' : 'none'}
-            className="h-4 w-4"
-          />
-        </button>
-      </div>
-    </Card>
-  );
-};
+import { useBookmarks } from '../hooks/useBookmarks';
 
 const ProfilePageContent = ({ profile, isLoading, error }) => {
   const { user: authUser } = useAuth();
@@ -175,7 +38,9 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  const [followListType, setFollowListType] = useState<'followers' | 'following' | null>(null);
+  const [followListType, setFollowListType] = useState<
+    'followers' | 'following' | null
+  >(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const { mutate: createConversation } = useCreateConversation();
@@ -211,9 +76,9 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
 
   const userPosts: (Post & { timestamp: string })[] = posts
     ? posts.map((post) => ({
-      ...post,
-      timestamp: format(new Date(post.created_at), 'PP'),
-    }))
+        ...post,
+        timestamp: format(new Date(post.created_at), 'PP'),
+      }))
     : [];
 
   const bookmarkedPosts = userPosts.filter((post) =>
@@ -275,8 +140,9 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
 
                       try {
                         const ext = file.name.split('.').pop();
-                        const filePath = `${authUser.id
-                          }/cover-${Date.now()}.${ext}`;
+                        const filePath = `${
+                          authUser.id
+                        }/cover-${Date.now()}.${ext}`;
                         const { error: uploadErr } = await supabase.storage
                           .from('avatars')
                           .upload(filePath, file, { upsert: true });
@@ -348,8 +214,9 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
 
                             try {
                               const ext = file.name.split('.').pop();
-                              const filePath = `${authUser.id
-                                }/avatar-${Date.now()}.${ext}`;
+                              const filePath = `${
+                                authUser.id
+                              }/avatar-${Date.now()}.${ext}`;
                               const { error: uploadErr } =
                                 await supabase.storage
                                   .from('avatars')
@@ -487,13 +354,19 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                     </p>
                     <p className="text-sm text-muted-foreground">Posts</p>
                   </div>
-                  <div className="text-center cursor-pointer hover:text-primary transition-colors" onClick={() => setFollowListType('followers')}>
+                  <div
+                    className="text-center cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => setFollowListType('followers')}
+                  >
                     <p className="font-bold text-lg">
                       {profile.followers_count.toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Followers</p>
                   </div>
-                  <div className="text-center cursor-pointer hover:text-primary transition-colors" onClick={() => setFollowListType('following')}>
+                  <div
+                    className="text-center cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => setFollowListType('following')}
+                  >
                     <p className="font-bold text-lg">
                       {profile.following_count.toLocaleString()}
                     </p>
@@ -597,7 +470,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
         isOpen={!!selectedPost}
         onClose={() => setSelectedPost(null)}
       />
-      
+
       {/* Follow List Modal */}
       {followListType && (
         <FollowListModal

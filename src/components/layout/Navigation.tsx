@@ -158,7 +158,7 @@ export const Navigation = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <img
-              src="/assets/Logo/StarMar-.png"
+              src="../../assets/Logo/StarMar-.png"
               alt="StarMar"
               className="w-10 h-10 object-contain"
             />
@@ -190,32 +190,29 @@ export const Navigation = () => {
                 </Button>
               );
             })}
-            {/* More menu - only show if there are items to show */}
-            {(profile?.role === 'admin' || true) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start space-x-3 h-12 text-base"
-                  >
-                    <Menu className="h-6 w-6" />
-                    <span>More</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64" side="right" align="start">
-                  {profile?.role === 'admin' && (
-                    <DropdownMenuItem onClick={() => navigate('/Admin_Dashbord')}>
-                      <Home className="mr-2 h-4 w-4" />
-                      <span>Dashboard Admin</span>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={handleSettingsClick}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start space-x-3 h-12 text-base"
+                >
+                  <Menu className="h-6 w-6" />
+                  <span>More</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64" side="right" align="start">
+                {profile?.role === 'admin' && (
+                  <DropdownMenuItem onClick={() => navigate('/Admin_Dashbord')}>
+                    <Home className="mr-2 h-4 w-4" />
+                    <span>Dashboard Admin</span>
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                )}
+                <DropdownMenuItem onClick={handleSettingsClick}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -253,7 +250,7 @@ export const Navigation = () => {
         <header className="fixed top-0 left-0 right-0 bg-card border-b border-border p-4 flex items-center justify-between z-50">
           <div className="flex items-center space-x-3">
             <img
-              src="/assets/Logo/StarMar.png"
+              src="../../assets/Logo/StarMar.png"
               alt="StarMar"
               className="w-8 h-8 object-contain"
             />

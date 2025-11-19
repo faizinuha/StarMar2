@@ -2,13 +2,11 @@ import { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heart, MoreHorizontal, Trash2 } from "lucide-react";
-import { Comment, useCreateComment, useToggleCommentLike } from "@/hooks/useComments";
+import { Heart, MoreHorizontal } from "lucide-react";
+import { Comment, useCreateComment } from "@/hooks/useComments";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useLikes } from "@/hooks/useLikes";
 
 interface CommentItemProps {
   comment: Comment;
@@ -21,11 +19,10 @@ interface CommentItemProps {
 
 export const CommentItem = ({ comment, postId, memeId, level = 0, postOwnerId, memeOwnerId }: CommentItemProps) => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyContent, setReplyContent] = useState("");
   const { mutate: createComment, isPending: isCreatingComment } = useCreateComment();
-  const { mutate: toggleLike } = useToggleCommentLike();
+  const { likesCount, isLiked, toggleLike } = useLikes('comment', comment.id, comment.user_id);
 
   const handleReply = () => {
     if (!replyContent.trim()) return;
@@ -49,36 +46,8 @@ export const CommentItem = ({ comment, postId, memeId, level = 0, postOwnerId, m
   };
 
   const handleLike = () => {
-    if (!user) {
-      toast.error("Please login to like comments");
-      return;
-    }
-    toggleLike({ commentId: comment.id, isLiked: comment.isLiked });
-  };
-
-  const handleDelete = async () => {
-    if (!user || user.id !== comment.user_id) return;
-    
-    try {
-      const { error } = await supabase
-        .from('comments')
-        .delete()
-        .eq('id', comment.id);
-      
-      if (error) throw error;
-      
-      // Invalidate queries
-      if (postId) {
-        queryClient.invalidateQueries({ queryKey: ["comments", "post", postId] });
-      }
-      if (memeId) {
-        queryClient.invalidateQueries({ queryKey: ["comments", "meme", memeId] });
-      }
-      
-      toast.success("Comment deleted");
-    } catch (error) {
-      toast.error("Failed to delete comment");
-    }
+    if (!user) return; // Or show toast
+    toggleLike();
   };
 
   return (
@@ -103,11 +72,11 @@ export const CommentItem = ({ comment, postId, memeId, level = 0, postOwnerId, m
 
         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
           <button
-            className={`flex items-center gap-1 text-xs hover:text-foreground transition-colors ${comment.isLiked ? 'text-red-500' : 'text-muted-foreground'}`}
+            className={`flex items-center gap-1 text-xs hover:text-foreground transition-colors ${isLiked ? 'text-red-500' : 'text-muted-foreground'}`}
             onClick={handleLike}
           >
-            <Heart className={`h-3 w-3 ${comment.isLiked ? 'fill-red-500' : ''}`} />
-            <span>{comment.likes_count || 0}</span>
+            <Heart className={`h-3 w-3 ${isLiked ? 'fill-red-500' : ''}`} />
+            <span>{likesCount || 0}</span>
           </button>
 
           <button
@@ -117,14 +86,9 @@ export const CommentItem = ({ comment, postId, memeId, level = 0, postOwnerId, m
             Reply
           </button>
 
-          {user?.id === comment.user_id && (
-            <button
-              className="text-xs text-muted-foreground hover:text-red-500 transition-colors"
-              onClick={handleDelete}
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
-          )}
+          <Button variant="ghost" size="sm" className="h-auto p-0 hover:bg-transparent">
+            <MoreHorizontal className="h-3 w-3" />
+          </Button>
         </div>
 
         {showReplyInput && (
