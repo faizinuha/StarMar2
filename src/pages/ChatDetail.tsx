@@ -148,7 +148,7 @@ export default function ChatDetail() {
       conversationId: chatId,
       content: newMessage.trim(),
       file: fileToSend || undefined,
-      parent_message_id: replyingTo?.id,
+      parentMessageId: replyingTo?.id,
     });
     setNewMessage('');
     setSelectedFile(null);

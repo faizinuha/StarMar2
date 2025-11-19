@@ -47,6 +47,7 @@ interface Post {
   likes: number;
   likes_count: number;
   comments: number;
+  comments_count: number;
   isLiked: boolean;
   isBookmarked: boolean;
   location?: string;

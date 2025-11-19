@@ -34,6 +34,7 @@ interface PostForModal {
   created_at: string;
   likes: number;
   comments: number;
+  comments_count: number;
   isLiked: boolean;
   likes_count: number;
   profiles: { username: string; display_name: string; avatar_url: string };
