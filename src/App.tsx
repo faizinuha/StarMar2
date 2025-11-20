@@ -19,7 +19,6 @@ import Admin from "./pages/Admin";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import Chat from "./pages/Chat"; // Assuming Chat is a default export
-import ChatDetail from "./pages/ChatDetail";
 import { GlobalPlayer } from "./components/layout/GlobalPlayer";
 import { MusicProvider } from "./contexts/Music"; // Correctly import MusicProvider
 import PlayPage from "./pages/play";
@@ -82,7 +81,7 @@ const App = () => (
                     path="/chat/:chatId"
                     element={
                       <PrivateRoute>
-                        <ChatDetail />
+                        <Chat />
                       </PrivateRoute>
                     }
                   />

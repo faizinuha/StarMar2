@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversations, useCreateConversation, Conversation } from '@/hooks/useConversations';
-import { useFavoriteConversations, useFavoriteUsers } from '@/hooks/useFavorites';
-import { useCreateGroup } from '@/hooks/useGroupChat';
+import { useFavoriteConversations } from '@/hooks/useFavorites';
+import { useCreateGroup, useGetGroupMembers, useFollowedUsers, useDeleteGroup } from '@/hooks/useGroupChat';
+import { GroupInfoDrawer } from '@/components/GroupInfoDrawer';
 import { useMessages, useSendMessage, Message } from '@/hooks/useMessages';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,7 +14,6 @@ import {
   Search,
   Plus,
   Users,
-  Shield,
   Star,
   Trash2,
   ArrowLeft,
@@ -35,6 +35,9 @@ import {
   Download,
   Share,
   Heart,
+  MessageSquare,
+  ChevronDown,
+  AlertCircle,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -46,6 +49,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSeparator } from '@/components/ui/context-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function Chat() {
   const { chatId } = useParams();
@@ -55,31 +64,26 @@ export default function Chat() {
   const { mutate: createConversation } = useCreateConversation();
   const { mutate: createGroup } = useCreateGroup();
   const { favorites: favConvs, toggleFavorite: toggleFavConv, isFavorite: isConvFav } = useFavoriteConversations();
-  const { favorites: favUsers, toggleFavorite: toggleFavUser, isFavorite: isUserFav } = useFavoriteUsers();
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConvId, setDeleteConvId] = useState<string | null>(null);
   const [showGroupDialog, setShowGroupDialog] = useState(false);
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-
-  const { data: adminUser } = useQuery({
-    queryKey: ['admin-user'],
-    queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('user_id, username, display_name, avatar_url').eq('role', 'admin').limit(1).single();
-      return data;
-    },
-  });
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users'],
     queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('user_id, username, display_name, avatar_url').neq('user_id', user?.id).limit(50);
+      const { data } = await supabase.from('profiles').select('user_id, username, display_name, avatar_url').neq('user_id', user?.id).limit(100);
       return data || [];
     },
     enabled: !!user,
   });
+
+  const { data: followedUsers = [] } = useFollowedUsers();
 
   const handleDeleteConversation = async () => {
     if (!deleteConvId) return;
@@ -95,8 +99,10 @@ export default function Chat() {
   };
 
   const handleContactAdmin = () => {
-    if (!adminUser) return toast.error('Admin tidak ditemukan');
-    createConversation({ otherUserId: adminUser.user_id }, {
+    if (!user) return toast.error('Tidak login');
+    // Buat conversation dengan user baru
+    const userId = 'any-user-id'; // Ganti dengan user ID yang dipilih
+    createConversation({ otherUserId: userId }, {
       onSuccess: (id) => navigate(`/chat/${id}`),
       onError: () => toast.error('Gagal membuat conversation'),
     });
@@ -112,6 +118,19 @@ export default function Chat() {
         setSelectedMembers([]);
         navigate(`/chat/${id}`);
       },
+    });
+  };
+
+  const handleStartDirectChat = () => {
+    if (!selectedUser) return toast.error('Pilih user');
+    createConversation({ otherUserId: selectedUser }, {
+      onSuccess: (id) => {
+        toast.success('Chat dimulai');
+        setShowNewChatDialog(false);
+        setSelectedUser(null);
+        navigate(`/chat/${id}`);
+      },
+      onError: () => toast.error('Gagal membuat conversation'),
     });
   };
 
@@ -179,7 +198,21 @@ export default function Chat() {
         <div className="p-3 border-b">
           <div className="flex justify-between items-center mb-3">
             <h1 className="text-xl font-bold">Messages</h1>
-            <Button onClick={() => setShowGroupDialog(true)} size="icon" variant="ghost"><Plus className="h-5 w-5" /></Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost"><Plus className="h-5 w-5" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setShowNewChatDialog(true)}>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Chat Baru
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowGroupDialog(true)}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Buat Grup
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -208,35 +241,9 @@ export default function Chat() {
                 ))
               ) : (
                 <>
-                  {adminUser && (
-                    <div onClick={handleContactAdmin} className="flex items-center gap-3 p-3 hover:bg-accent cursor-pointer border-b">
-                      <Avatar className="h-12 w-12"><AvatarFallback className="bg-primary text-primary-foreground"><Shield className="h-5 w-5" /></AvatarFallback></Avatar>
-                      <div>
-                        <h3 className="font-semibold text-sm">Admin Support</h3>
-                        <p className="text-xs text-muted-foreground">Hubungi admin</p>
-                      </div>
-                    </div>
-                  )}
-                  {favUsers.length > 0 && (
-                    <>
-                      <div className="px-3 py-2 bg-muted/30"><h3 className="text-xs font-semibold uppercase flex items-center gap-2"><Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />Pengguna Favorit</h3></div>
-                      {favUsers.map((fav: any) => {
-                        const profile = fav.profiles || fav;
-                        return (
-                          <div key={profile.user_id} onClick={() => createConversation({ otherUserId: profile.user_id }, { onSuccess: (id) => navigate(`/chat/${id}`) })} className="flex items-center gap-3 p-3 hover:bg-accent cursor-pointer border-b">
-                            <Avatar className="h-12 w-12"><AvatarImage src={profile.avatar_url} /><AvatarFallback>{profile.username?.[0]}</AvatarFallback></Avatar>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-sm truncate">{profile.display_name || profile.username}</h3>
-                              <p className="text-xs text-muted-foreground">Klik untuk chat</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </>
-                  )}
                   {favoriteConversations.length > 0 && (
                     <>
-                      <div className="px-3 py-2 bg-muted/30"><h3 className="text-xs font-semibold uppercase flex items-center gap-2"><Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />Chat Favorit</h3></div>
+                      <div className="px-3 py-2 bg-muted/30 sticky top-0"><h3 className="text-xs font-semibold uppercase flex items-center gap-2"><Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />Chat Favorit</h3></div>
                       {favoriteConversations.map(renderConversation)}
                     </>
                   )}
@@ -296,23 +303,60 @@ export default function Chat() {
           <DialogHeader><DialogTitle>Buat Grup Chat</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <Input placeholder="Nama grup" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+            {followedUsers.length === 0 ? (
+              <div className="text-center p-8 text-sm text-muted-foreground">
+                <p>Anda belum follow siapapun</p>
+                <p className="text-xs mt-2">Follow user terlebih dahulu untuk membuat grup</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-64 border rounded p-2">
+                {followedUsers.map((u: any) => (
+                  <div
+                    key={u.user_id}
+                    onClick={() => setSelectedMembers(p => p.includes(u.user_id) ? p.filter(i => i !== u.user_id) : [...p, u.user_id])}
+                    className="flex gap-2 items-center p-2 hover:bg-accent rounded cursor-pointer"
+                  >
+                    <input type="checkbox" checked={selectedMembers.includes(u.user_id)} readOnly className="pointer-events-none" />
+                    <Avatar className="h-8 w-8"><AvatarImage src={u.avatar_url} /><AvatarFallback>{u.username?.[0]}</AvatarFallback></Avatar>
+                    <p className="text-sm">{u.display_name || u.username}</p>
+                  </div>
+                ))}
+              </ScrollArea>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowGroupDialog(false)}>Batal</Button>
+            <Button onClick={handleCreateGroup} disabled={followedUsers.length === 0}>Buat Grup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Chat Baru</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Pilih user untuk memulai percakapan</p>
             <ScrollArea className="h-64 border rounded p-2">
               {allUsers.map((u: any) => (
                 <div
                   key={u.user_id}
-                  onClick={() => setSelectedMembers(p => p.includes(u.user_id) ? p.filter(i => i !== u.user_id) : [...p, u.user_id])}
+                  onClick={() => {
+                    setSelectedUser(u.user_id);
+                    handleStartDirectChat();
+                  }}
                   className="flex gap-2 items-center p-2 hover:bg-accent rounded cursor-pointer"
                 >
-                  <input type="checkbox" checked={selectedMembers.includes(u.user_id)} readOnly className="pointer-events-none" />
-                  <Avatar className="h-8 w-8"><AvatarImage src={u.avatar_url} /><AvatarFallback>{u.username?.[0]}</AvatarFallback></Avatar>
-                  <p className="text-sm">{u.display_name || u.username}</p>
+                  <Avatar className="h-10 w-10"><AvatarImage src={u.avatar_url} /><AvatarFallback>{u.username?.[0]}</AvatarFallback></Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{u.display_name || u.username}</p>
+                    <p className="text-xs text-muted-foreground">@{u.username}</p>
+                  </div>
                 </div>
               ))}
             </ScrollArea>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowGroupDialog(false)}>Batal</Button>
-            <Button onClick={handleCreateGroup}>Buat Grup</Button>
+            <Button variant="outline" onClick={() => setShowNewChatDialog(false)}>Batal</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -331,6 +375,7 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
   const { messages, isLoading } = useMessages(conversationId);
   const { conversations } = useConversations();
   const { mutate: sendMessage } = useSendMessage();
+  const { data: groupMembers = [] } = useGetGroupMembers(conversationId);
   const queryClient = useQueryClient();
 
   const [newMessage, setNewMessage] = useState('');
@@ -340,6 +385,7 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [attachmentViewer, setAttachmentViewer] = useState<{ isOpen: boolean; url: string | null; type: string | null }>({ isOpen: false, url: null, type: null });
   const [deleteMessageInfo, setDeleteMessageInfo] = useState<Message | null>(null);
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -350,10 +396,21 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
   const otherUser = currentConversation?.members.find(m => m.user_id !== user?.id);
   const conversationName = currentConversation?.is_group ? currentConversation.name || 'Group Chat' : otherUser?.display_name || otherUser?.username || 'Unknown';
   const conversationAvatar = currentConversation?.is_group ? currentConversation.avatar_url : otherUser?.avatar_url;
+  
+  // Check apakah user masih member grup
+  const isUserMember = currentConversation?.members?.some(m => m.user_id === user?.id);
+  const isGroupChat = currentConversation?.is_group;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Check if user was removed from group and show toast notification
+  useEffect(() => {
+    if (isGroupChat && !isUserMember) {
+      toast.error('Anda telah dikeluarkan dari grup');
+    }
+  }, [isUserMember, isGroupChat]);
 
   const handleSend = () => {
     if ((!newMessage.trim() && !selectedFile && !audioBlob) || !conversationId) return;
@@ -461,7 +518,7 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
                 <AvatarImage src={conversationAvatar || undefined} />
                 <AvatarFallback>{currentConversation?.is_group ? <Users className="h-5 w-5" /> : conversationName[0]}</AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 cursor-pointer" onClick={() => currentConversation?.is_group && setShowGroupInfo(true)}>
                 <h3 className="font-semibold text-sm truncate">{conversationName}</h3>
                 {currentConversation?.is_group && (
                   <p className="text-xs text-muted-foreground">{currentConversation.members.length} anggota</p>
@@ -473,7 +530,12 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
         <div className="flex gap-1">
           <Button variant="ghost" size="icon"><Phone className="h-5 w-5" /></Button>
           <Button variant="ghost" size="icon"><Video className="h-5 w-5" /></Button>
-          <Button variant="ghost" size="icon"><MoreVertical className="h-5 w-5" /></Button>
+          {currentConversation?.is_group && (
+            <Button variant="ghost" size="icon" onClick={() => setShowGroupInfo(true)}><MoreVertical className="h-5 w-5" /></Button>
+          )}
+          {!currentConversation?.is_group && (
+            <Button variant="ghost" size="icon"><MoreVertical className="h-5 w-5" /></Button>
+          )}
         </div>
       </div>
 
@@ -543,6 +605,12 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
 
       {/* Input area */}
       <div className="border-t p-3 bg-background">
+        {!isUserMember && isGroupChat && (
+          <div className="mb-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-center gap-2 text-sm text-destructive">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <p>Anda bukan anggota grup. Tidak dapat mengirim pesan.</p>
+          </div>
+        )}
         {replyingTo && (
           <div className="mb-2 flex items-center justify-between bg-muted p-2 rounded">
             <ReplyPreview message={replyingTo} />
@@ -564,13 +632,20 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
           </div>
         )}
         <div className="flex items-center gap-2">
-          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
-          <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><Paperclip className="h-5 w-5" /></Button>
-          <Button variant="ghost" size="icon" onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording}>
+          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} disabled={!isUserMember && isGroupChat} />
+          <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={!isUserMember && isGroupChat}><Paperclip className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} disabled={!isUserMember && isGroupChat}>
             {isRecording ? <Square className="h-5 w-5 text-destructive" /> : <Mic className="h-5 w-5" />}
           </Button>
-          <Input placeholder="Ketik pesan..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyPress={handleKeyPress} className="flex-1" />
-          <Button onClick={handleSend} size="icon"><Send className="h-5 w-5" /></Button>
+          <Input 
+            placeholder={isUserMember || !isGroupChat ? "Ketik pesan..." : "Anda bukan anggota grup"} 
+            value={newMessage} 
+            onChange={(e) => setNewMessage(e.target.value)} 
+            onKeyPress={handleKeyPress} 
+            className="flex-1" 
+            disabled={!isUserMember && isGroupChat}
+          />
+          <Button onClick={handleSend} size="icon" disabled={!isUserMember && isGroupChat}><Send className="h-5 w-5" /></Button>
         </div>
       </div>
 
@@ -603,6 +678,19 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {currentConversation?.is_group && (
+        <GroupInfoDrawer
+          open={showGroupInfo}
+          onOpenChange={setShowGroupInfo}
+          conversationId={conversationId}
+          groupName={conversationName}
+          groupAvatar={conversationAvatar}
+          members={groupMembers?.map?.((m: any) => m.profiles || m) || currentConversation.members || []}
+          createdBy={currentConversation.created_by || ''}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 }

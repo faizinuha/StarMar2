@@ -30,53 +30,64 @@ export const useMessages = (conversationId: string | undefined) => {
     queryFn: async () => {
       if (!conversationId) return [];
 
-      const { data: messagesData, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
+      try {
+        // Fetch messages tanpa join
+        const { data: messagesData, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: true });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Get unique sender IDs and parent message IDs
-      const senderIds = [...new Set(messagesData.map((m) => m.sender_id))];
-      const parentMessageIds = messagesData
-        .map((m) => m.parent_message_id)
-        .filter((id): id is string => !!id);
+        // Get unique sender IDs
+        const senderIds = [...new Set(messagesData.map((m: any) => m.sender_id))];
+        
+        // Get unique parent message IDs
+        const parentMessageIds = messagesData
+          .map((m: any) => m.parent_message_id)
+          .filter((id): id is string => !!id);
 
-      // Fetch sender profiles
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, username, display_name, avatar_url')
-        .in('user_id', senderIds);
+        // Fetch sender profiles
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, username, display_name, avatar_url')
+          .in('user_id', senderIds);
 
-      // Fetch parent messages if any
-      const parentMessages = parentMessageIds.length > 0 
-        ? await supabase
+        // Fetch parent messages if any
+        let parentMessagesMap = new Map<string, any>();
+        if (parentMessageIds.length > 0) {
+          const { data: parentMessages } = await supabase
             .from('messages')
             .select('*')
-            .in('id', parentMessageIds)
-        : { data: [] };
+            .in('id', parentMessageIds);
 
-      // Map profiles to messages  
-      const profilesMap = new Map<string, any>();
-      profiles?.forEach((p) => profilesMap.set(p.user_id, p));
-      
-      const parentMessagesMap = new Map<string, any>();
-      parentMessages.data?.forEach((m: any) => parentMessagesMap.set(m.id, m));
+          parentMessages?.forEach((m: any) => parentMessagesMap.set(m.id, m));
+        }
 
-      const messagesWithSender = messagesData.map((msg) => ({
-        ...msg,
-        sender: profilesMap.get(msg.sender_id) || {
-          user_id: msg.sender_id,
-          username: 'Anonymous',
-          display_name: 'Anonymous',
-          avatar_url: '',
-        },
-        parent_message: msg.parent_message_id ? parentMessagesMap.get(msg.parent_message_id) : null,
-      }));
+        // Create profiles map
+        const profilesMap = new Map<string, any>();
+        profiles?.forEach((p: any) => profilesMap.set(p.user_id, p));
 
-      return messagesWithSender as Message[];
+        const messagesWithSender = messagesData.map((msg: any) => {
+          const profile = profilesMap.get(msg.sender_id);
+          return {
+            ...msg,
+            sender: profile || {
+              user_id: msg.sender_id,
+              username: 'Anonymous',
+              display_name: 'Anonymous',
+              avatar_url: '',
+            },
+            parent_message: msg.parent_message_id ? parentMessagesMap.get(msg.parent_message_id) : null,
+          };
+        });
+
+        return messagesWithSender as Message[];
+      } catch (error: any) {
+        console.error('Failed to fetch messages:', error.message);
+        return [];
+      }
     },
     enabled: !!conversationId,
   });
@@ -143,51 +154,63 @@ export const useSendMessage = () => {
       file?: File;
       parentMessageId?: string;
     }) => {
+      if (!user) throw new Error('Not authenticated');
+
       let attachmentUrl: string | undefined;
       let attachmentType: string | undefined;
 
-      // Upload file if provided
-      if (file && user) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}/${conversationId}/${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('chat-attachments')
-          .upload(fileName, file);
+      try {
+        // Upload file if provided
+        if (file) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${user.id}/${conversationId}/${Date.now()}.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('chat-attachments')
+            .upload(fileName, file);
 
-        if (uploadError) throw uploadError;
+          if (uploadError) throw uploadError;
 
-        attachmentUrl = fileName;
-        attachmentType = file.type;
+          attachmentUrl = fileName;
+          attachmentType = file.type;
+        }
+
+        // Send message with attachment
+        const { data: message, error } = await supabase
+          .from('messages')
+          .insert({
+            conversation_id: conversationId,
+            sender_id: user.id,
+            content: content || '',
+            attachment_url: attachmentUrl,
+            attachment_type: attachmentType,
+            parent_message_id: parentMessageId || null,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Update conversation last_message_at
+        const { error: updateError } = await supabase
+          .from('conversations')
+          .update({ last_message_at: new Date().toISOString() })
+          .eq('id', conversationId);
+
+        if (updateError) throw updateError;
+
+        return message;
+      } catch (error: any) {
+        console.error('Failed to send message:', error.message);
+        throw error;
       }
-
-      // Send message with attachment
-      const { data: message, error } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversationId,
-          sender_id: user?.id,
-          content: content || '',
-          attachment_url: attachmentUrl,
-          attachment_type: attachmentType,
-          parent_message_id: parentMessageId || null,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Update conversation last_message_at
-      await supabase
-        .from('conversations')
-        .update({ last_message_at: new Date().toISOString() })
-        .eq('id', conversationId);
-
-      return message;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['messages', variables.conversationId] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+    onError: (error: any) => {
+      console.error('Message send error:', error.message);
     },
   });
 };

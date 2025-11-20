@@ -267,16 +267,7 @@ const PeopleContent = () => {
     },
   });
 
-  // Data dummy untuk melengkapi tampilan
-  const dummyUsers: UserProfile[] = [
-    { id: 'dummy1', user_id: 'dummy1', username: 'code_ninja', display_name: 'Code Ninja', avatar_url: dummyAvatar('ninja'), bio: 'Slicing through code with precision. React & TypeScript enthusiast.', followers_count: 15200 },
-    { id: 'dummy2', user_id: 'dummy2', username: 'design_dreamer', display_name: 'Design Dreamer', avatar_url: dummyAvatar('dreamer'), bio: 'Crafting beautiful and intuitive user interfaces. Figma wizard.', followers_count: 8750 },
-    { id: 'dummy3', user_id: 'dummy3', username: 'data_dynamo', display_name: 'Data Dynamo', avatar_url: dummyAvatar('dynamo'), bio: 'Making sense of data, one query at a time. Python & SQL.', followers_count: 7300 },
-    { id: 'dummy4', user_id: 'dummy4', username: 'startup_savant', display_name: 'Startup Savant', avatar_url: dummyAvatar('savant'), bio: 'Building the future, one startup at a time. Founder & Investor.', followers_count: 25400 },
-    { id: 'dummy5', user_id: 'dummy5', username: 'gaming_guru', display_name: 'Gaming Guru', avatar_url: dummyAvatar('guru'), bio: 'Professional gamer and streamer. Exploring virtual worlds.', followers_count: 11200 },
-  ];
-
-  const users = [...(realUsers || []), ...dummyUsers];
+  const users = realUsers || [];
 
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!users || users.length === 0) return <EmptyState icon={<Users className="h-12 w-12" />} title="No Suggested Users" message="We'll suggest people to follow here soon." />;
