@@ -14,6 +14,7 @@ export interface Conversation {
   id: string;
   name: string | null;
   is_group: boolean;
+  avatar_url: string | null;
   created_at: string;
   last_message_at: string;
   last_message: string | null;
@@ -81,10 +82,20 @@ export const useConversations = () => {
               userMember?.last_read_at || new Date(0).toISOString()
             );
 
+          // Get avatar URL for group if exists
+          let avatarUrl = null;
+          if (conv.is_group && conv.avatar_url) {
+            const { data: avatarData } = supabase.storage
+              .from('chat-attachments')
+              .getPublicUrl(conv.avatar_url);
+            avatarUrl = avatarData.publicUrl;
+          }
+
           return {
             id: conv.id,
             name: conv.name,
             is_group: conv.is_group,
+            avatar_url: avatarUrl,
             created_at: conv.created_at,
             last_message_at: conv.last_message_at,
             last_message: lastMessage?.content || null,

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -98,5 +98,61 @@ export const useUpdateGroupName = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
+  });
+};
+
+export const useUpdateGroupAvatar = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ conversationId, file }: { conversationId: string; file: File }) => {
+      if (!user) throw new Error('Not authenticated');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${conversationId}/avatar-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('chat-attachments')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error } = await supabase
+        .from('conversations')
+        .update({ avatar_url: fileName })
+        .eq('id', conversationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+};
+
+export const useGetGroupMembers = (conversationId: string | undefined) => {
+  return useQuery({
+    queryKey: ['group-members', conversationId],
+    queryFn: async () => {
+      if (!conversationId) return [];
+      
+      const { data, error } = await supabase
+        .from('conversation_members')
+        .select(`
+          user_id,
+          profiles:user_id (
+            user_id,
+            username,
+            display_name,
+            avatar_url
+          )
+        `)
+        .eq('conversation_id', conversationId);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!conversationId,
   });
 };
