@@ -68,63 +68,63 @@
   }
 
   .dark {
-    /* Dark theme - StarMar */
-    --background: 220 15% 6%;
-    --foreground: 220 10% 95%;
+    /* Dark theme - Instagram style pure black */
+    --background: 0 0% 0%; /* Pure black like Instagram */
+    --foreground: 0 0% 100%;
     
     /* Surface colors */
-    --card: 220 15% 10%;
-    --card-foreground: 220 10% 95%;
-    --popover: 220 15% 10%;
-    --popover-foreground: 220 10% 95%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 100%;
     
-    /* Brand colors - Dark neutral theme */
-    --primary: 0 0% 95%; /* Almost white for dark mode */
-    --primary-foreground: 220 15% 6%;
-    --primary-light: 0 0% 100%;
-    --primary-dark: 0 0% 85%;
+    /* Brand colors - Instagram style */
+    --primary: 209 100% 55%; /* Instagram blue for buttons */
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 209 100% 65%;
+    --primary-dark: 209 100% 45%;
     
-    --accent: 220 10% 50%; /* Neutral gray accent */
+    --accent: 0 0% 15%; /* Dark gray accent */
     --accent-foreground: 0 0% 100%;
-    --accent-light: 220 10% 70%;
-    --accent-dark: 220 10% 35%;
+    --accent-light: 0 0% 25%;
+    --accent-dark: 0 0% 10%;
     
     /* Updated gradients for dark mode */
-    --gradient-primary: linear-gradient(135deg, hsl(220 15% 15%), hsl(220 10% 25%));
-    --gradient-subtle: linear-gradient(135deg, hsl(220 15% 12%), hsl(220 10% 18%));
-    --gradient-card: linear-gradient(135deg, hsl(220 15% 10% / 0.8), hsl(220 15% 14% / 0.4));
+    --gradient-primary: linear-gradient(135deg, hsl(209 100% 55%), hsl(209 100% 45%));
+    --gradient-subtle: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 12%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 0% / 0.8), hsl(0 0% 5% / 0.4));
     
-    /* Neutral system for dark */
-    --secondary: 220 15% 14%;
-    --secondary-foreground: 220 10% 85%;
-    --muted: 220 15% 14%;
-    --muted-foreground: 220 10% 60%;
+    /* Neutral system for dark - Instagram style */
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
     
     /* Interactive states */
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
-    --ring: 0 0% 95%;
-    --destructive: 0 84% 65%;
-    --destructive-foreground: 220 10% 95%;
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 209 100% 55%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
     
     /* Glass morphism for dark */
-    --glass: 220 15% 18% / 0.2;
-    --glass-border: 220 10% 40% / 0.1;
+    --glass: 0 0% 15% / 0.3;
+    --glass-border: 0 0% 30% / 0.2;
     
     /* Dark shadows */
-    --shadow-soft: 0 4px 6px -1px hsl(220 15% 3% / 0.3), 0 2px 4px -1px hsl(220 15% 3% / 0.2);
-    --shadow-medium: 0 10px 15px -3px hsl(220 15% 3% / 0.4), 0 4px 6px -2px hsl(220 15% 3% / 0.3);
-    --shadow-large: 0 25px 50px -12px hsl(220 15% 3% / 0.6);
-    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.15);
+    --shadow-soft: 0 4px 6px -1px hsl(0 0% 0% / 0.5), 0 2px 4px -1px hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 10px 15px -3px hsl(0 0% 0% / 0.6), 0 4px 6px -2px hsl(0 0% 0% / 0.4);
+    --shadow-large: 0 25px 50px -12px hsl(0 0% 0% / 0.8);
+    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.2);
 
-    --sidebar-background: 220 15% 8%;
-    --sidebar-foreground: 220 10% 90%;
-    --sidebar-primary: 0 0% 95%;
-    --sidebar-primary-foreground: 220 15% 6%;
-    --sidebar-accent: 220 15% 12%;
-    --sidebar-accent-foreground: 220 10% 90%;
-    --sidebar-border: 220 15% 15%;
-    --sidebar-ring: 220 10% 60%;
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 209 100% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 209 100% 55%;
   }
 }
 
