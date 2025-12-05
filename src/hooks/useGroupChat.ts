@@ -311,11 +311,11 @@ export const useDeleteGroup = () => {
       
       // 1. Delete group invitations
       const { error: invError } = await supabase
-        .from('group_invitations')
+        .from('group_invitations' as any)
         .delete()
         .eq('conversation_id', conversationId);
 
-      if (invError && !invError.message.includes('No rows found')) throw invError;
+      if (invError && !(invError as any).message?.includes('No rows found')) throw invError;
 
       // 2. Delete messages
       const { error: msgError } = await supabase
