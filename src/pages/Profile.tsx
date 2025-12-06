@@ -21,10 +21,8 @@ import {
   Bookmark,
   Calendar,
   Camera,
-  ChevronDown,
   Grid3X3,
   Heart,
-  Image as ImageIcon,
   Link as LinkIcon,
   Lock,
   MapPin,
@@ -58,9 +56,6 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
   // Liked and Bookmarked posts
   const { data: likedPosts = [], isLoading: likedLoading } = useLikedPosts(profile?.user_id);
   const { data: bookmarkedPosts = [], isLoading: bookmarkedLoading } = useBookmarkedPosts(profile?.user_id);
-  
-  // Bio Media state
-  const [showAllMedia, setShowAllMedia] = useState(false);
 
   const pageLoading = isLoading || postsLoading || followLoading || likedLoading || bookmarkedLoading;
 
@@ -89,10 +84,6 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
         timestamp: format(new Date(post.created_at), 'PP'),
       }))
     : [];
-
-  // Get media posts for Bio Media section
-  const mediaPosts = userPosts.filter(post => post.image_url || (post.media && post.media.length > 0));
-  const displayedMediaPosts = showAllMedia ? mediaPosts : mediaPosts.slice(0, 4);
 
   const isOwnProfile = authUser?.id === profile?.user_id;
   const showContent = !profile.is_private || isOwnProfile || isFollowing;
@@ -354,6 +345,28 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                     </span>
                   </div>
                 </div>
+                
+                {/* Social Media Links */}
+                {(() => {
+                  const socialLinks = (profile as any).social_links;
+                  const links = Array.isArray(socialLinks) ? socialLinks : [];
+                  if (links.length === 0) return null;
+                  return (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {links.map((link: { platform: string; url: string }, index: number) => (
+                        <a
+                          key={index}
+                          href={link.url.startsWith('http') ? link.url : `https://${link.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 hover:bg-muted text-sm transition-colors"
+                        >
+                          <span className="capitalize">{link.platform}</span>
+                        </a>
+                      ))}
+                    </div>
+                  );
+                })()}
 
                 {/* Stats */}
                 <div className="flex items-center space-x-6 pt-2">
@@ -385,44 +398,6 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
               </div>
             </div>
           </Card>
-
-          {/* Bio Media Section */}
-          {showContent && mediaPosts.length > 0 && (
-            <Card className="mb-6 p-4 animate-fade-in">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4" />
-                  Media
-                </h3>
-                {mediaPosts.length > 4 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setShowAllMedia(!showAllMedia)}
-                    className="text-primary"
-                  >
-                    {showAllMedia ? 'Show Less' : `View All (${mediaPosts.length})`}
-                    <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${showAllMedia ? 'rotate-180' : ''}`} />
-                  </Button>
-                )}
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {displayedMediaPosts.map((post) => (
-                  <div 
-                    key={post.id}
-                    className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => setSelectedPost(post)}
-                  >
-                    <img 
-                      src={post.image_url || post.media?.[0]?.media_url} 
-                      alt="" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
 
           {/* Content Tabs */}
           <Tabs defaultValue="posts" className="space-y-6">
