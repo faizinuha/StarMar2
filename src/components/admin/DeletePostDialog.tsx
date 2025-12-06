@@ -38,14 +38,47 @@ export const DeletePostDialog = ({ isOpen, onClose, postId, reportId, reportedUs
     setIsDeleting(true);
 
     try {
-      // Mark post as deleted with reason
+      // First, get the post media to delete from storage
+      const { data: postMedia } = await supabase
+        .from('post_media')
+        .select('media_url, media_type')
+        .eq('post_id', postId);
+
+      // Delete media files from storage
+      if (postMedia && postMedia.length > 0) {
+        for (const media of postMedia) {
+          try {
+            // Extract file path from URL
+            const url = media.media_url;
+            if (url) {
+              // Parse the storage path from the URL
+              const match = url.match(/\/storage\/v1\/object\/public\/posts\/(.+)/);
+              if (match) {
+                const filePath = match[1];
+                await supabase.storage.from('posts').remove([filePath]);
+              }
+            }
+          } catch (mediaErr) {
+            console.error('Error deleting media file:', mediaErr);
+            // Continue even if media deletion fails
+          }
+        }
+      }
+
+      // Delete the post media records
+      const { error: mediaError } = await supabase
+        .from('post_media')
+        .delete()
+        .eq('post_id', postId);
+
+      if (mediaError) {
+        console.error('Error deleting post_media records:', mediaError);
+      }
+
+      // Delete the post itself
       const { error: postError } = await supabase
         .from('posts')
-        .update({
-          deleted_at: new Date().toISOString(),
-          deleted_by: user?.id,
-          delete_reason: reason,
-        })
+        .delete()
         .eq('id', postId);
 
       if (postError) throw postError;
@@ -74,7 +107,7 @@ export const DeletePostDialog = ({ isOpen, onClose, postId, reportId, reportedUs
 
       if (notifError) throw notifError;
 
-      toast({ title: 'Success', description: 'Post deleted and user notified' });
+      toast({ title: 'Success', description: 'Post and media deleted, user notified' });
       onClose();
     } catch (error: any) {
       console.error('Error deleting post:', error);

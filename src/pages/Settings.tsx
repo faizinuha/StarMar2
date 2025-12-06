@@ -55,6 +55,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMfa } from './useMfa';
+import { SocialLinksEditor, SocialLink } from '@/components/settings/SocialLinksEditor';
 
 interface UserSettings {
   notifications_enabled: boolean;
@@ -91,6 +92,7 @@ export const Settings = () => {
 
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
   const [bio, setBio] = useState(profile?.bio || '');
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [uploading, setUploading] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
@@ -129,6 +131,19 @@ export const Settings = () => {
     if (profile) {
       setDisplayName(profile.display_name || '');
       setBio(profile.bio || '');
+      // Parse social_links from profile (it's stored as JSONB)
+      try {
+        const links = (profile as any).social_links;
+        if (Array.isArray(links)) {
+          setSocialLinks(links);
+        } else if (typeof links === 'string') {
+          setSocialLinks(JSON.parse(links));
+        } else {
+          setSocialLinks([]);
+        }
+      } catch {
+        setSocialLinks([]);
+      }
     }
   }, [profile]);
 
@@ -215,7 +230,8 @@ export const Settings = () => {
       await updateProfile.mutateAsync({
         display_name: displayName,
         bio: bio,
-      });
+        social_links: socialLinks,
+      } as any);
 
       toast({
         title: 'Profile updated successfully!',
@@ -487,6 +503,16 @@ export const Settings = () => {
                     rows={3}
                   />
                 </div>
+                
+                <Separator />
+                
+                {/* Social Media Links */}
+                <SocialLinksEditor
+                  links={socialLinks}
+                  onChange={setSocialLinks}
+                  maxLinks={6}
+                />
+                
                 <div>
                   <Label htmlFor="bio">Role: {profile.role}</Label>
                 </div>
