@@ -16,7 +16,7 @@ import {
 } from '@/hooks/useComments';
 import { useLikes } from '@/hooks/useLikes';
 import { useBookmarks } from '@/hooks/useBookmarks';
-import { Bookmark, Heart, Loader2, MessageCircle, Play, Send } from 'lucide-react';
+import { Bookmark, Heart, Loader2, Play, Send } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { CommentItem } from './CommentItem';
@@ -270,7 +270,7 @@ export const CommentSection = ({
               </div>
             </ScrollArea>
 
-            {/* Actions: Like, Comment, Share, Bookmark */}
+            {/* Actions: Like, Share, Bookmark */}
             <div className="p-4 space-y-2 border-t flex-shrink-0">
               <div className="flex justify-between items-center">
                 <div className="flex space-x-2">
@@ -282,9 +282,6 @@ export const CommentSection = ({
                     <Heart
                       className={`h-6 w-6 ${isLiked ? 'fill-red-500 text-red-500' : ''}`}
                     />
-                  </Button>
-                  <Button variant="ghost" size="icon">
-                    <MessageCircle className="h-6 w-6" />
                   </Button>
                   <Button variant="ghost" size="icon">
                     <Send className="h-6 w-6" />

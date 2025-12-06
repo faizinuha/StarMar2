@@ -76,21 +76,57 @@ export function Auth() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.email) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
-      newErrors.email = 'Email is invalid';
-    if (!formData.password) newErrors.password = 'Password is required';
-    else if (formData.password.length < 8)
-      newErrors.password = 'Password must be at least 8 characters';
-    if (!isLogin) {
-      if (!formData.username) newErrors.username = 'Username is required';
-      else if (formData.username.length < 3)
-        newErrors.username = 'Username must be at least 3 characters';
-      if (!formData.displayName)
-        newErrors.displayName = 'Display name is required';
-      if (formData.password !== formData.confirmPassword)
-        newErrors.confirmPassword = "Passwords don't match";
+    
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
     }
+    
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one uppercase letter';
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one lowercase letter';
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one number';
+    }
+    
+    // Registration-specific validations
+    if (!isLogin) {
+      // Username validation
+      if (!formData.username) {
+        newErrors.username = 'Username is required';
+      } else if (formData.username.length < 3) {
+        newErrors.username = 'Username must be at least 3 characters';
+      } else if (formData.username.length > 20) {
+        newErrors.username = 'Username must be less than 20 characters';
+      } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+        newErrors.username = 'Username can only contain letters, numbers, and underscores';
+      }
+      
+      // Display name validation
+      if (!formData.displayName) {
+        newErrors.displayName = 'Display name is required';
+      } else if (formData.displayName.length < 2) {
+        newErrors.displayName = 'Display name must be at least 2 characters';
+      } else if (formData.displayName.length > 50) {
+        newErrors.displayName = 'Display name must be less than 50 characters';
+      }
+      
+      // Confirm password validation
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm your password';
+      } else if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = "Passwords don't match";
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -132,24 +168,26 @@ export function Auth() {
   };
 
   const validateField = (name: string, value: string, currentData = formData) => {
-    // If the field is empty, clear the error. The final check for required fields will be on submit.
     if (!value) return '';
 
     switch (name) {
       case 'email':
-        // if (!value) return 'Email is required'; // This check is now handled on submit
-        if (!/\S+@\S+\.\S+/.test(value)) return 'Email is invalid';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
         return '';
       case 'password':
-        // if (!value) return 'Password is required';
         if (value.length < 8) return 'Password must be at least 8 characters';
+        if (!/[A-Z]/.test(value)) return 'Password must contain at least one uppercase letter';
+        if (!/[a-z]/.test(value)) return 'Password must contain at least one lowercase letter';
+        if (!/[0-9]/.test(value)) return 'Password must contain at least one number';
         return '';
       case 'username':
-        // if (!isLogin && !value) return 'Username is required';
         if (!isLogin && value.length < 3) return 'Username must be at least 3 characters';
+        if (!isLogin && value.length > 20) return 'Username must be less than 20 characters';
+        if (!isLogin && !/^[a-zA-Z0-9_]+$/.test(value)) return 'Username can only contain letters, numbers, and underscores';
         return '';
       case 'displayName':
-        // if (!isLogin && !value) return 'Display name is required';
+        if (!isLogin && value.length < 2) return 'Display name must be at least 2 characters';
+        if (!isLogin && value.length > 50) return 'Display name must be less than 50 characters';
         return '';
       case 'confirmPassword':
         if (!isLogin && currentData.password !== value) return "Passwords don't match";
