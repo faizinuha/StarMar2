@@ -204,14 +204,8 @@ export function Auth() {
     setErrors((prev) => ({ ...prev, [field]: error }));
   };
 
-  const handleForgotPassword = async () => {
-    if (!formData.email) {
-      setErrors({ email: 'Please enter your email to reset password' });
-      return;
-    }
-    const { error } = await resetPassword(formData.email);
-    if (error) setErrors({ general: error.message });
-    else alert('Password reset email sent. Check your inbox!');
+  const handleForgotPassword = () => {
+    navigate('/auth/forgot-password');
   };
 
   const handleOAuthSignIn = async (
