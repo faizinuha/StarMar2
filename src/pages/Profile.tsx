@@ -351,6 +351,10 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                   const socialLinks = (profile as any).social_links;
                   const links = Array.isArray(socialLinks) ? socialLinks : [];
                   if (links.length === 0) return null;
+                  
+                  // Import social icons dynamically
+                  const { getSocialIcon, getSocialColor } = require('@/components/ui/icons/SocialIcons');
+                  
                   return (
                     <div className="flex flex-wrap gap-2 pt-2">
                       {links.map((link: { platform: string; url: string }, index: number) => (
@@ -359,8 +363,10 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                           href={link.url.startsWith('http') ? link.url : `https://${link.url}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 hover:bg-muted text-sm transition-colors"
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 hover:bg-muted text-sm transition-colors ${getSocialColor(link.platform)}`}
+                          title={link.platform}
                         >
+                          {getSocialIcon(link.platform, 'h-4 w-4')}
                           <span className="capitalize">{link.platform}</span>
                         </a>
                       ))}

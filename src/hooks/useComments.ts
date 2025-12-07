@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sanitizeComment } from "@/lib/sanitizeComment";
 
 export interface CommentUser {
   username: string;
@@ -164,10 +165,17 @@ export function useCreateComment() {
     }) => {
       if (!user) throw new Error("User not authenticated");
 
+      // Sanitize content - strip HTML tags
+      const sanitizedContent = sanitizeComment(content);
+      
+      if (!sanitizedContent.trim()) {
+        throw new Error("Comment cannot be empty");
+      }
+
       const { data, error } = await supabase
         .from("comments")
         .insert({
-          content,
+          content: sanitizedContent,
           user_id: user.id,
           post_id: postId,
           meme_id: memeId,

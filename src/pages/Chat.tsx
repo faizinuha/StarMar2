@@ -686,7 +686,12 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
           conversationId={conversationId}
           groupName={conversationName}
           groupAvatar={conversationAvatar}
-          members={groupMembers?.map?.((m: any) => m.profiles || m) || currentConversation.members || []}
+          members={groupMembers.length > 0 ? groupMembers : currentConversation.members.map(m => ({
+            user_id: m.user_id,
+            username: m.username || '',
+            display_name: m.display_name || '',
+            avatar_url: m.avatar_url || '',
+          }))}
           createdBy={currentConversation.created_by || ''}
           isLoading={isLoading}
         />

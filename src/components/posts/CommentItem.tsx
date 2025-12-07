@@ -7,6 +7,7 @@ import { Comment, useCreateComment } from "@/hooks/useComments";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { useLikes } from "@/hooks/useLikes";
+import { sanitizeComment } from "@/lib/sanitizeComment";
 
 interface CommentItemProps {
   comment: Comment;
@@ -27,9 +28,13 @@ export const CommentItem = ({ comment, postId, memeId, level = 0, postOwnerId, m
   const handleReply = () => {
     if (!replyContent.trim()) return;
 
+    // Sanitize reply content before sending
+    const sanitizedContent = sanitizeComment(replyContent);
+    if (!sanitizedContent) return;
+
     createComment(
       {
-        content: replyContent,
+        content: sanitizedContent,
         postId,
         memeId,
         parentCommentId: comment.id,
