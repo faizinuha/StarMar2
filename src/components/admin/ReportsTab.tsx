@@ -19,14 +19,16 @@ import {
 } from '@/components/ui/select';
 import { useReports } from '@/hooks/useReports';
 import { format } from 'date-fns';
-import { Loader2, AlertTriangle, ExternalLink, Trash2 } from 'lucide-react';
+import { Loader2, AlertTriangle, ExternalLink, Trash2, Image as ImageIcon } from 'lucide-react';
 import { DeletePostDialog } from './DeletePostDialog';
+import { MemePreviewModal } from './MemePreviewModal';
 import { useNavigate } from 'react-router-dom';
 
 export const ReportsTab = () => {
   const { reports, isLoading, updateReportStatus } = useReports();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [deleteDialog, setDeleteDialog] = useState<{ postId: string; reportId: string; reportedUserId: string } | null>(null);
+  const [memePreview, setMemePreview] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const filteredReports = reports.filter((report) =>
@@ -125,15 +127,28 @@ export const ReportsTab = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {report.post_id && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/?post=${report.post_id}`)}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {report.post_id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/?post=${report.post_id}`)}
+                          title="View Post"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {report.meme_id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setMemePreview(report.meme_id!)}
+                          title="Preview Meme"
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -181,6 +196,13 @@ export const ReportsTab = () => {
           postId={deleteDialog.postId}
           reportId={deleteDialog.reportId}
           reportedUserId={deleteDialog.reportedUserId}
+        />
+      )}
+      {memePreview && (
+        <MemePreviewModal
+          isOpen={!!memePreview}
+          onClose={() => setMemePreview(null)}
+          memeId={memePreview}
         />
       )}
     </Card>

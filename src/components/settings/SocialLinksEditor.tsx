@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, Trash2, ExternalLink } from 'lucide-react';
+import { getSocialIcon, getSocialColor } from '@/components/ui/icons/SocialIcons';
 
 export interface SocialLink {
   platform: string;
@@ -99,13 +100,23 @@ export const SocialLinksEditor = ({ links, onChange, maxLinks = 6 }: SocialLinks
               value={link.platform}
               onValueChange={(value) => handlePlatformChange(index, value)}
             >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
+              <SelectTrigger className="w-[160px]">
+                <div className="flex items-center gap-2">
+                  <span className={getSocialColor(link.platform)}>
+                    {getSocialIcon(link.platform, 'h-4 w-4')}
+                  </span>
+                  <SelectValue />
+                </div>
               </SelectTrigger>
               <SelectContent>
                 {SOCIAL_PLATFORMS.map((platform) => (
                   <SelectItem key={platform.value} value={platform.value}>
-                    {platform.label}
+                    <div className="flex items-center gap-2">
+                      <span className={getSocialColor(platform.value)}>
+                        {getSocialIcon(platform.value, 'h-4 w-4')}
+                      </span>
+                      {platform.label}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
