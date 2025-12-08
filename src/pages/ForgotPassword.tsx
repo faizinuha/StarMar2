@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Mail, KeyRound, Smartphone, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mail, KeyRound, Smartphone, Loader2, CheckCircle2, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -22,15 +22,15 @@ import {
 } from '@/components/ui/input-otp';
 import starMarLogo from '../../assets/Logo/StarMar-.png';
 
-type Step = 'email' | 'method' | 'otp' | 'authenticator' | 'newPassword';
+type Step = 'email' | 'method' | 'emailSent' | 'authenticator' | 'newPassword';
 
 export function ForgotPassword() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
   const [authenticatorCode, setAuthenticatorCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -38,13 +38,42 @@ export function ForgotPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [canResend, setCanResend] = useState(false);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
-  // Countdown timer
+  // Check if user came from recovery link
+  useEffect(() => {
+    const checkRecoverySession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Check if this is a recovery session
+      if (session?.user) {
+        const recoveryParam = searchParams.get('type');
+        if (recoveryParam === 'recovery' || window.location.hash.includes('type=recovery')) {
+          setIsRecoveryMode(true);
+          setStep('newPassword');
+        }
+      }
+    };
+
+    checkRecoverySession();
+
+    // Listen for auth state changes (when user clicks magic link)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoveryMode(true);
+        setStep('newPassword');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [searchParams]);
+
+  // Countdown timer for resend
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (countdown === 0 && step === 'otp') {
+    } else if (countdown === 0 && step === 'emailSent') {
       setCanResend(true);
     }
   }, [countdown, step]);
@@ -61,7 +90,7 @@ export function ForgotPassword() {
     return '';
   };
 
-  const handleSendOTP = async () => {
+  const handleSendMagicLink = async () => {
     if (!validateEmail(email)) {
       setError('Please enter a valid email address');
       return;
@@ -72,78 +101,52 @@ export function ForgotPassword() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+        redirectTo: `${window.location.origin}/auth/forgot-password?type=recovery`,
       });
 
       if (error) throw error;
 
       toast({
-        title: 'OTP Sent!',
-        description: 'Check your email for the verification code.',
+        title: 'Recovery Email Sent!',
+        description: 'Check your email for the password reset link.',
       });
       
       setStep('method');
     } catch (err: any) {
-      setError(err.message || 'Failed to send OTP');
+      setError(err.message || 'Failed to send recovery email');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSelectMethod = (method: 'otp' | 'authenticator') => {
-    if (method === 'otp') {
+  const handleSelectMethod = (method: 'emailSent' | 'authenticator') => {
+    if (method === 'emailSent') {
       setCountdown(60);
       setCanResend(false);
     }
     setStep(method);
   };
 
-  const handleResendOTP = async () => {
+  const handleResendEmail = async () => {
     if (!canResend) return;
     
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+        redirectTo: `${window.location.origin}/auth/forgot-password?type=recovery`,
       });
 
       if (error) throw error;
 
       toast({
-        title: 'OTP Resent!',
-        description: 'Check your email for the new verification code.',
+        title: 'Email Resent!',
+        description: 'Check your email for the new password reset link.',
       });
       
       setCountdown(60);
       setCanResend(false);
     } catch (err: any) {
       setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async () => {
-    if (otp.length !== 6) {
-      setError('Please enter the complete 6-digit code');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: 'recovery',
-      });
-
-      if (error) throw error;
-
-      setStep('newPassword');
-    } catch (err: any) {
-      setError(err.message || 'Invalid OTP code');
     } finally {
       setIsLoading(false);
     }
@@ -159,14 +162,19 @@ export function ForgotPassword() {
     setError('');
 
     try {
-      // Get user's MFA factors
+      // First, we need to sign in with email to access MFA
+      // This is a limitation - user needs to have MFA set up and be able to sign in
       const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
       
-      if (factorsError) throw factorsError;
+      if (factorsError) {
+        // User is not signed in, need to use magic link instead
+        setError('Please use the email link method first to verify your identity, then you can use authenticator for additional security.');
+        return;
+      }
 
       const totpFactor = factors?.totp?.[0];
       if (!totpFactor) {
-        setError('No authenticator app configured. Please use email OTP.');
+        setError('No authenticator app configured for this account. Please use the email link method.');
         return;
       }
 
@@ -220,6 +228,8 @@ export function ForgotPassword() {
         description: 'You can now login with your new password.',
       });
 
+      // Sign out and redirect to auth
+      await supabase.auth.signOut();
       navigate('/auth');
     } catch (err: any) {
       setError(err.message || 'Failed to reset password');
@@ -236,7 +246,7 @@ export function ForgotPassword() {
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Forgot Password</CardTitle>
               <CardDescription>
-                Enter your email address to receive a verification code.
+                Enter your email address to receive a password reset link.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -257,19 +267,20 @@ export function ForgotPassword() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMagicLink()}
                   />
                 </div>
               </div>
 
               <Button
                 className="w-full"
-                onClick={handleSendOTP}
+                onClick={handleSendMagicLink}
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                Send Verification Code
+                Send Reset Link
               </Button>
             </CardContent>
           </>
@@ -287,46 +298,54 @@ export function ForgotPassword() {
             <CardContent className="space-y-4">
               <Button
                 variant="outline"
-                className="w-full h-16 justify-start gap-4"
-                onClick={() => handleSelectMethod('otp')}
+                className="w-full h-20 justify-start gap-4"
+                onClick={() => handleSelectMethod('emailSent')}
               >
                 <div className="p-2 rounded-full bg-primary/10">
                   <Mail className="h-5 w-5 text-primary" />
                 </div>
-                <div className="text-left">
-                  <p className="font-medium">Email OTP</p>
+                <div className="text-left flex-1">
+                  <p className="font-medium">Email Link</p>
                   <p className="text-sm text-muted-foreground">
-                    Enter code sent to {email}
+                    Click the link we sent to {email}
                   </p>
                 </div>
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
               </Button>
 
               <Button
                 variant="outline"
-                className="w-full h-16 justify-start gap-4"
+                className="w-full h-20 justify-start gap-4"
                 onClick={() => handleSelectMethod('authenticator')}
               >
                 <div className="p-2 rounded-full bg-primary/10">
                   <Smartphone className="h-5 w-5 text-primary" />
                 </div>
-                <div className="text-left">
+                <div className="text-left flex-1">
                   <p className="font-medium">Google Authenticator</p>
                   <p className="text-sm text-muted-foreground">
-                    Use your authenticator app
+                    Use your authenticator app (requires prior setup)
                   </p>
                 </div>
               </Button>
+
+              <p className="text-xs text-muted-foreground text-center mt-4">
+                Note: Google Authenticator only works if you've already set up 2FA in your account settings.
+              </p>
             </CardContent>
           </>
         );
 
-      case 'otp':
+      case 'emailSent':
         return (
           <>
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Enter OTP Code</CardTitle>
+              <div className="mx-auto mb-4 p-4 rounded-full bg-green-500/10">
+                <Mail className="h-8 w-8 text-green-500" />
+              </div>
+              <CardTitle className="text-2xl">Check Your Email</CardTitle>
               <CardDescription>
-                We sent a 6-digit code to {email}
+                We've sent a password reset link to <strong>{email}</strong>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -336,52 +355,54 @@ export function ForgotPassword() {
                 </Alert>
               )}
 
-              <div className="flex justify-center">
-                <InputOTP
-                  maxLength={6}
-                  value={otp}
-                  onChange={(value) => setOtp(value)}
-                >
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                  </InputOTPGroup>
-                  <InputOTPSeparator />
-                  <InputOTPGroup>
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
-                  </InputOTPGroup>
-                </InputOTP>
+              <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="p-1 rounded-full bg-primary/10 mt-0.5">
+                    <span className="text-xs font-bold text-primary">1</span>
+                  </div>
+                  <p className="text-sm">Open your email inbox</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-1 rounded-full bg-primary/10 mt-0.5">
+                    <span className="text-xs font-bold text-primary">2</span>
+                  </div>
+                  <p className="text-sm">Click the password reset link in the email</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-1 rounded-full bg-primary/10 mt-0.5">
+                    <span className="text-xs font-bold text-primary">3</span>
+                  </div>
+                  <p className="text-sm">You'll be redirected back here to set your new password</p>
+                </div>
               </div>
 
               <div className="text-center">
                 {countdown > 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Resend code in <span className="font-medium text-primary">{countdown}s</span>
+                    Resend link in <span className="font-medium text-primary">{countdown}s</span>
                   </p>
                 ) : (
                   <Button
                     variant="link"
-                    onClick={handleResendOTP}
+                    onClick={handleResendEmail}
                     disabled={isLoading || !canResend}
                     className="text-sm"
                   >
-                    Resend Code
+                    {isLoading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Didn't receive it? Resend link
                   </Button>
                 )}
               </div>
 
               <Button
+                variant="outline"
                 className="w-full"
-                onClick={handleVerifyOTP}
-                disabled={isLoading || otp.length !== 6}
+                onClick={() => window.open('https://mail.google.com', '_blank')}
               >
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : null}
-                Verify Code
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open Gmail
               </Button>
             </CardContent>
           </>
@@ -393,7 +414,7 @@ export function ForgotPassword() {
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Authenticator Code</CardTitle>
               <CardDescription>
-                Enter the 6-digit code from your authenticator app.
+                Enter the 6-digit code from your Google Authenticator app.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -402,6 +423,12 @@ export function ForgotPassword() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
+
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground text-center">
+                  Open the Google Authenticator app on your phone and enter the 6-digit code shown for StarMar.
+                </p>
+              </div>
 
               <div className="flex justify-center">
                 <InputOTP
@@ -437,9 +464,9 @@ export function ForgotPassword() {
               <Button
                 variant="link"
                 className="w-full"
-                onClick={() => handleSelectMethod('otp')}
+                onClick={() => handleSelectMethod('emailSent')}
               >
-                Use email OTP instead
+                Use email link instead
               </Button>
             </CardContent>
           </>
@@ -449,9 +476,12 @@ export function ForgotPassword() {
         return (
           <>
             <CardHeader className="text-center">
+              <div className="mx-auto mb-4 p-4 rounded-full bg-green-500/10">
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+              </div>
               <CardTitle className="text-2xl">Create New Password</CardTitle>
               <CardDescription>
-                Enter your new password below.
+                Your identity has been verified. Enter your new password below.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -487,13 +517,30 @@ export function ForgotPassword() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="pl-10"
+                    onKeyDown={(e) => e.key === 'Enter' && handleResetPassword()}
                   />
                 </div>
               </div>
 
-              <p className="text-sm text-muted-foreground">
-                Password must be at least 8 characters with uppercase, lowercase, and number.
-              </p>
+              <div className="bg-muted/50 p-3 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Password requirements:
+                </p>
+                <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                  <li className={newPassword.length >= 8 ? 'text-green-500' : ''}>
+                    • At least 8 characters
+                  </li>
+                  <li className={/[A-Z]/.test(newPassword) ? 'text-green-500' : ''}>
+                    • One uppercase letter
+                  </li>
+                  <li className={/[a-z]/.test(newPassword) ? 'text-green-500' : ''}>
+                    • One lowercase letter
+                  </li>
+                  <li className={/[0-9]/.test(newPassword) ? 'text-green-500' : ''}>
+                    • One number
+                  </li>
+                </ul>
+              </div>
 
               <Button
                 className="w-full"
@@ -512,46 +559,51 @@ export function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-6">
-          <img
-            src={starMarLogo}
-            alt="StarMar Logo"
-            className="w-24 mx-auto mb-4"
-          />
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <img src={starMarLogo} alt="StarMar" className="h-16 w-auto" />
         </div>
 
-        <Card className="border-none shadow-none sm:border sm:shadow-sm">
-          {step !== 'email' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="m-4 mb-0"
-              onClick={() => {
-                if (step === 'method') setStep('email');
-                else if (step === 'otp' || step === 'authenticator') setStep('method');
-                else if (step === 'newPassword') navigate('/auth');
-              }}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-          )}
-          
+        <Card className="border-border/50 shadow-xl">
           {renderStep()}
+          
+          {/* Back buttons */}
+          <div className="px-6 pb-6">
+            {step !== 'email' && step !== 'newPassword' && (
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  if (step === 'method') setStep('email');
+                  else setStep('method');
+                }}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            )}
+            
+            {step === 'email' && (
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => navigate('/auth')}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Login
+              </Button>
+            )}
+          </div>
         </Card>
 
-        {step === 'email' && (
-          <div className="text-center mt-4">
-            <Button
-              variant="link"
-              onClick={() => navigate('/auth')}
-            >
-              Back to Login
-            </Button>
-          </div>
-        )}
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          Remember your password?{' '}
+          <Button variant="link" className="p-0 h-auto" onClick={() => navigate('/auth')}>
+            Sign in
+          </Button>
+        </p>
       </div>
     </div>
   );
