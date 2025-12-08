@@ -86,11 +86,16 @@ export const useLikedPosts = (userId?: string) => {
           (a.order_index || 0) - (b.order_index || 0)
         );
         
+        // Get the first media URL
+        const firstMediaUrl = media[0]?.media_url || '';
+        const firstMediaType = media[0]?.media_type || 'image';
+        
         return {
           id: post.id,
           user_id: post.user_id,
           content: post.caption || '',
-          image_url: media[0]?.media_url || '',
+          image_url: firstMediaUrl,
+          media_type: firstMediaType,
           created_at: post.created_at,
           likes: post.likes_count || 0,
           likes_count: post.likes_count || 0,

@@ -19,10 +19,12 @@ import {
   Laugh,
   Menu,
   MessageCircle,
+  MoreHorizontal,
   Music,
   PlusSquare,
   Search,
   Settings,
+  Shield,
   User
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -34,14 +36,13 @@ export const Navigation = () => {
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { totalUnread } = useConversations();
   const { unreadCount } = useNotifications();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   // Redirect to auth if not authenticated and not loading
   useEffect(() => {
-    if (!authLoading && !user && location.pathname !== '/auth' && location.pathname !== '/auth/callback') {
+    if (!authLoading && !user && location.pathname !== '/auth' && location.pathname !== '/auth/callback' && location.pathname !== '/auth/forgot-password') {
       navigate('/auth');
     }
   }, [user, authLoading, navigate, location.pathname]);
@@ -94,7 +95,7 @@ export const Navigation = () => {
     }
   ];
 
-  // Mobile bottom navbar items (only 4 items: Home, Explore, Create, Memes)
+  // Mobile bottom navbar items (5 items with notifications)
   const mobileBottomNavItems = [
     { icon: Home, label: 'Home', path: '/', active: location.pathname === '/' },
     {
@@ -111,10 +112,11 @@ export const Navigation = () => {
       onClick: () => setShowCreateModal(true),
     },
     {
-      icon: Laugh,
-      label: 'Memes',
-      path: '/memes',
-      active: location.pathname === '/memes',
+      icon: Heart,
+      label: 'Notifications',
+      path: '/notifications',
+      badge: unreadCount > 0 ? unreadCount : null,
+      active: location.pathname === '/notifications',
     },
     {
       icon: User,
@@ -135,18 +137,18 @@ export const Navigation = () => {
     } else if (path !== '#') {
       navigate(path);
     }
-    setIsMenuOpen(false);
   };
 
   const handleProfileClick = () => {
     navigate('/profile');
-    setIsMenuOpen(false);
   };
 
   const handleSettingsClick = () => {
     navigate('/settings');
-    setIsMenuOpen(false);
   };
+
+  // Check if there are more menu items to show
+  const hasMoreItems = profile?.role === 'admin' || profile?.role === 'moderator';
 
   return (
     <>
@@ -188,29 +190,33 @@ export const Navigation = () => {
                 </Button>
               );
             })}
-            <DropdownMenu>
-              {/* <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start space-x-3 h-12 text-base"
-                >
-                  <Menu className="h-6 w-6" />
-                  <span>More</span>
-                </Button>
-              </DropdownMenuTrigger> */}
-              <DropdownMenuContent className="w-64" side="right" align="start">
-                {profile?.role === 'admin' && (
-                  <DropdownMenuItem onClick={() => navigate('/Admin_Dashbord')}>
-                    <Home className="mr-2 h-4 w-4" />
-                    <span>Dashboard Admin</span>
+            
+            {/* More Menu - Only show if there are additional items */}
+            {hasMoreItems && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start space-x-3 h-12 text-base"
+                  >
+                    <MoreHorizontal className="h-6 w-6" />
+                    <span>More</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64 bg-popover border border-border z-50" side="right" align="start">
+                  {(profile?.role === 'admin' || profile?.role === 'moderator') && (
+                    <DropdownMenuItem onClick={() => navigate('/Admin_Dashbord')} className="cursor-pointer">
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Dashboard Admin</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={handleSettingsClick}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 
@@ -257,23 +263,34 @@ export const Navigation = () => {
             </span>
           </div>
 
-          {/* Message Icon with Badge */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative"
-            onClick={() => navigate('/chat')}
-          >
-            <MessageCircle className={`h-6 w-6 ${location.pathname.startsWith('/chat') ? 'text-primary' : ''}`} />
-            {totalUnread > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs starmar-gradient border-0">
-                {totalUnread}
-              </Badge>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Message Icon with Badge */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              onClick={() => navigate('/chat')}
+            >
+              <MessageCircle className={`h-6 w-6 ${location.pathname.startsWith('/chat') ? 'text-primary' : ''}`} />
+              {totalUnread > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs starmar-gradient border-0">
+                  {totalUnread}
+                </Badge>
+              )}
+            </Button>
+            
+            {/* Settings Icon */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/settings')}
+            >
+              <Settings className={`h-6 w-6 ${location.pathname === '/settings' ? 'text-primary' : ''}`} />
+            </Button>
+          </div>
         </header>
 
-        {/* Bottom Navigation - Only 4 items */}
+        {/* Bottom Navigation - 5 items */}
         <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-2 flex justify-around z-40">
           {mobileBottomNavItems.map((item, index) => {
             const Icon = item.icon;
@@ -288,6 +305,11 @@ export const Navigation = () => {
                 <Icon
                   className={`h-6 w-6 ${item.active ? 'text-primary' : ''}`}
                 />
+                {item.badge && (
+                  <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-xs starmar-gradient border-0">
+                    {item.badge > 9 ? '9+' : item.badge}
+                  </Badge>
+                )}
               </Button>
             );
           })}
