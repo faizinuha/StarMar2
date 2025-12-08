@@ -6,14 +6,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { getSocialColor, getSocialIcon } from '@/components/ui/icons/SocialIcons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBookmarkedPosts } from '@/hooks/useBookmarkedPosts';
 import { useCreateConversation } from '@/hooks/useConversations';
 import { useFollowStatus, useToggleFollow } from '@/hooks/useFollow';
+import { useLikedPosts } from '@/hooks/useLikedPosts';
 import { Post, useUserPosts } from '@/hooks/usePosts';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
-import { useLikedPosts } from '@/hooks/useLikedPosts';
-import { useBookmarkedPosts } from '@/hooks/useBookmarkedPosts';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -52,7 +53,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
   const { data: isFollowing = false, isLoading: followLoading } =
     useFollowStatus(profile?.user_id || '');
   const { mutate: toggleFollow } = useToggleFollow();
-  
+
   // Liked and Bookmarked posts
   const { data: likedPosts = [], isLoading: likedLoading } = useLikedPosts(profile?.user_id);
   const { data: bookmarkedPosts = [], isLoading: bookmarkedLoading } = useBookmarkedPosts(profile?.user_id);
@@ -80,9 +81,9 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
 
   const userPosts: (Post & { timestamp: string })[] = posts
     ? posts.map((post) => ({
-        ...post,
-        timestamp: format(new Date(post.created_at), 'PP'),
-      }))
+      ...post,
+      timestamp: format(new Date(post.created_at), 'PP'),
+    }))
     : [];
 
   const isOwnProfile = authUser?.id === profile?.user_id;
@@ -140,9 +141,8 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
 
                       try {
                         const ext = file.name.split('.').pop();
-                        const filePath = `${
-                          authUser.id
-                        }/cover-${Date.now()}.${ext}`;
+                        const filePath = `${authUser.id
+                          }/cover-${Date.now()}.${ext}`;
                         const { error: uploadErr } = await supabase.storage
                           .from('avatars')
                           .upload(filePath, file, { upsert: true });
@@ -214,9 +214,8 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
 
                             try {
                               const ext = file.name.split('.').pop();
-                              const filePath = `${
-                                authUser.id
-                              }/avatar-${Date.now()}.${ext}`;
+                              const filePath = `${authUser.id
+                                }/avatar-${Date.now()}.${ext}`;
                               const { error: uploadErr } =
                                 await supabase.storage
                                   .from('avatars')
@@ -345,16 +344,13 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Social Media Links */}
                 {(() => {
                   const socialLinks = (profile as any).social_links;
                   const links = Array.isArray(socialLinks) ? socialLinks : [];
                   if (links.length === 0) return null;
-                  
-                  // Import social icons dynamically
-                  const { getSocialIcon, getSocialColor } = require('@/components/ui/icons/SocialIcons');
-                  
+
                   return (
                     <div className="flex flex-wrap gap-2 pt-2">
                       {links.map((link: { platform: string; url: string }, index: number) => (

@@ -1,28 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { CreatePostModal } from '@/components/posts/CreatePostModal';
+import { NavigationSkeleton } from '@/components/skeletons/NavigationSkeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import {
-  Home,
-  Search,
-  PlusSquare,
-  Heart,
-  MessageCircle,
-  User,
-  Menu,
-  X,
-  Settings,
-  Laugh,
-  Music,
-} from 'lucide-react';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,12 +10,24 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProfile } from '@/hooks/useProfile';
 import { useConversations } from '@/hooks/useConversations';
 import { useNotifications } from '@/hooks/useNotifications';
-import { CreatePostModal } from '@/components/posts/CreatePostModal';
+import { useProfile } from '@/hooks/useProfile';
+import {
+  Heart,
+  Home,
+  Laugh,
+  Menu,
+  MessageCircle,
+  Music,
+  PlusSquare,
+  Search,
+  Settings,
+  User
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AccountSwitcher } from './AccountSwitcher';
-import { NavigationSkeleton } from '@/components/skeletons/NavigationSkeleton';
 
 export const Navigation = () => {
   const { user, loading: authLoading } = useAuth();
@@ -124,6 +116,12 @@ export const Navigation = () => {
       path: '/memes',
       active: location.pathname === '/memes',
     },
+    {
+      icon: User,
+      label: 'Profile',
+      path: '/profile',
+      active: location.pathname === '/profile',
+    }
   ];
 
   // Don't render navigation if user is not authenticated
@@ -158,7 +156,7 @@ export const Navigation = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <img
-              src="../../assets/Logo/StarMar-.png"
+              src="../../assets/Logo/StarMar.png"
               alt="StarMar"
               className="w-10 h-10 object-contain"
             />
@@ -191,7 +189,7 @@ export const Navigation = () => {
               );
             })}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              {/* <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   className="w-full justify-start space-x-3 h-12 text-base"
@@ -199,7 +197,7 @@ export const Navigation = () => {
                   <Menu className="h-6 w-6" />
                   <span>More</span>
                 </Button>
-              </DropdownMenuTrigger>
+              </DropdownMenuTrigger> */}
               <DropdownMenuContent className="w-64" side="right" align="start">
                 {profile?.role === 'admin' && (
                   <DropdownMenuItem onClick={() => navigate('/Admin_Dashbord')}>
@@ -260,8 +258,8 @@ export const Navigation = () => {
           </div>
 
           {/* Message Icon with Badge */}
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             className="relative"
             onClick={() => navigate('/chat')}

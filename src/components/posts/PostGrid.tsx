@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Post } from "@/hooks/usePosts";
-import { Heart, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle, Play } from "lucide-react";
+import { useState } from "react";
 
 interface PostGridProps {
   posts: Post[];
@@ -11,10 +11,10 @@ export const PostGrid = ({ posts, onPostClick }: PostGridProps) => {
   return (
     <div className="grid grid-cols-3 gap-1">
       {posts.map((post) => (
-        <PostGridItem 
-          key={post.id} 
-          post={post} 
-          onClick={() => onPostClick(post)} 
+        <PostGridItem
+          key={post.id}
+          post={post}
+          onClick={() => onPostClick(post)}
         />
       ))}
     </div>
@@ -30,7 +30,7 @@ const PostGridItem = ({ post, onClick }: PostGridItemProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div 
+    <div
       className="aspect-square relative overflow-hidden cursor-pointer bg-muted group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -38,14 +38,23 @@ const PostGridItem = ({ post, onClick }: PostGridItemProps) => {
     >
       {post.image_url ? (
         (post.media_type === 'video' ? (
-          <video 
-            src={post.image_url} 
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+          <>
+            <video
+              src={post.image_url}
+              poster={post.image_url}
+              preload="metadata"
+              muted
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            {/* Video indicator */}
+            <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1.5">
+              <Play className="h-4 w-4 text-white fill-white" />
+            </div>
+          </>
         ) : (
-          <img 
-            src={post.image_url} 
-            alt="Post" 
+          <img
+            src={post.image_url}
+            alt="Post"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ))
@@ -58,7 +67,7 @@ const PostGridItem = ({ post, onClick }: PostGridItemProps) => {
           </div>
         </div>
       )}
-      
+
       {/* Hover overlay with stats */}
       {isHovered && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center transition-opacity duration-300">

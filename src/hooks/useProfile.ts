@@ -87,7 +87,7 @@ export function useProfile(userId?: string) {
 
             const { data: signedUrlData } = await supabase.storage
                 .from('avatars')
-                .createSignedUrl(path, 99999999); // 1 year
+                .createSignedUrl(path, 99999999999); // 1 week
             
             return signedUrlData ? signedUrlData.signedUrl : url;
         };
