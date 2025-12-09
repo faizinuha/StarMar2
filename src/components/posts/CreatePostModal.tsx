@@ -22,9 +22,10 @@ import { useEffect, useState } from 'react';
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultTab?: 'post' | 'meme';
 }
 
-export const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
+export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: CreatePostModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [caption, setCaption] = useState('');
@@ -32,7 +33,7 @@ export const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState('post');
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   const [selectedBadges, setSelectedBadges] = useState<number[]>([]);
   const { data: availableBadges, isLoading: isLoadingBadges } = useBadges();
@@ -48,6 +49,12 @@ export const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
     setLocation('');
     setSelectedBadges([]);
   }, [activeTab]);
+  
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(defaultTab);
+    }
+  }, [isOpen, defaultTab]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -242,7 +249,7 @@ export const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
           <DialogTitle>Create New Content</DialogTitle>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'post' | 'meme')} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="post" className="flex items-center gap-2">
               <Image className="h-4 w-4" />

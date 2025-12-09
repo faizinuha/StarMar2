@@ -1291,7 +1291,7 @@ export type Database = {
       delete_post: { Args: { p_post_id: string }; Returns: undefined }
       delete_user_data: { Args: { target_user_id: string }; Returns: undefined }
       extract_and_store_hashtags: {
-        Args: { post_content: string; post_id: string }
+        Args: { p_post_content: string; p_post_id: string }
         Returns: undefined
       }
       get_all_notifications_for_user: {

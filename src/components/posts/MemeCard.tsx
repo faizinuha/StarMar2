@@ -17,6 +17,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLikes } from '@/hooks/useLikes';
 import { useMemeComments } from '@/hooks/useComments';
+import { useBookmarks } from '@/hooks/useBookmarks';
 import { Meme, useAddMemeBadge, useBadges } from '@/hooks/useMemes';
 import {
   Bookmark,
@@ -31,6 +32,7 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CommentSection } from './CommentSection';
+import { BookmarkFolderDialog } from './BookmarkFolderDialog';
 
 interface MemeCardProps {
   meme: Meme;
@@ -100,9 +102,21 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
   const { toast } = useToast();
   const { likesCount, isLiked, toggleLike } = useLikes('meme', meme.id, meme.user_id);
   const { data: commentsForMeme = [] } = useMemeComments(meme.id);
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
+
+  // Use real bookmark hook
+  const {
+    bookmarks,
+    isLoading: bookmarksLoading,
+    createBookmark,
+    deleteBookmark,
+  } = useBookmarks();
+  
+  // Note: Memes don't have a separate bookmark table, we reuse posts bookmark
+  // For now we'll use meme.id as if it were a post
+  const isBookmarked = bookmarks?.some((bookmark) => bookmark.post_id === meme.id) || false;
 
   const handleLike = async () => {
     if (!user) {
@@ -116,18 +130,42 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
     toggleLike();
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: `Meme by @${meme.user.username}`,
-        text: meme.caption,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
+  const handleBookmark = async () => {
+    if (!user) {
       toast({
-        title: 'Link copied to clipboard!',
+        title: 'Login required',
+        description: 'You need to be logged in to bookmark.',
+        variant: 'destructive',
       });
+      return;
+    }
+
+    if (isBookmarked) {
+      await deleteBookmark.mutateAsync(meme.id);
+      toast({ title: 'Bookmark removed' });
+    } else {
+      setShowBookmarkDialog(true);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/memes/${meme.id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Meme by @${meme.user.username}`,
+          text: meme.caption || 'Check out this meme!',
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or share failed, fallback to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        toast({ title: 'Link copied to clipboard!' });
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({ title: 'Link copied to clipboard!' });
     }
   };
 
@@ -154,212 +192,209 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
       : meme.caption?.substring(0, 150) + '...';
 
   return (
-    <Card className="post-card bg-card animate-fade-in border-2 border-primary/20">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4">
-        <Link
-          to={`/profile/${meme.user.username}`}
-          className="flex items-center space-x-3"
-        >
-          <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-            <AvatarImage src={meme.user.avatar} alt={meme.user.displayName} />
-            <AvatarFallback>
-              {meme.user.displayName?.charAt(0) ||
-                meme.user.username?.charAt(0) ||
-                'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="font-semibold text-sm">
-                {meme.user.displayName || meme.user.username}
-              </p>
-              <Laugh className="h-4 w-4 text-primary" />
+    <>
+      <Card className="post-card bg-card animate-fade-in border-b-2">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4">
+          <Link
+            to={`/profile/${meme.user.username}`}
+            className="flex items-center space-x-3"
+          >
+            <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+              <AvatarImage src={meme.user.avatar} alt={meme.user.displayName} />
+              <AvatarFallback>
+                {meme.user.displayName?.charAt(0) ||
+                  meme.user.username?.charAt(0) ||
+                  'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-sm">
+                  {meme.user.displayName || meme.user.username}
+                </p>
+                <Laugh className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                <span>@{meme.user.username}</span>
+                <span>•</span>
+                <span>{formatTimeAgo(meme.created_at)}</span>
+              </div>
             </div>
-            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-              <span>@{meme.user.username}</span>
-              <span>•</span>
-              <span>{formatTimeAgo(meme.created_at)}</span>
+          </Link>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Follow @{meme.user.username}</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleShare}>
+                Share meme
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">
+                Report
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Media */}
+        <div className="aspect-square overflow-hidden bg-black">
+          {meme.media_type === 'image' ? (
+            <img
+              src={meme.media_url}
+              alt="Meme content"
+              className="w-full h-full object-contain hover:scale-105 transition-transform duration-700"
+            />
+          ) : (
+            <video
+              src={meme.media_url}
+              controls
+              className="w-full h-full object-contain"
+            />
+          )}
+        </div>
+
+        {/* Actions & Badges */}
+        <div className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleLike}
+                className={`flex items-center gap-2 text-sm transition-colors ${
+                  isLiked
+                    ? 'text-red-500'
+                    : 'text-muted-foreground hover:text-red-500'
+                }`}
+              >
+                <Heart
+                  className={`h-6 w-6 ${isLiked ? 'fill-red-500' : ''}`}
+                />
+                <span className="font-semibold">
+                  {likesCount.toLocaleString()}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setShowComments(true)}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-blue-500 transition-colors"
+              >
+                <MessageCircle className="h-6 w-6" />
+                <span className="font-semibold">
+                  {commentsForMeme.length.toLocaleString()}
+                </span>
+              </button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10"
+                onClick={handleShare}
+              >
+                <Share className="h-6 w-6 hover:text-green-500 transition-colors" />
+              </Button>
             </div>
-          </div>
-        </Link>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Follow @{meme.user.username}</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleShare}>
-              Share meme
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
-              Report
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Media */}
-      <div className="aspect-square overflow-hidden bg-black">
-        {meme.media_type === 'image' ? (
-          <img
-            src={meme.media_url}
-            alt="Meme content"
-            className="w-full h-full object-contain hover:scale-105 transition-transform duration-700"
-          />
-        ) : (
-          <video
-            src={meme.media_url}
-            controls
-            className="w-full h-full object-contain"
-          />
-        )}
-      </div>
-
-      {/* Actions & Badges */}
-      <div className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 hover:bg-red-50 dark:hover:bg-red-950"
-              onClick={handleLike}
+              className="h-10 w-10"
+              onClick={handleBookmark}
+              disabled={bookmarksLoading}
             >
-              <Heart
-                className={`h-6 w-6 transition-all duration-200 ${
-                  isLiked
-                    ? 'fill-red-500 text-red-500 animate-heart-beat'
-                    : 'hover:text-red-500'
+              <Bookmark
+                className={`h-6 w-6 transition-colors ${
+                  isBookmarked
+                    ? 'fill-orange-500 text-orange-500'
+                    : 'hover:text-orange-500'
                 }`}
               />
             </Button>
-
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-10 w-10"
-              onClick={() => setShowComments(true)}
-            >
-              <MessageCircle className="h-6 w-6 hover:text-blue-500 transition-colors" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10"
-              onClick={handleShare}
-            >
-              <Share className="h-6 w-6 hover:text-green-500 transition-colors" />
-            </Button>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10"
-            onClick={() => setIsBookmarked(!isBookmarked)}
-          >
-            <Bookmark
-              className={`h-6 w-6 transition-colors ${
-                isBookmarked
-                  ? 'fill-yellow-500 text-yellow-500'
-                  : 'hover:text-yellow-500'
-              }`}
-            />
-          </Button>
-        </div>
+          {/* Badges Section */}
+          {meme.badges && meme.badges.length > 0 && (
+            <div className="flex items-center flex-wrap gap-2">
+              {meme.badges.map((badge) => (
+                <Badge key={badge.id} variant="secondary">
+                  {badge.name}
+                </Badge>
+              ))}
+              <AddBadgePopover meme={meme} />
+            </div>
+          )}
 
-        {/* Likes Count */}
-        <div className="flex items-center gap-4">
-          <div className="text-sm font-semibold">
-            {likesCount.toLocaleString()} likes
-          </div>
+          {/* Caption */}
+          {meme.caption && (
+            <div className="text-sm space-y-1">
+              <span className="font-semibold">@{meme.user.username}</span>{' '}
+              <span className="whitespace-pre-wrap">{displayContent}</span>
+              {isLongCaption && !showFullCaption && (
+                <button
+                  className="text-muted-foreground hover:text-foreground ml-1"
+                  onClick={() => setShowFullCaption(true)}
+                >
+                  more
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Add Badge Button (if no badges exist yet) */}
+          {(!meme.badges || meme.badges.length === 0) && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Add a badge:</span>
+              <AddBadgePopover meme={meme} />
+            </div>
+          )}
+
+          {/* Comments Link */}
           {commentsForMeme.length > 0 && (
-            <button
+            <button 
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setShowComments(true)}
-              className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
             >
-              {commentsForMeme.length} {commentsForMeme.length === 1 ? 'comment' : 'comments'}
+              View all {commentsForMeme.length} comments
             </button>
           )}
         </div>
 
-        {/* Badges Section */}
-        {meme.badges && meme.badges.length > 0 && (
-          <div className="flex items-center flex-wrap gap-2">
-            {meme.badges.map((badge) => (
-              <Badge key={badge.id} variant="secondary">
-                {badge.name}
-              </Badge>
-            ))}
-            <AddBadgePopover meme={meme} />
-          </div>
+        {/* Comment Section Modal */}
+        {showComments && (
+          <CommentSection
+            memeId={meme.id}
+            post={{
+              id: meme.id,
+              user_id: meme.user_id,
+              content: meme.caption || '',
+              image_url: meme.media_url,
+              created_at: meme.created_at,
+              likes: likesCount,
+              comments: commentsForMeme.length,
+              isLiked: isLiked,
+              isBookmarked: isBookmarked,
+              user: {
+                username: meme.user.username,
+                displayName: meme.user.displayName,
+                avatar: meme.user.avatar,
+              },
+              media_type: meme.media_type,
+            }}
+            onClose={() => setShowComments(false)}
+            isOpen={showComments}
+          />
         )}
+      </Card>
 
-        {/* Caption */}
-        {meme.caption && (
-          <div className="text-sm space-y-1">
-            <span className="font-semibold">@{meme.user.username}</span>{' '}
-            <span className="whitespace-pre-wrap">{displayContent}</span>
-            {isLongCaption && !showFullCaption && (
-              <button
-                className="text-muted-foreground hover:text-foreground ml-1"
-                onClick={() => setShowFullCaption(true)}
-              >
-                more
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Add Badge Button (if no badges exist yet) */}
-        {(!meme.badges || meme.badges.length === 0) && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Add a badge:</span>
-            <AddBadgePopover meme={meme} />
-          </div>
-        )}
-
-        {/* Comments Link */}
-        {commentsForMeme.length > 0 && (
-          <button 
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => setShowComments(true)}
-          >
-            View all {commentsForMeme.length} comments
-          </button>
-        )}
-      </div>
-
-      {/* Comment Section Modal */}
-      {showComments && (
-        <CommentSection
-          memeId={meme.id}
-          post={{
-            id: meme.id,
-            user_id: meme.user_id,
-            content: meme.caption || '',
-            image_url: meme.media_url,
-            created_at: meme.created_at,
-            likes: likesCount,
-            comments: commentsForMeme.length,
-            isLiked: isLiked,
-            isBookmarked: isBookmarked,
-            user: {
-              username: meme.user.username,
-              displayName: meme.user.displayName,
-              avatar: meme.user.avatar,
-            },
-            media_type: meme.media_type,
-          }}
-          onClose={() => setShowComments(false)}
-          isOpen={showComments}
-        />
-      )}
-    </Card>
+      {/* Bookmark Folder Dialog */}
+      <BookmarkFolderDialog
+        isOpen={showBookmarkDialog}
+        onClose={() => setShowBookmarkDialog(false)}
+        postId={meme.id}
+      />
+    </>
   );
 };
