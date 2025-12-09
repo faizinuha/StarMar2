@@ -45,7 +45,8 @@ export function usePostComments(postId: string) {
   return useQuery({
     queryKey: ["comments", "post", postId],
     queryFn: async (): Promise<Comment[]> => {
-      const { data, error } = await supabase
+      // First fetch comments
+      const { data: commentsData, error: commentsError } = await supabase
         .from("comments")
         .select(`
           id,
@@ -60,15 +61,29 @@ export function usePostComments(postId: string) {
             username,
             display_name,
             avatar_url
-          ),
-          likes(user_id)
+          )
         `)
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
 
-      if (error) throw error;
+      if (commentsError) throw commentsError;
 
-      const allComments: Comment[] = data.map((comment: any) => ({
+      // Then fetch user's likes for these comments separately
+      let userLikedCommentIds: Set<string> = new Set();
+      if (user && commentsData.length > 0) {
+        const commentIds = commentsData.map((c: any) => c.id);
+        const { data: likesData } = await supabase
+          .from("likes")
+          .select("comment_id")
+          .eq("user_id", user.id)
+          .in("comment_id", commentIds);
+        
+        if (likesData) {
+          userLikedCommentIds = new Set(likesData.map((l: any) => l.comment_id));
+        }
+      }
+
+      const allComments: Comment[] = commentsData.map((comment: any) => ({
         id: comment.id,
         content: comment.content,
         user_id: comment.user_id,
@@ -77,7 +92,7 @@ export function usePostComments(postId: string) {
         likes_count: comment.likes_count || 0,
         created_at: comment.created_at,
         updated_at: comment.updated_at,
-        isLiked: comment.likes.some((like: { user_id: string }) => like.user_id === user?.id),
+        isLiked: userLikedCommentIds.has(comment.id),
         user: {
           username: comment.profiles?.username || '',
           displayName: comment.profiles?.display_name || comment.profiles?.username || '',
@@ -97,7 +112,8 @@ export function useMemeComments(memeId: string) {
   return useQuery({
     queryKey: ["comments", "meme", memeId],
     queryFn: async (): Promise<Comment[]> => {
-      const { data, error } = await supabase
+      // First fetch comments
+      const { data: commentsData, error: commentsError } = await supabase
         .from("comments")
         .select(`
           id,
@@ -112,15 +128,29 @@ export function useMemeComments(memeId: string) {
             username,
             display_name,
             avatar_url
-          ),
-          likes(user_id)
+          )
         `)
         .eq("meme_id", memeId)
         .order("created_at", { ascending: true });
 
-      if (error) throw error;
+      if (commentsError) throw commentsError;
 
-      const allComments: Comment[] = data.map((comment: any) => ({
+      // Then fetch user's likes for these comments separately
+      let userLikedCommentIds: Set<string> = new Set();
+      if (user && commentsData.length > 0) {
+        const commentIds = commentsData.map((c: any) => c.id);
+        const { data: likesData } = await supabase
+          .from("likes")
+          .select("comment_id")
+          .eq("user_id", user.id)
+          .in("comment_id", commentIds);
+        
+        if (likesData) {
+          userLikedCommentIds = new Set(likesData.map((l: any) => l.comment_id));
+        }
+      }
+
+      const allComments: Comment[] = commentsData.map((comment: any) => ({
         id: comment.id,
         content: comment.content,
         user_id: comment.user_id,
@@ -129,7 +159,7 @@ export function useMemeComments(memeId: string) {
         likes_count: comment.likes_count || 0,
         created_at: comment.created_at,
         updated_at: comment.updated_at,
-        isLiked: comment.likes.some((like: { user_id: string }) => like.user_id === user?.id),
+        isLiked: userLikedCommentIds.has(comment.id),
         user: {
           username: comment.profiles?.username || '',
           displayName: comment.profiles?.display_name || comment.profiles?.username || '',

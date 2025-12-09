@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useBookmarkFolders } from '@/hooks/useBookmarkFolders';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { Folder, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface BookmarkFolderDialogProps {
   isOpen: boolean;
@@ -32,24 +33,47 @@ export const BookmarkFolderDialog = ({
   const { folders, createFolder } = useBookmarkFolders();
   const { createBookmark } = useBookmarks();
 
-  const handleSave = async () => {
-    let folderId = selectedFolder;
-
-    if (showNewFolder && newFolderName) {
-      const result = await createFolder.mutateAsync(newFolderName);
-      folderId = result.id;
+  // Auto-select first folder when folders load
+  useEffect(() => {
+    if (folders.length > 0 && !selectedFolder) {
+      setSelectedFolder(folders[0].id);
     }
+  }, [folders, selectedFolder]);
 
-    createBookmark.mutate(
-      { postId, folderId },
-      {
-        onSuccess: () => {
-          onClose();
-          setNewFolderName('');
-          setShowNewFolder(false);
-        },
+  // Reset state when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setShowNewFolder(false);
+      setNewFolderName('');
+      if (folders.length > 0) {
+        setSelectedFolder(folders[0].id);
       }
-    );
+    }
+  }, [isOpen, folders]);
+
+  const handleSave = async () => {
+    try {
+      let folderId = selectedFolder;
+
+      if (showNewFolder && newFolderName.trim()) {
+        const result = await createFolder.mutateAsync(newFolderName.trim());
+        folderId = result.id;
+      }
+
+      if (!folderId) {
+        toast.error('Please select or create a folder');
+        return;
+      }
+
+      await createBookmark.mutateAsync({ postId, folderId });
+      toast.success('Saved to folder');
+      onClose();
+      setNewFolderName('');
+      setShowNewFolder(false);
+      setSelectedFolder('');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save bookmark');
+    }
   };
 
   return (

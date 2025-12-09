@@ -242,6 +242,7 @@ export function useAllPosts() {
   const { user } = useAuth();
 
   return useQuery({
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
     queryKey: ['allPosts'],
     queryFn: async () => {
       const { data, error } = await supabase
