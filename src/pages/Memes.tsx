@@ -1,107 +1,149 @@
 import { useAllMemesWithBadges } from "@/hooks/useMemes";
 import { MemeCard } from "@/components/posts/MemeCard";
 import { Navigation } from "@/components/layout/Navigation";
-import { TrendingTags } from "@/components/posts/TrendingTags";
-import { Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { Loader2, RefreshCw, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { CreatePost } from "@/components/posts/CreatePost";
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Memes = () => {
   const { data: memes = [], isLoading, refetch } = useAllMemesWithBadges();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"latest" | "popular">("latest");
+  const [showSearch, setShowSearch] = useState(false);
+
+  // Filter and sort memes
+  const filteredMemes = memes
+    .filter((meme) => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        meme.caption?.toLowerCase().includes(query) ||
+        meme.user.username?.toLowerCase().includes(query) ||
+        meme.user.displayName?.toLowerCase().includes(query)
+      );
+    })
+    .sort((a, b) => {
+      if (sortBy === "popular") {
+        return (b.likes_count || 0) - (a.likes_count || 0);
+      }
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       
       <main className="md:ml-72 min-h-screen pb-20 md:pb-8">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          {/* Hero Section */}
-          <Card className="mb-8 bg-gradient-to-br from-primary/10 via-accent/10 to-secondary/10 border-primary/20">
-            <CardContent className="p-8">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div>
-                  <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-3 flex items-center gap-3">
-                    <Sparkles className="h-10 w-10 text-primary animate-pulse" />
-                    Galeri Memes
-                  </h1>
-                  <p className="text-lg text-muted-foreground max-w-2xl">
-                    Temukan dan bagikan meme terbaik dari komunitas! Beri lencana pada favorit Anda 🏆
-                  </p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  onClick={() => refetch()} 
-                  disabled={isLoading}
-                  className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
-                >
-                  <RefreshCw className={`h-5 w-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Memes Feed */}
-            <div className="lg:col-span-2 space-y-6">
-              {memes.map((meme) => (
-                <MemeCard key={meme.id} meme={meme} />
-              ))}
-
-              {isLoading && (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                </div>
-              )}
-
-              {memes.length === 0 && !isLoading && (
-                <Card className="border-dashed">
-                  <CardContent className="text-center py-16">
-                    <div className="text-8xl mb-6">😅</div>
-                    <h3 className="text-2xl font-bold mb-3">Belum Ada Meme</h3>
-                    <p className="text-muted-foreground text-lg mb-6">
-                      Jadilah yang pertama membagikan meme lucu!
-                    </p>
-                    <Button size="lg" className="animate-pulse">
-                      Upload Meme Pertama
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          {/* Header with Search and Filter */}
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 flex-1">
+                {showSearch ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search memes..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                        autoFocus
+                      />
+                      {searchQuery && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                          onClick={() => setSearchQuery("")}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowSearch(false);
+                        setSearchQuery("");
+                      }}
+                    >
+                      Cancel
                     </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <TrendingTags limit={10} />
-              
-              {/* Stats Card */}
-              <Card className="bg-gradient-to-br from-accent/10 to-primary/10">
-                <CardContent className="p-6">
-                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    📊 Statistik
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Total Memes</span>
-                      <span className="font-bold text-xl">{memes.length}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Total Likes</span>
-                      <span className="font-bold text-xl">
-                        {memes.reduce((sum, m) => sum + (m.likes_count || 0), 0)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Total Komentar</span>
-                      <span className="font-bold text-xl">
-                        {memes.reduce((sum, m) => sum + (m.comments_count || 0), 0)}
-                      </span>
-                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                ) : (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowSearch(true)}
+                    >
+                      <Search className="h-5 w-5" />
+                    </Button>
+                    <Select value={sortBy} onValueChange={(v) => setSortBy(v as "latest" | "popular")}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="latest">Latest</SelectItem>
+                        <SelectItem value="popular">Popular</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
+              </div>
+              
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => refetch()} 
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
+          </div>
+
+          {/* Create Post */}
+          <div className="mb-4">
+            <CreatePost defaultTab="meme" />
+          </div>
+
+          {/* Memes Feed */}
+          <div className="space-y-4">
+            {filteredMemes.map((meme) => (
+              <MemeCard key={meme.id} meme={meme} />
+            ))}
+
+            {isLoading && (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              </div>
+            )}
+
+            {filteredMemes.length === 0 && !isLoading && (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">😅</div>
+                <h3 className="text-xl font-bold mb-2">
+                  {searchQuery ? "No memes found" : "No memes yet"}
+                </h3>
+                <p className="text-muted-foreground">
+                  {searchQuery
+                    ? "Try a different search term"
+                    : "Be the first to share a meme!"}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>

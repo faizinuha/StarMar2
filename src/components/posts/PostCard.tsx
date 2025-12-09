@@ -440,8 +440,8 @@ export const PostCard = ({ post }: PostCardProps) => {
             <Bookmark
               className={`h-6 w-6 transition-colors ${
                 isBookmarked
-                  ? 'fill-yellow-500 text-yellow-500'
-                  : 'hover:text-yellow-500'
+                  ? 'fill-orange-500 text-orange-500'
+                  : 'hover:text-orange-500'
               }`}
             />
           </Button>

@@ -355,8 +355,8 @@ export function useUpdatePost() {
       // Use the existing extract_and_store_hashtags function
       try {
         await supabase.rpc('extract_and_store_hashtags', { 
-          post_content: content, 
-          post_id: postId 
+          p_post_content: content, 
+          p_post_id: postId 
         });
       } catch(e) { 
         console.error('Error syncing hashtags:', e) 
