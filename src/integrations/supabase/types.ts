@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          target_meme_id: string | null
+          target_post_id: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_meme_id?: string | null
+          target_post_id?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_meme_id?: string | null
+          target_post_id?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           created_at: string | null
@@ -879,6 +912,9 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          ban_reason: string | null
+          banned_at: string | null
+          banned_by: string | null
           bio: string | null
           cover_img: string | null
           created_at: string
@@ -886,6 +922,7 @@ export type Database = {
           followers_count: number | null
           following_count: number | null
           id: string
+          is_banned: boolean | null
           is_private: boolean | null
           is_verified: string | null
           posts_count: number | null
@@ -897,6 +934,9 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           bio?: string | null
           cover_img?: string | null
           created_at?: string
@@ -904,6 +944,7 @@ export type Database = {
           followers_count?: number | null
           following_count?: number | null
           id?: string
+          is_banned?: boolean | null
           is_private?: boolean | null
           is_verified?: string | null
           posts_count?: number | null
@@ -915,6 +956,9 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           bio?: string | null
           cover_img?: string | null
           created_at?: string
@@ -922,6 +966,7 @@ export type Database = {
           followers_count?: number | null
           following_count?: number | null
           id?: string
+          is_banned?: boolean | null
           is_private?: boolean | null
           is_verified?: string | null
           posts_count?: number | null

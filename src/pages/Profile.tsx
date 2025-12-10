@@ -28,11 +28,11 @@ import {
   Lock,
   MapPin,
   MessageCircle,
-  MoreHorizontal,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { ProfileMenu } from '@/components/profile/ProfileMenu';
 
 const ProfilePageContent = ({ profile, isLoading, error }) => {
   const { user: authUser } = useAuth();
@@ -299,9 +299,11 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                       >
                         <MessageCircle className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <ProfileMenu
+                        userId={profile.user_id}
+                        username={profile.username}
+                        isOwnProfile={false}
+                      />
                     </>
                   )}
                 </div>
