@@ -1,13 +1,15 @@
-import { useEffect, useState, ReactNode } from "react";
+import { useEffect, useState, ReactNode, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { EditUserModal } from "@/components/admin/EditUserModal";
 import UserActivityChart from "@/components/admin/UserActivityChart";
 import { MaintenanceBannersTab } from "@/pages/MaintenanceBannersTab";
 import { ReportsTab } from "@/components/admin/ReportsTab";
+import { BanUserDialog } from "@/components/admin/BanUserDialog";
 import { useMaintenanceTasks, useExecuteMaintenanceTask, useSystemHealth } from "@/hooks/useMaintenanceTasks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -16,12 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, Users, FileText, Heart, UserPlus } from "lucide-react";
+import { MoreHorizontal, Users, FileText, Heart, UserPlus, Search, ChevronLeft, ChevronRight, Ban, ShieldOff } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -38,6 +41,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { Navigation } from "@/components/layout/Navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Link } from "react-router-dom";
 
 // --- INTERFACES ---
 interface Profile {
@@ -51,6 +56,8 @@ interface Profile {
   posts_count: number;
   role: string | null;
   is_verified: string | null;
+  is_banned?: boolean;
+  ban_reason?: string | null;
   created_at: string;
 }
 
@@ -190,6 +197,8 @@ const MaintenanceTab = () => {
   );
 };
 
+const ITEMS_PER_PAGE = 10;
+
 // --- MAIN COMPONENTS ---
 const AdminPage = () => {
   return (
@@ -208,7 +217,10 @@ const AdminContent = () => {
   const [stats, setStats] = useState({ totalUsers: 0, totalPosts: 0, totalLikes: 0, newUsersToday: 0 });
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [userToDelete, setUserToDelete] = useState<Profile | null>(null);
+  const [userToBan, setUserToBan] = useState<Profile | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
   const processAvatarUrl = async (url: string | null) => {
@@ -241,7 +253,18 @@ const AdminContent = () => {
       const processedUsers = await Promise.all(
         usersRes.data.map(async (user) => {
           const avatar_url = await processAvatarUrl(user.avatar_url);
-          return { ...user, avatar_url };
+          
+          // Fetch actual posts count for this user
+          const { count: postsCount } = await supabase
+            .from('posts')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.user_id);
+          
+          return { 
+            ...user, 
+            avatar_url,
+            posts_count: postsCount || 0 
+          };
         })
       );
 
@@ -270,6 +293,28 @@ const AdminContent = () => {
     fetchDashboardData();
   }, []);
 
+  // Filter and paginate users
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users;
+    const query = searchQuery.toLowerCase();
+    return users.filter(user => 
+      user.username?.toLowerCase().includes(query) ||
+      user.display_name?.toLowerCase().includes(query) ||
+      user.user_id.toLowerCase().includes(query)
+    );
+  }, [users, searchQuery]);
+
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredUsers.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredUsers, currentPage]);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const handleEditClick = (user: Profile) => {
     setSelectedUser(user);
     setIsModalOpen(true);
@@ -279,10 +324,9 @@ const AdminContent = () => {
     setIsModalOpen(false);
     setSelectedUser(null);
     if (updatedUser) {
-      // Optimistically update the local state instead of refetching everything
       setUsers(currentUsers => currentUsers.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u));
     } else {
-      fetchDashboardData(); // Fallback to refetch if no updated user is provided
+      fetchDashboardData();
     }
   };
 
@@ -301,7 +345,7 @@ const AdminContent = () => {
       toast({ title: "Error", description: "Failed to delete user.", variant: "destructive" });
     } else {
       toast({ title: "Success", description: `User @${userToDelete.username} has been deleted.` });
-      fetchDashboardData(); // Refresh the user list and stats
+      fetchDashboardData();
     }
     setUserToDelete(null);
   };
@@ -327,8 +371,21 @@ const AdminContent = () => {
         <TabsContent value="users" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>User Accounts</CardTitle>
-              <CardDescription>Manage and view all registered users.</CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <CardTitle>User Accounts</CardTitle>
+                  <CardDescription>Manage and view all registered users.</CardDescription>
+                </div>
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search users..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -337,8 +394,9 @@ const AdminContent = () => {
                     <TableHead className="w-[80px]">Avatar</TableHead>
                     <TableHead>Username</TableHead>
                     <TableHead>Display Name</TableHead>
+                    <TableHead>Posts</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Verified</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -350,25 +408,44 @@ const AdminContent = () => {
                         <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-12" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-16" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-16" /></TableCell>
                         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                         <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                       </TableRow>
                     ))
-                    : users.map((user) => (
+                    : paginatedUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          <img src={user.avatar_url || 'https://avatar.vercel.sh/' + user.username} alt={user.username} className="h-10 w-10 rounded-full object-cover" />
+                          <Link to={`/profile/${user.user_id}`}>
+                            <Avatar className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary transition-all">
+                              <AvatarImage src={user.avatar_url || 'https://avatar.vercel.sh/' + user.username} alt={user.username || ''} />
+                              <AvatarFallback>{user.username?.charAt(0) || 'U'}</AvatarFallback>
+                            </Avatar>
+                          </Link>
                         </TableCell>
-                        <TableCell className="font-medium">{user.username || "N/A"}</TableCell>
+                        <TableCell className="font-medium">
+                          <Link to={`/profile/${user.user_id}`} className="hover:underline">
+                            {user.username || "N/A"}
+                          </Link>
+                        </TableCell>
                         <TableCell>{user.display_name || "N/A"}</TableCell>
+                        <TableCell>{user.posts_count}</TableCell>
                         <TableCell>
                           <Badge variant={user.role === "admin" ? "destructive" : "outline"}>
                             {user.role}
                           </Badge>
                         </TableCell>
-                        <TableCell>{user.is_verified === 'verified' ? "Yes" : "No"}</TableCell>
+                        <TableCell>
+                          {user.is_banned ? (
+                            <Badge variant="destructive">Banned</Badge>
+                          ) : user.is_verified === 'verified' ? (
+                            <Badge variant="default">Verified</Badge>
+                          ) : (
+                            <Badge variant="outline">Active</Badge>
+                          )}
+                        </TableCell>
                         <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -380,10 +457,19 @@ const AdminContent = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => handleEditClick(user)}>Edit</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => { /* TODO: Impersonate */ }}>Impersonate</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEditClick(user)}>Edit Roles</DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link to={`/profile/${user.user_id}`}>View Profile</Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setUserToBan(user)}>
+                                {user.is_banned ? (
+                                  <><ShieldOff className="h-4 w-4 mr-2" /> Unban User</>
+                                ) : (
+                                  <><Ban className="h-4 w-4 mr-2" /> Ban User</>
+                                )}
+                              </DropdownMenuItem>
                               <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(user)}>Delete</DropdownMenuItem>
-
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -391,6 +477,36 @@ const AdminContent = () => {
                     ))}
                 </TableBody>
               </Table>
+
+              {/* Pagination */}
+              {!loading && totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)} of {filteredUsers.length} users
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -407,9 +523,22 @@ const AdminContent = () => {
           <MaintenanceTab />
         </TabsContent>
       </Tabs>
+      
       {selectedUser && (
         <EditUserModal user={selectedUser} isOpen={isModalOpen} onClose={handleCloseModal} />
       )}
+      
+      {userToBan && (
+        <BanUserDialog
+          isOpen={!!userToBan}
+          onClose={() => setUserToBan(null)}
+          userId={userToBan.user_id}
+          username={userToBan.username}
+          isBanned={!!userToBan.is_banned}
+          onSuccess={fetchDashboardData}
+        />
+      )}
+      
       <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

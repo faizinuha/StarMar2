@@ -9,6 +9,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { useProfile } from "@/hooks/useProfile";
 import { useAllProfiles } from "@/hooks/useAllProfiles";
+import { ProfileHoverCard } from "@/components/profile/ProfileHoverCard";
+import { Link } from "react-router-dom";
 
 interface SuggestedUser {
   avatar_url: string | null;
@@ -16,6 +18,9 @@ interface SuggestedUser {
   username: string | null;
   displayName: string | null;
   mutualFollows?: number;
+  bio?: string | null;
+  followers_count?: number;
+  following_count?: number;
 }
 
 export const SuggestedFriends = () => {
@@ -34,6 +39,9 @@ export const SuggestedFriends = () => {
       username: u.username,
       displayName: u.display_name || u.username,
       avatar_url: u.avatar_url,
+      bio: u.bio,
+      followers_count: u.followers_count,
+      following_count: u.following_count,
     }));
 
   return (
@@ -95,18 +103,34 @@ const SuggestedUserCard = ({ user: suggestedUser }: SuggestedUserCardProps) => {
     }
   };
 
+  const hoverUser = {
+    user_id: suggestedUser.id,
+    username: suggestedUser.username,
+    display_name: suggestedUser.displayName,
+    avatar_url: suggestedUser.avatar_url,
+    bio: suggestedUser.bio,
+    followers_count: suggestedUser.followers_count,
+    following_count: suggestedUser.following_count,
+  };
+
   return (
     <div className="flex items-center justify-between gap-3 p-2 rounded-md hover:bg-muted/50">
-      <div className="flex items-center gap-3">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={suggestedUser.avatar_url || undefined} />
-          <AvatarFallback>{suggestedUser.displayName?.charAt(0) || suggestedUser.username?.charAt(0) || 'U'}</AvatarFallback>
-        </Avatar>
-        <div>
-          <h3 className="font-semibold text-sm">{suggestedUser.displayName || suggestedUser.username}</h3>
-          <p className="text-sm text-muted-foreground">@{suggestedUser.username || 'user'}</p>
+      <ProfileHoverCard user={hoverUser}>
+        <div className="flex items-center gap-3 cursor-pointer">
+          <Link to={`/profile/${suggestedUser.id}`}>
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={suggestedUser.avatar_url || undefined} />
+              <AvatarFallback>{suggestedUser.displayName?.charAt(0) || suggestedUser.username?.charAt(0) || 'U'}</AvatarFallback>
+            </Avatar>
+          </Link>
+          <div>
+            <Link to={`/profile/${suggestedUser.id}`} className="hover:underline">
+              <h3 className="font-semibold text-sm">{suggestedUser.displayName || suggestedUser.username}</h3>
+            </Link>
+            <p className="text-sm text-muted-foreground">@{suggestedUser.username || 'user'}</p>
+          </div>
         </div>
-      </div>
+      </ProfileHoverCard>
       <Button
         size="sm"
         className="h-7 px-3"

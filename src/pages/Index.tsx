@@ -4,6 +4,7 @@ import { SuggestedFriends } from "@/components/posts/SuggestedFriends";
 import { StoriesSection } from "@/components/posts/StoriesSection";
 import { CreatePost } from "@/components/posts/CreatePost";
 import { Navigation } from "@/components/layout/Navigation";
+import { MaintenanceBanner } from "@/components/MaintenanceBanner";
 import { useAllPosts, Post } from "@/hooks/usePosts";
 import { useAuth } from "@/contexts/AuthContext";
 import { Grid3X3, LayoutGrid } from "lucide-react";
@@ -98,6 +99,8 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
+              <MaintenanceBanner />
+              
               <ErrorBoundary>
                 <StoriesSection />
               </ErrorBoundary>
