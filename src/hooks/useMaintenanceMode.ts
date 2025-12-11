@@ -53,14 +53,44 @@ export function useSetMaintenanceMode() {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
+      // First check if the maintenance mode entry exists
+      const { data: existing } = await supabase
         .from('maintenance_mode')
-        .upsert({ ...params, created_by: user.id }, { onConflict: 'page_path' })
-        .select()
-        .single();
+        .select('id')
+        .eq('page_path', params.page_path)
+        .maybeSingle();
 
-      if (error) throw error;
-      return data;
+      if (existing) {
+        // Update existing entry
+        const { data, error } = await supabase
+          .from('maintenance_mode')
+          .update({ 
+            is_active: params.is_active,
+            title: params.title,
+            message: params.message,
+            type: params.type,
+            updated_at: new Date().toISOString()
+          })
+          .eq('page_path', params.page_path)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      } else {
+        // Insert new entry
+        const { data, error } = await supabase
+          .from('maintenance_mode')
+          .insert({ 
+            ...params, 
+            created_by: user.id 
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['maintenance-mode'] });

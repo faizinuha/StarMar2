@@ -46,16 +46,13 @@ export const BanUserDialog = ({
     setIsSubmitting(true);
 
     try {
-      // Update profile ban status
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          is_banned: !isBanned,
-          ban_reason: isBanned ? null : reason,
-          banned_at: isBanned ? null : new Date().toISOString(),
-          banned_by: isBanned ? null : user?.id,
-        })
-        .eq('user_id', userId);
+      // Use security definer function to bypass RLS
+      const { error: profileError } = await supabase.rpc('admin_update_ban_status', {
+        target_user_id: userId,
+        is_banned_val: !isBanned,
+        ban_reason_val: isBanned ? null : reason,
+        banned_by_val: isBanned ? null : user?.id,
+      });
 
       if (profileError) throw profileError;
 
