@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CommentSection } from './CommentSection';
+import { UnifiedCommentModal } from './UnifiedCommentModal';
 import { BookmarkFolderDialog } from './BookmarkFolderDialog';
 
 interface MemeCardProps {
@@ -364,25 +364,22 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
 
         {/* Comment Section Modal */}
         {showComments && (
-          <CommentSection
-            memeId={meme.id}
-            post={{
+          <UnifiedCommentModal
+            content={{
               id: meme.id,
               user_id: meme.user_id,
-              content: meme.caption || '',
-              image_url: meme.media_url,
-              created_at: meme.created_at,
-              likes: likesCount,
-              comments: commentsForMeme.length,
-              isLiked: isLiked,
-              isBookmarked: isBookmarked,
+              caption: meme.caption || '',
+              media_url: meme.media_url,
+              media_type: meme.media_type,
+              likes_count: likesCount,
+              comments_count: commentsForMeme.length,
               user: {
                 username: meme.user.username,
                 displayName: meme.user.displayName,
                 avatar: meme.user.avatar,
               },
-              media_type: meme.media_type,
             }}
+            type="meme"
             onClose={() => setShowComments(false)}
             isOpen={showComments}
           />
