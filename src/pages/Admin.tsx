@@ -6,6 +6,7 @@ import { MaintenanceBannersTab } from "@/pages/MaintenanceBannersTab";
 import { ReportsTab } from "@/components/admin/ReportsTab";
 import { BanUserDialog } from "@/components/admin/BanUserDialog";
 import { useMaintenanceTasks, useExecuteMaintenanceTask, useSystemHealth } from "@/hooks/useMaintenanceTasks";
+import { BanAppealsTab } from "@/components/admin/BanAppealsTab";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -362,10 +363,11 @@ const AdminContent = () => {
         <StatCard title="New Users Today" value={stats.newUsersToday.toLocaleString()} icon={<UserPlus className="h-4 w-4 text-muted-foreground" />} description="Users that signed up today" />
       </div>
       <Tabs defaultValue="users" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="users">User Management</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="appeals">Ban Appeals</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
         </TabsList>
         <TabsContent value="users" className="space-y-4">
@@ -517,6 +519,10 @@ const AdminContent = () => {
         
         <TabsContent value="reports" className="space-y-4">
           <ReportsTab />
+        </TabsContent>
+
+        <TabsContent value="appeals" className="space-y-4">
+          <BanAppealsTab />
         </TabsContent>
         
         <TabsContent value="maintenance" className="space-y-4">
