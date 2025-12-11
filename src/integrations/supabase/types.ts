@@ -65,6 +65,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ban_appeals: {
+        Row: {
+          admin_response: string | null
+          contact_email: string | null
+          created_at: string
+          evidence: string | null
+          explanation: string
+          id: string
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_response?: string | null
+          contact_email?: string | null
+          created_at?: string
+          evidence?: string | null
+          explanation: string
+          id?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_response?: string | null
+          contact_email?: string | null
+          created_at?: string
+          evidence?: string | null
+          explanation?: string
+          id?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bookmark_folders: {
         Row: {
           created_at: string | null
@@ -140,6 +182,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          image_url: string | null
           likes_count: number | null
           meme_id: string | null
           parent_comment_id: string | null
@@ -151,6 +194,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          image_url?: string | null
           likes_count?: number | null
           meme_id?: string | null
           parent_comment_id?: string | null
@@ -162,6 +206,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          image_url?: string | null
           likes_count?: number | null
           meme_id?: string | null
           parent_comment_id?: string | null

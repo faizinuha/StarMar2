@@ -17,11 +17,12 @@ import { Notifications } from "./pages/Notifications";
 import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import Checkpoint from "./pages/Checkpoint";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
-import Chat from "./pages/Chat"; // Assuming Chat is a default export
+import Chat from "./pages/Chat";
 import { GlobalPlayer } from "./components/layout/GlobalPlayer";
-import { MusicProvider } from "./contexts/Music"; // Correctly import MusicProvider
+import { MusicProvider } from "./contexts/Music";
 import PlayPage from "./pages/play";
 
 const queryClient = new QueryClient({
@@ -95,6 +96,7 @@ const App = () => (
                       </AdminRoute>
                     }
                   />
+                  <Route path="/checkpoint" element={<Checkpoint />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 <GlobalPlayer />

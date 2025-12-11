@@ -73,7 +73,19 @@ export const CommentItem = ({ comment, postId, memeId, level = 0, postOwnerId, m
             {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
           </span>
         </div>
-        <p className="text-sm mt-0.5">{comment.content}</p>
+        {comment.content && <p className="text-sm mt-0.5">{comment.content}</p>}
+        
+        {/* Display image/GIF if present */}
+        {comment.image_url && (
+          <div className="mt-2 max-w-[200px]">
+            <img 
+              src={comment.image_url} 
+              alt="Comment attachment"
+              className="rounded-lg max-h-48 object-contain"
+              loading="lazy"
+            />
+          </div>
+        )}
 
         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
           <button

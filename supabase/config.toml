@@ -1,1 +1,16 @@
 project_id = "ogbzhbwfucgjiafhsxab"
+
+[functions.delete-user]
+verify_jwt = true
+
+[functions.log-session]
+verify_jwt = false
+
+[functions.deezer-recommendations]
+verify_jwt = false
+
+[functions.deezer-track-by-id]
+verify_jwt = false
+
+[functions.giphy-search]
+verify_jwt = false

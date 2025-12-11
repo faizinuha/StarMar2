@@ -12,6 +12,7 @@ export interface CommentUser {
 export interface Comment {
   id: string;
   content: string;
+  image_url?: string;
   user_id: string;
   post_id?: string;
   meme_id?: string;
@@ -21,7 +22,7 @@ export interface Comment {
   updated_at: string;
   isLiked: boolean;
   user: CommentUser;
-  replies?: Comment[]; // Added for nested comments
+  replies?: Comment[];
 }
 
 // Helper function to build a nested comment tree
@@ -51,6 +52,7 @@ export function usePostComments(postId: string) {
         .select(`
           id,
           content,
+          image_url,
           user_id,
           post_id,
           parent_comment_id,
@@ -86,6 +88,7 @@ export function usePostComments(postId: string) {
       const allComments: Comment[] = commentsData.map((comment: any) => ({
         id: comment.id,
         content: comment.content,
+        image_url: comment.image_url,
         user_id: comment.user_id,
         post_id: comment.post_id,
         parent_comment_id: comment.parent_comment_id,
@@ -118,6 +121,7 @@ export function useMemeComments(memeId: string) {
         .select(`
           id,
           content,
+          image_url,
           user_id,
           meme_id,
           parent_comment_id,
@@ -153,6 +157,7 @@ export function useMemeComments(memeId: string) {
       const allComments: Comment[] = commentsData.map((comment: any) => ({
         id: comment.id,
         content: comment.content,
+        image_url: comment.image_url,
         user_id: comment.user_id,
         meme_id: comment.meme_id,
         parent_comment_id: comment.parent_comment_id,
@@ -180,13 +185,15 @@ export function useCreateComment() {
   return useMutation({
     mutationFn: async ({ 
       content, 
+      imageUrl,
       postId, 
       memeId, 
       parentCommentId,
       postOwnerId,
       memeOwnerId
     }: { 
-      content: string; 
+      content: string;
+      imageUrl?: string;
       postId?: string; 
       memeId?: string; 
       parentCommentId?: string;
@@ -198,7 +205,7 @@ export function useCreateComment() {
       // Sanitize content - strip HTML tags
       const sanitizedContent = sanitizeComment(content);
       
-      if (!sanitizedContent.trim()) {
+      if (!sanitizedContent.trim() && !imageUrl) {
         throw new Error("Comment cannot be empty");
       }
 
@@ -206,6 +213,7 @@ export function useCreateComment() {
         .from("comments")
         .insert({
           content: sanitizedContent,
+          image_url: imageUrl,
           user_id: user.id,
           post_id: postId,
           meme_id: memeId,

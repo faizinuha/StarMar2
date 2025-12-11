@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ImageCarousel } from './ImageCarousel';
+import { GifPicker } from './GifPicker';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Bookmark,
@@ -14,6 +16,7 @@ import {
   Image as ImageIcon,
   X,
   Play,
+  Smile,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -27,6 +30,7 @@ import { useLikes } from '@/hooks/useLikes';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { CommentItem } from './CommentItem';
 import { BookmarkFolderDialog } from './BookmarkFolderDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 // Universal media type for both posts and memes
 interface MediaItem {
@@ -72,9 +76,13 @@ export const UnifiedCommentModal = ({
 }: UnifiedCommentModalProps) => {
   const { user } = useAuth();
   const [newComment, setNewComment] = useState('');
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
   const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Determine IDs based on type
   const postId = type === 'post' ? content?.id : undefined;
@@ -131,18 +139,78 @@ export const UnifiedCommentModal = ({
 
   const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim() && !attachedImage) return;
 
     createComment(
       { 
         content: newComment, 
+        imageUrl: attachedImage || undefined,
         postId: postId,
         memeId: memeId,
         postOwnerId: type === 'post' ? content.user_id : undefined,
         memeOwnerId: type === 'meme' ? content.user_id : undefined,
       },
-      { onSuccess: () => setNewComment('') }
+      { 
+        onSuccess: () => {
+          setNewComment('');
+          setAttachedImage(null);
+        } 
+      }
     );
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Hanya file gambar yang diperbolehkan');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran file maksimal 5MB');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `comment_${user.id}_${Date.now()}.${fileExt}`;
+      const filePath = `comments/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('posts')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('posts')
+        .getPublicUrl(filePath);
+
+      setAttachedImage(urlData.publicUrl);
+      toast.success('Gambar berhasil diupload');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Gagal mengupload gambar');
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleGifSelect = (gifUrl: string) => {
+    setAttachedImage(gifUrl);
+    setShowGifPicker(false);
+  };
+
+  const removeAttachment = () => {
+    setAttachedImage(null);
   };
 
   const handleBookmarkToggle = () => {
@@ -373,37 +441,98 @@ export const UnifiedCommentModal = ({
               </div>
 
               {/* Add Comment Input */}
-              <form
-                onSubmit={handleCommentSubmit}
-                className="flex gap-3 p-4 border-t flex-shrink-0 bg-background"
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.user_metadata?.avatar_url} />
-                  <AvatarFallback className="text-xs">
-                    {user?.user_metadata?.display_name?.[0] || user?.email?.[0] || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 flex gap-2">
-                  <Input
-                    placeholder="Add a comment..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    disabled={isCreatingComment}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    disabled={!newComment.trim() || isCreatingComment}
-                  >
-                    {isCreatingComment ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </form>
+              <div className="p-4 border-t flex-shrink-0 bg-background space-y-2">
+                {/* Attached Image Preview */}
+                {attachedImage && (
+                  <div className="relative inline-block">
+                    <img 
+                      src={attachedImage} 
+                      alt="Attachment" 
+                      className="h-20 rounded-lg object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeAttachment}
+                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+
+                <form onSubmit={handleCommentSubmit} className="flex gap-2 items-center">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarImage src={user?.user_metadata?.avatar_url} />
+                    <AvatarFallback className="text-xs">
+                      {user?.user_metadata?.display_name?.[0] || user?.email?.[0] || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1 flex gap-1 items-center">
+                    <Input
+                      placeholder="Tulis komentar..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      disabled={isCreatingComment || isUploadingImage}
+                      className="flex-1"
+                    />
+                    
+                    {/* Image Upload */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingImage || !!attachedImage}
+                      className="h-8 w-8"
+                    >
+                      {isUploadingImage ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ImageIcon className="h-4 w-4" />
+                      )}
+                    </Button>
+
+                    {/* GIF Picker */}
+                    <Popover open={showGifPicker} onOpenChange={setShowGifPicker}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={!!attachedImage}
+                          className="h-8 w-8"
+                        >
+                          <Smile className="h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="end">
+                        <GifPicker onSelect={handleGifSelect} onClose={() => setShowGifPicker(false)} />
+                      </PopoverContent>
+                    </Popover>
+
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={(!newComment.trim() && !attachedImage) || isCreatingComment}
+                      className="h-8"
+                    >
+                      {isCreatingComment ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </DialogContent>
