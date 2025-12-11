@@ -87,17 +87,17 @@ export const BanAppealsTab = () => {
 
       if (appealError) throw appealError;
 
-      // If approved, unban the user
+      // If approved, unban the user using security definer function
       if (approved) {
-        const { error: unbanError } = await supabase
-          .from('profiles')
-          .update({
+        const { error: unbanError } = await supabase.rpc('admin_update_profile', {
+          target_user_id: appeal.user_id,
+          update_data: {
             is_banned: false,
             ban_reason: null,
             banned_at: null,
-            banned_by: null,
-          })
-          .eq('user_id', appeal.user_id);
+            banned_by: null
+          }
+        });
 
         if (unbanError) throw unbanError;
 

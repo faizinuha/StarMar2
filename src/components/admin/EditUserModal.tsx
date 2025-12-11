@@ -71,14 +71,14 @@ export const EditUserModal = ({ user, isOpen, onClose }) => {
         primaryRole = 'user';
       }
 
-      // Update verification status AND role in profiles
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ 
+      // Use security definer function to update profile (avoids RLS recursion)
+      const { error: profileError } = await supabase.rpc('admin_update_profile', {
+        target_user_id: user.user_id,
+        update_data: {
           is_verified: isVerified ? 'verified' : null,
-          role: primaryRole  // Update the role badge
-        })
-        .eq('user_id', user.user_id);
+          role: primaryRole
+        }
+      });
 
       if (profileError) throw profileError;
 
