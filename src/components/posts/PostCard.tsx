@@ -26,7 +26,7 @@ import {
   Flag,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import { CommentSection } from './CommentSection';
+import { UnifiedCommentModal } from './UnifiedCommentModal';
 import { EditPostModal } from './EditPostModal';
 import { PostCaption } from './PostCaption';
 import { BookmarkFolderDialog } from './BookmarkFolderDialog';
@@ -474,9 +474,9 @@ export const PostCard = ({ post }: PostCardProps) => {
         )}
       </div>
       {showComments && (
-        <CommentSection
-          postId={post.id}
-          post={post}
+        <UnifiedCommentModal
+          content={post}
+          type="post"
           onClose={() => setShowComments(false)}
           isOpen={showComments}
         />

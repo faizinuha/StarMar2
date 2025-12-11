@@ -10,6 +10,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+
+// Available pages in the app
+const AVAILABLE_PAGES = [
+  { path: '/', label: 'Home (Site-wide)' },
+  { path: '/explore', label: 'Explore' },
+  { path: '/memes', label: 'Memes' },
+  { path: '/chat', label: 'Chat' },
+  { path: '/notifications', label: 'Notifications' },
+  { path: '/settings', label: 'Settings' },
+  { path: '/profile', label: 'Profile (All)' },
+  { path: '/admin', label: 'Admin Dashboard' },
+  { path: '/reelms', label: 'Reelms' },
+];
 
 export const MaintenanceBannersTab = () => {
   const { data: banners, isLoading } = useMaintenanceMode();
@@ -17,6 +31,7 @@ export const MaintenanceBannersTab = () => {
 
   const [selectedBanner, setSelectedBanner] = useState<Partial<MaintenanceMode> | null>(null);
   const [pagePath, setPagePath] = useState('');
+  const [customPath, setCustomPath] = useState('');
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [type, setType] = useState<'info' | 'warning' | 'maintenance' | 'blocked'>('warning');
@@ -24,7 +39,15 @@ export const MaintenanceBannersTab = () => {
 
   useEffect(() => {
     if (selectedBanner) {
-      setPagePath(selectedBanner.page_path || '');
+      // Check if it's a predefined path
+      const isPredefined = AVAILABLE_PAGES.some(p => p.path === selectedBanner.page_path);
+      if (isPredefined) {
+        setPagePath(selectedBanner.page_path || '');
+        setCustomPath('');
+      } else {
+        setPagePath('custom');
+        setCustomPath(selectedBanner.page_path || '');
+      }
       setTitle(selectedBanner.title || '');
       setMessage(selectedBanner.message || '');
       setType(selectedBanner.type || 'warning');
@@ -32,6 +55,7 @@ export const MaintenanceBannersTab = () => {
     } else {
       // Reset form
       setPagePath('');
+      setCustomPath('');
       setTitle('');
       setMessage('');
       setType('warning');
@@ -40,17 +64,27 @@ export const MaintenanceBannersTab = () => {
   }, [selectedBanner]);
 
   const handleSave = () => {
-    if (!pagePath || !title || !message) {
-      // Basic validation
-      alert('Page Path, Title, and Message are required.');
+    const finalPath = pagePath === 'custom' ? customPath : pagePath;
+    
+    if (!finalPath || !title || !message) {
+      toast.error('Page Path, Title, dan Message wajib diisi.');
       return;
     }
+    
     setMaintenanceMode({
-      page_path: pagePath,
+      page_path: finalPath,
       title,
       message,
       type,
       is_active: isActive,
+    }, {
+      onSuccess: () => {
+        toast.success('Banner berhasil disimpan!');
+        setSelectedBanner(null);
+      },
+      onError: (error) => {
+        toast.error(`Gagal menyimpan: ${error.message}`);
+      }
     });
   };
 
@@ -101,13 +135,42 @@ export const MaintenanceBannersTab = () => {
           <CardHeader>
             <CardTitle>{selectedBanner ? 'Edit Banner' : 'Create Banner'}</CardTitle>
             <CardDescription>
-              {selectedBanner ? `Editing banner for ${selectedBanner.page_path}` : 'Use "/" for a site-wide banner.'}
+              {selectedBanner ? `Editing banner for ${selectedBanner.page_path}` : 'Pilih halaman atau masukkan path custom.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="pagePath">Page Path</Label>
-              <Input id="pagePath" placeholder="/profile/username" value={pagePath} onChange={(e) => setPagePath(e.target.value)} disabled={!!selectedBanner} />
+              <Select 
+                value={pagePath} 
+                onValueChange={(v) => {
+                  setPagePath(v);
+                  if (v !== 'custom') setCustomPath('');
+                }}
+                disabled={!!selectedBanner}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih halaman..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {AVAILABLE_PAGES.map((page) => (
+                    <SelectItem key={page.path} value={page.path}>
+                      {page.label}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="custom">Custom Path...</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {pagePath === 'custom' && (
+                <Input 
+                  placeholder="/custom/path" 
+                  value={customPath} 
+                  onChange={(e) => setCustomPath(e.target.value)}
+                  disabled={!!selectedBanner}
+                  className="mt-2"
+                />
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
