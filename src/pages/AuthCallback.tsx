@@ -19,8 +19,20 @@ export function AuthCallback() {
         }
 
         if (session) {
-          // Successfully authenticated, redirect to home
-          navigate('/', { replace: true });
+          // Check if user has completed onboarding (has username)
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (!profile?.username) {
+            // User needs to complete onboarding
+            navigate('/onboarding', { replace: true });
+          } else {
+            // User already onboarded, go to home
+            navigate('/', { replace: true });
+          }
         } else {
           // No session found, redirect to auth page
           navigate('/auth');

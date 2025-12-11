@@ -1369,6 +1369,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_update_ban_status: {
+        Args: {
+          ban_reason_val?: string
+          banned_by_val?: string
+          is_banned_val: boolean
+          target_user_id: string
+        }
+        Returns: boolean
+      }
       decrement_followers_count: {
         Args: { user_id: string }
         Returns: undefined

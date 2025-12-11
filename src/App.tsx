@@ -19,6 +19,7 @@ import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Checkpoint from "./pages/Checkpoint";
+import Onboarding from "./pages/Onboarding";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import Chat from "./pages/Chat";
@@ -99,6 +100,7 @@ const App = () => (
                     }
                   />
                   <Route path="/checkpoint" element={<Checkpoint />} />
+                  <Route path="/onboarding" element={<Onboarding />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 <GlobalPlayer />
