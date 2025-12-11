@@ -16,6 +16,8 @@ export interface Profile {
   posts_count: number;
   is_private: boolean;
   is_verified: string | null;
+  is_banned?: boolean;
+  ban_reason?: string | null;
   role: string | null;
   created_at: string;
   updated_at: string;

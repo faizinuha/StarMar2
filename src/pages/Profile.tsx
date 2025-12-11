@@ -303,6 +303,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                         userId={profile.user_id}
                         username={profile.username}
                         isOwnProfile={false}
+                        isBanned={profile.is_banned}
                       />
                     </>
                   )}
