@@ -1378,6 +1378,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_update_profile: {
+        Args: { target_user_id: string; update_data: Json }
+        Returns: boolean
+      }
       decrement_followers_count: {
         Args: { user_id: string }
         Returns: undefined
