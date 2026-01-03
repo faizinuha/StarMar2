@@ -1,10 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useState } from 'react';
-import { CreatePostModal } from './CreatePostModal';
+import { SimpleCreatePostModal } from './SimpleCreatePostModal';
 
 interface CreatePostProps {
   defaultTab?: 'post' | 'meme';
@@ -20,13 +18,13 @@ export const CreatePost = ({ defaultTab = 'post' }: CreatePostProps) => {
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
             <AvatarImage
-              src={userProfile?.avatar_url || '/assets/placeholder/cewek.png'}
+              src={userProfile?.avatar_url || '/assets/Place/cewek.png'}
             />
             <AvatarFallback>
               {userProfile?.username?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
-          <div 
+          <div
             className="flex-1 bg-secondary rounded-full px-4 py-3 text-muted-foreground cursor-pointer hover:bg-secondary/80 transition-colors"
             onClick={() => setIsOpen(true)}
           >
@@ -34,10 +32,9 @@ export const CreatePost = ({ defaultTab = 'post' }: CreatePostProps) => {
           </div>
         </div>
       </Card>
-      <CreatePostModal 
-        isOpen={isOpen} 
-        onClose={() => setIsOpen(false)} 
-        defaultTab={defaultTab}
+      <SimpleCreatePostModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
       />
     </>
   );

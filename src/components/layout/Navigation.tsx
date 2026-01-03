@@ -1,3 +1,4 @@
+import starMarLogo from '@/assets/Logo/StarMar-.png';
 import { CreatePostModal } from '@/components/posts/CreatePostModal';
 import { NavigationSkeleton } from '@/components/skeletons/NavigationSkeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -9,18 +10,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversations } from '@/hooks/useConversations';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useProfile } from '@/hooks/useProfile';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Heart,
   Home,
   Laugh,
-  Menu,
   MessageCircle,
   MoreHorizontal,
   Music,
+  Play,
   PlusSquare,
   Search,
   Settings,
@@ -35,10 +38,58 @@ export const Navigation = () => {
   const { user, loading: authLoading } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { totalUnread } = useConversations();
-  const { unreadCount } = useNotifications();
+  const { unreadCount, refetch: refetchNotifications } = useNotifications();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase.channel('realtime-notifications')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'notifications', 
+          filter: `user_id=eq.${user.id}` 
+        },
+        async (payload) => {
+          console.log('New notification received:', payload);
+          
+          const newNotification = payload.new as any;
+          
+          // Ambil profil pengirim notifikasi
+          const { data: senderProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', newNotification.sender_id)
+            .single();
+
+          if (profileError) {
+            console.error("Error fetching sender profile:", profileError);
+            return;
+          }
+          
+          // Tampilkan toast
+          toast({
+            title: "New Notification!",
+            description: `@${senderProfile.username} ${newNotification.type}d your post.`,
+            action: (
+                <Button variant="link" size="sm" onClick={() => navigate(`/post/${newNotification.post_id}`)}>View</Button>
+            )
+          });
+          
+          // Perbarui jumlah notifikasi
+          refetchNotifications();
+        }
+      ).subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      }
+  }, [user, toast, navigate, refetchNotifications]);
 
   // Redirect to auth if not authenticated and not loading
   useEffect(() => {
@@ -59,6 +110,12 @@ export const Navigation = () => {
       label: 'Explore',
       path: '/explore',
       active: location.pathname === '/explore',
+    },
+    {
+      icon: Play,
+      label: 'Play',
+      path: '/Reelms',
+      active: location.pathname === '/Reelms',
     },
     {
       icon: PlusSquare,
@@ -92,10 +149,15 @@ export const Navigation = () => {
       label: 'MyMusic',
       path: '/mymusic/music',
       active: location.pathname === '/mymusic/music',
+    },
+    {
+      icon: Settings,
+      label: 'Settings',
+      path: '/settings',
+      active: location.pathname === '/settings'
     }
   ];
 
-  // Mobile bottom navbar items (5 items with notifications)
   const mobileBottomNavItems = [
     { icon: Home, label: 'Home', path: '/', active: location.pathname === '/' },
     {
@@ -103,6 +165,12 @@ export const Navigation = () => {
       label: 'Explore',
       path: '/explore',
       active: location.pathname === '/explore',
+    },
+    {
+      icon: Play,
+      label: 'Play',
+      path: '/reelms',
+      active: location.pathname === '/reelms',
     },
     {
       icon: PlusSquare,
@@ -143,10 +211,6 @@ export const Navigation = () => {
     navigate('/profile');
   };
 
-  const handleSettingsClick = () => {
-    navigate('/settings');
-  };
-
   // Check if there are more menu items to show
   const hasMoreItems = profile?.role === 'admin' || profile?.role === 'moderator';
 
@@ -158,7 +222,7 @@ export const Navigation = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <img
-              src="../../assets/Logo/StarMar.png"
+              src={starMarLogo}
               alt="StarMar"
               className="w-10 h-10 object-contain"
             />
@@ -190,7 +254,7 @@ export const Navigation = () => {
                 </Button>
               );
             })}
-            
+
             {/* More Menu - Only show if there are additional items */}
             {hasMoreItems && (
               <DropdownMenu>
@@ -210,10 +274,6 @@ export const Navigation = () => {
                       <span>Dashboard Admin</span>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -254,7 +314,7 @@ export const Navigation = () => {
         <header className="fixed top-0 left-0 right-0 bg-card border-b border-border p-4 flex items-center justify-between z-50">
           <div className="flex items-center space-x-3">
             <img
-              src="../../assets/Logo/StarMar.png"
+              src={starMarLogo}
               alt="StarMar"
               className="w-8 h-8 object-contain"
             />
@@ -278,7 +338,7 @@ export const Navigation = () => {
                 </Badge>
               )}
             </Button>
-            
+
             {/* Settings Icon */}
             <Button
               variant="ghost"

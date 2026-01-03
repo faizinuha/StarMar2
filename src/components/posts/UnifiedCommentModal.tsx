@@ -1,36 +1,225 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ImageCarousel } from './ImageCarousel';
-import { GifPicker } from './GifPicker';
-import { formatDistanceToNow } from 'date-fns';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/contexts/AuthContext';
+import { useBookmarks } from '@/hooks/useBookmarks';
+import {
+  Comment,
+  useCreateComment,
+  useDeleteComment,
+  useMemeComments,
+  usePostComments,
+} from '@/hooks/useComments';
+import { useLikes } from '@/hooks/useLikes';
+import { supabase } from '@/integrations/supabase/client';
+import { sanitizeComment } from "@/lib/sanitizeComment";
+import { formatDistanceToNow } from "date-fns";
 import {
   Bookmark,
   Heart,
-  Loader2,
-  MessageCircle,
-  Send,
   Image as ImageIcon,
-  X,
+  Loader2,
+  MoreHorizontal,
   Play,
+  Send,
   Smile,
+  Trash2,
+  X
 } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
-import {
-  useCreateComment,
-  usePostComments,
-  useMemeComments,
-} from '@/hooks/useComments';
-import { useLikes } from '@/hooks/useLikes';
-import { useBookmarks } from '@/hooks/useBookmarks';
-import { CommentItem } from './CommentItem';
 import { BookmarkFolderDialog } from './BookmarkFolderDialog';
-import { supabase } from '@/integrations/supabase/client';
+import { GifPicker } from './GifPicker';
+import { ImageCarousel } from './ImageCarousel';
+
+interface CommentItemProps {
+  comment: Comment;
+  postId?: string;
+  memeId?: string;
+  level?: number;
+  postOwnerId?: string;
+  memeOwnerId?: string;
+}
+
+const CommentItem = ({ comment, postId, memeId, level = 0, postOwnerId, memeOwnerId }: CommentItemProps) => {
+  const { user } = useAuth();
+  const [showReplyInput, setShowReplyInput] = useState(false);
+  const [replyContent, setReplyContent] = useState("");
+  const { mutate: createComment, isPending: isCreatingComment } = useCreateComment();
+  const { mutate: deleteComment, isPending: isDeletingComment } = useDeleteComment();
+  const { likesCount, isLiked, toggleLike } = useLikes('comment', comment.id, comment.user_id);
+
+  const isOwner = user?.id === comment.user_id;
+  const isPostOwner = user?.id === postOwnerId;
+
+  const handleDelete = () => {
+    deleteComment(comment.id, {
+      onSuccess: () => {
+        toast.success("Comment deleted");
+      },
+      onError: () => {
+        toast.error("Failed to delete comment");
+      }
+    });
+  };
+
+  const handleReply = () => {
+    if (!replyContent.trim()) return;
+
+    // Sanitize reply content before sending
+    const sanitizedContent = sanitizeComment(replyContent);
+    if (!sanitizedContent) return;
+
+    createComment(
+      {
+        content: sanitizedContent,
+        postId,
+        memeId,
+        parentCommentId: comment.id,
+        postOwnerId,
+        memeOwnerId,
+      },
+      {
+        onSuccess: () => {
+          setReplyContent("");
+          setShowReplyInput(false);
+        },
+      }
+    );
+  };
+
+  const handleLike = () => {
+    if (!user) return; // Or show toast
+    toggleLike();
+  };
+
+  return (
+    <div className={`flex items-start gap-2 ${level > 0 ? 'ml-8 pl-4 border-l border-border' : ''}`}>
+      <Avatar className="h-7 w-7 mt-1">
+        <AvatarImage src={comment.user.avatar} />
+        <AvatarFallback className="text-xs">
+          {comment.user.displayName?.[0] || comment.user.username?.[0] || ''}
+        </AvatarFallback>
+      </Avatar>
+
+      <div className="flex-1">
+        <div className="flex items-center gap-1">
+          <span className="font-semibold text-sm">
+            {comment.user.displayName || comment.user.username}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+          </span>
+        </div>
+        {comment.content && <p className="text-sm mt-0.5">{comment.content}</p>}
+
+        {/* Display image/GIF if present */}
+        {comment.image_url && (
+          <div className="mt-2 max-w-[200px]">
+            <img
+              src={comment.image_url}
+              alt="Comment attachment"
+              className="rounded-lg max-h-48 object-contain"
+              loading="lazy"
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+          <button
+            className={`flex items-center gap-1 text-xs hover:text-foreground transition-colors ${isLiked ? 'text-red-500' : 'text-muted-foreground'}`}
+            onClick={handleLike}
+          >
+            <Heart className={`h-3 w-3 ${isLiked ? 'fill-red-500' : ''}`} />
+            <span>{likesCount || 0}</span>
+          </button>
+
+          <button
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setShowReplyInput(!showReplyInput)}
+          >
+            Reply
+          </button>
+
+          {(isOwner || isPostOwner) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-auto p-0 hover:bg-transparent">
+                  <MoreHorizontal className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleDelete} className="text-destructive text-xs">
+                  <Trash2 className="h-3 w-3 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
+        {showReplyInput && (
+          <div className="flex gap-2 mt-2">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={user?.user_metadata?.avatar_url} />
+              <AvatarFallback className="text-xs">
+                {user?.user_metadata?.display_name?.[0] || user?.email?.[0] || ''}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 flex gap-2">
+              <Input
+                placeholder={`Reply to @${comment.user.username}...`}
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                className="h-8 text-sm"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleReply();
+                  }
+                }}
+              />
+              <Button
+                size="sm"
+                onClick={handleReply}
+                disabled={!replyContent.trim() || isCreatingComment}
+                className="h-8"
+              >
+                {isCreatingComment ? "..." : "Reply"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Nested replies */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div className="mt-2">
+            {comment.replies.map((reply) => (
+              <CommentItem
+                key={reply.id}
+                comment={reply}
+                postId={postId}
+                memeId={memeId}
+                level={level + 1}
+                postOwnerId={postOwnerId}
+                memeOwnerId={memeOwnerId}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // Universal media type for both posts and memes
 interface MediaItem {
@@ -93,7 +282,7 @@ export const UnifiedCommentModal = ({
   const { data: postComments = [], isLoading: isLoadingPostComments } = usePostComments(postId || '');
   const { data: memeComments = [], isLoading: isLoadingMemeComments } = useMemeComments(memeId || '');
   const { mutate: createComment, isPending: isCreatingComment } = useCreateComment();
-  
+
   // Bookmark functionality
   const { bookmarks, createBookmark, deleteBookmark } = useBookmarks();
   const isBookmarked = bookmarks?.some(b => b.post_id === content?.id);
@@ -142,19 +331,19 @@ export const UnifiedCommentModal = ({
     if (!newComment.trim() && !attachedImage) return;
 
     createComment(
-      { 
-        content: newComment, 
+      {
+        content: newComment,
         imageUrl: attachedImage || undefined,
         postId: postId,
         memeId: memeId,
         postOwnerId: type === 'post' ? content.user_id : undefined,
         memeOwnerId: type === 'meme' ? content.user_id : undefined,
       },
-      { 
+      {
         onSuccess: () => {
           setNewComment('');
           setAttachedImage(null);
-        } 
+        }
       }
     );
   };
@@ -218,7 +407,7 @@ export const UnifiedCommentModal = ({
       toast.error('Please log in to bookmark');
       return;
     }
-    
+
     if (type === 'post') {
       if (isBookmarked) {
         deleteBookmark.mutate(content.id, {
@@ -243,7 +432,7 @@ export const UnifiedCommentModal = ({
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/${type}/${content.id}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -422,15 +611,13 @@ export const UnifiedCommentModal = ({
                         className={`h-6 w-6 ${isLiked ? 'fill-red-500 text-red-500' : ''}`}
                       />
                     </Button>
-                    <Button variant="ghost" size="icon">
-                      <MessageCircle className="h-6 w-6" />
-                    </Button>
+
                     <Button variant="ghost" size="icon" onClick={handleShare}>
                       <Send className="h-6 w-6" />
                     </Button>
                   </div>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     onClick={handleBookmarkToggle}
                   >
@@ -445,9 +632,9 @@ export const UnifiedCommentModal = ({
                 {/* Attached Image Preview */}
                 {attachedImage && (
                   <div className="relative inline-block">
-                    <img 
-                      src={attachedImage} 
-                      alt="Attachment" 
+                    <img
+                      src={attachedImage}
+                      alt="Attachment"
                       className="h-20 rounded-lg object-cover"
                     />
                     <button
@@ -467,7 +654,7 @@ export const UnifiedCommentModal = ({
                       {user?.user_metadata?.display_name?.[0] || user?.email?.[0] || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  
+
                   <div className="flex-1 flex gap-1 items-center">
                     <Input
                       placeholder="Tulis komentar..."
@@ -476,7 +663,7 @@ export const UnifiedCommentModal = ({
                       disabled={isCreatingComment || isUploadingImage}
                       className="flex-1"
                     />
-                    
+
                     {/* Image Upload */}
                     <input
                       ref={fileInputRef}

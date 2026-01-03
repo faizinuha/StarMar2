@@ -1,26 +1,26 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import starMarLogo from '@/assets/Logo/StarMar-.png';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Mail, KeyRound, Smartphone, Loader2, CheckCircle2, ExternalLink } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import {
   InputOTP,
   InputOTPGroup,
-  InputOTPSlot,
   InputOTPSeparator,
+  InputOTPSlot,
 } from '@/components/ui/input-otp';
-import starMarLogo from '../../assets/Logo/StarMar-.png';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft, CheckCircle2, ExternalLink, KeyRound, Loader2, Mail, Smartphone } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 type Step = 'email' | 'method' | 'emailSent' | 'authenticator' | 'newPassword';
 
@@ -28,7 +28,7 @@ export function ForgotPassword() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  
+
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [authenticatorCode, setAuthenticatorCode] = useState('');
@@ -44,7 +44,7 @@ export function ForgotPassword() {
   useEffect(() => {
     const checkRecoverySession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       // Check if this is a recovery session
       if (session?.user) {
         const recoveryParam = searchParams.get('type');
@@ -110,7 +110,7 @@ export function ForgotPassword() {
         title: 'Recovery Email Sent!',
         description: 'Check your email for the password reset link.',
       });
-      
+
       setStep('method');
     } catch (err: any) {
       setError(err.message || 'Failed to send recovery email');
@@ -129,7 +129,7 @@ export function ForgotPassword() {
 
   const handleResendEmail = async () => {
     if (!canResend) return;
-    
+
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -142,7 +142,7 @@ export function ForgotPassword() {
         title: 'Email Resent!',
         description: 'Check your email for the new password reset link.',
       });
-      
+
       setCountdown(60);
       setCanResend(false);
     } catch (err: any) {
@@ -165,7 +165,7 @@ export function ForgotPassword() {
       // First, we need to sign in with email to access MFA
       // This is a limitation - user needs to have MFA set up and be able to sign in
       const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
-      
+
       if (factorsError) {
         // User is not signed in, need to use magic link instead
         setError('Please use the email link method first to verify your identity, then you can use authenticator for additional security.');
@@ -255,7 +255,7 @@ export function ForgotPassword() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <div className="relative">
@@ -568,7 +568,7 @@ export function ForgotPassword() {
 
         <Card className="border-border/50 shadow-xl">
           {renderStep()}
-          
+
           {/* Back buttons */}
           <div className="px-6 pb-6">
             {step !== 'email' && step !== 'newPassword' && (
@@ -584,7 +584,7 @@ export function ForgotPassword() {
                 Back
               </Button>
             )}
-            
+
             {step === 'email' && (
               <Button
                 variant="ghost"

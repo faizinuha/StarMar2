@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export interface Post {
-  comments_count: number;
   id: string;
   user_id: string;
   content: string;
@@ -16,11 +15,19 @@ export interface Post {
   isLiked: boolean;
   isBookmarked: boolean;
   location?: string;
-  media?: Array<{ media_url: string; media_type: string; order_index?: number }>;
+  is_repost?: boolean;
+  original_post?: Omit<Post, 'comments_count' | 'likes_count' | 'isLiked' | 'isBookmarked' | 'profiles'>;
+  comments_count: number;
+  media?: Array<{
+    media_url: string;
+    media_type: string;
+    order_index?: number;
+  }>;
   user: {
     username: string;
     displayName: string;
     avatar: string;
+    is_verified?: string | null;
   };
   profiles?: any;
 }
@@ -77,17 +84,22 @@ export function useCreatePost() {
           .upload(filePath, selectedImage);
 
         if (uploadError) {
-          console.error('Image upload failed, but post was created.', uploadError);
+          console.error(
+            'Image upload failed, but post was created.',
+            uploadError
+          );
         } else {
           const { data: publicUrlData } = supabase.storage
             .from('posts')
             .getPublicUrl(filePath);
 
-          const { error: mediaError } = await supabase.from('post_media').insert({
-            post_id: postId,
-            media_url: publicUrlData.publicUrl,
-            media_type: selectedImage.type,
-          });
+          const { error: mediaError } = await supabase
+            .from('post_media')
+            .insert({
+              post_id: postId,
+              media_url: publicUrlData.publicUrl,
+              media_type: selectedImage.type,
+            });
           if (mediaError) {
             console.error('Failed to link media to post:', mediaError);
           }
@@ -97,22 +109,27 @@ export function useCreatePost() {
       // 3. Handle hashtags client-side
       if (content) {
         const hashtagRegex = /#(\w+)/g;
-        const hashtags = content.match(hashtagRegex)?.map(tag => tag.substring(1).toLowerCase()) || [];
+        const hashtags =
+          content
+            .match(hashtagRegex)
+            ?.map((tag) => tag.substring(1).toLowerCase()) || [];
         const uniqueHashtags = [...new Set(hashtags)];
 
         if (uniqueHashtags.length > 0) {
           try {
-            const upsertedTags = await Promise.all(uniqueHashtags.map(async (tag) => {
-              const { data: hashtagData, error: upsertError } = await supabase
-                .from('hashtags')
-                .upsert({ name: tag }, { onConflict: 'name' })
-                .select('id')
-                .single();
-              if (upsertError) throw upsertError;
-              return hashtagData;
-            }));
+            const upsertedTags = await Promise.all(
+              uniqueHashtags.map(async (tag) => {
+                const { data: hashtagData, error: upsertError } = await supabase
+                  .from('hashtags')
+                  .upsert({ name: tag }, { onConflict: 'name' })
+                  .select('id')
+                  .single();
+                if (upsertError) throw upsertError;
+                return hashtagData;
+              })
+            );
 
-            const postHashtagRelations = upsertedTags.map(tag => ({
+            const postHashtagRelations = upsertedTags.map((tag) => ({
               post_id: postId,
               hashtag_id: tag.id,
             }));
@@ -122,7 +139,6 @@ export function useCreatePost() {
               .insert(postHashtagRelations);
 
             if (relationError) throw relationError;
-
           } catch (e) {
             console.error('Error processing hashtags:', e);
           }
@@ -138,6 +154,47 @@ export function useCreatePost() {
   });
 }
 
+const POST_SELECT_QUERY = `
+  id,
+  user_id,
+  caption,
+  location,
+  created_at,
+  likes_count,
+  comments_count,
+  is_repost,
+  original_post_id,
+  profiles!posts_user_id_fkey (
+    username,
+    display_name,
+    avatar_url,
+    is_verified
+  ),
+  post_media (
+    media_url,
+    media_type,
+    order_index
+  ),
+  likes(user_id),
+  original_post:posts!original_post_id (
+    id,
+    caption,
+    user_id,
+    created_at,
+    post_media (
+      media_url,
+      media_type,
+      order_index
+    ),
+    profiles!posts_user_id_fkey (
+      username,
+      display_name,
+      avatar_url,
+      is_verified
+    )
+  )
+`;
+
 export function useUserPosts(userId?: string) {
   const { user } = useAuth();
   const targetUserId = userId || user?.id;
@@ -149,90 +206,13 @@ export function useUserPosts(userId?: string) {
 
       const { data, error } = await supabase
         .from('posts')
-        .select(
-          `
-          id,
-          user_id,
-          caption,
-          location,
-          created_at,
-          likes_count,
-          comments_count,
-          profiles!posts_user_id_fkey (
-            username,
-            display_name,
-            avatar_url
-          ),
-          post_media (
-            media_url,
-            media_type,
-            order_index
-          ),
-          likes(user_id)
-        `
-        )
+        .select(POST_SELECT_QUERY)
         .eq('user_id', targetUserId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const processUrl = async (url: string | undefined | null): Promise<string | undefined | null> => {
-        if (!url) return null;
-        if (url.startsWith('http') && !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
-            return url;
-        }
-        let path = url;
-        if (url.startsWith('http')) {
-            try {
-                const urlObject = new URL(url);
-                const pathParts = urlObject.pathname.split('/avatars/');
-                if (pathParts.length > 1) {
-                    path = pathParts[1];
-                } else {
-                    return url;
-                }
-            } catch (e) {
-                return url;
-            }
-        }
-        const { data: signedUrlData } = await supabase.storage
-            .from('avatars')
-            .createSignedUrl(path, 99999999);
-        return signedUrlData ? signedUrlData.signedUrl : url;
-      };
-
-      const processedData = await Promise.all(data.map(async (post: any) => {
-        const avatarUrl = await processUrl(post.profiles?.avatar_url);
-        const sortedMedia = (post.post_media || []).sort((a: any, b: any) => 
-          (a.order_index || 0) - (b.order_index || 0)
-        );
-        return {
-            id: post.id,
-            content: post.caption || '',
-            location: post.location,
-            created_at: post.created_at,
-            likes: post.likes_count || 0,
-            likes_count: post.likes_count || 0,
-            comments: post.comments_count || 0,
-            isLiked: post.likes.some(
-              (like: { user_id: string }) => like.user_id === user?.id
-            ),
-            isBookmarked: false,
-            image_url: sortedMedia[0]?.media_url,
-            media_type: sortedMedia[0]?.media_type,
-            media: sortedMedia,
-            user: {
-              username: post.profiles?.username || '',
-              displayName:
-                post.profiles?.display_name || post.profiles?.username || '',
-              avatar: avatarUrl || '',
-            },
-            user_id: post.user_id,
-            profiles: post.profiles,
-        }
-      }));
-
-      return processedData as Post[];
+      return await processPostsData(data, user?.id);
     },
     enabled: !!targetUserId,
   });
@@ -242,95 +222,103 @@ export function useAllPosts() {
   const { user } = useAuth();
 
   return useQuery({
-    refetchInterval: 5000, // Auto-refresh every 5 seconds
+    refetchInterval: 5000,
     queryKey: ['allPosts'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('posts')
-        .select(
-          `
-          id,
-          user_id,
-          caption,
-          location,
-          created_at,
-          likes_count,
-          comments_count,
-          profiles!posts_user_id_fkey (
-            username,
-            display_name,
-            avatar_url
-          ),
-          post_media (
-            media_url,
-            media_type,
-            order_index
-          ),
-          likes(user_id)
-        `
-        )
+        .select(POST_SELECT_QUERY)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const processUrl = async (url: string | undefined | null): Promise<string | undefined | null> => {
-        if (!url) return null;
-        if (url.startsWith('http') && !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
-            return url;
-        }
-        let path = url;
-        if (url.startsWith('http')) {
-            try {
-                const urlObject = new URL(url);
-                const pathParts = urlObject.pathname.split('/avatars/');
-                if (pathParts.length > 1) {
-                    path = pathParts[1];
-                } else {
-                    return url;
-                }
-            } catch (e) {
-                return url;
-            }
-        }
-        const { data: signedUrlData } = await supabase.storage
-            .from('avatars')
-            .createSignedUrl(path, 99999999);
-        return signedUrlData ? signedUrlData.signedUrl : url;
-      };
-
-      const processedData = await Promise.all(data.map(async (post: any) => {
-        const avatarUrl = await processUrl(post.profiles?.avatar_url);
-        const sortedMedia = (post.post_media || []).sort((a: any, b: any) => 
-          (a.order_index || 0) - (b.order_index || 0)
-        );
-        return {
-            id: post.id,
-            content: post.caption || '',
-            location: post.location,
-            created_at: post.created_at,
-            likes: post.likes_count || 0,
-            likes_count: post.likes_count || 0,
-            comments: post.comments_count || 0,
-            isLiked: post.likes.some(
-              (like: { user_id: string }) => like.user_id === user?.id
-            ),
-            isBookmarked: false,
-            image_url: sortedMedia[0]?.media_url,
-            media_type: sortedMedia[0]?.media_type,
-            media: sortedMedia,
-            user: {
-              username: post.profiles?.username || '',
-              displayName:
-                post.profiles?.display_name || post.profiles?.username || '',
-              avatar: avatarUrl || '',
-            },
-            user_id: post.user_id,
-            profiles: post.profiles,
-        }
-      }));
-      return processedData as Post[];
+      return await processPostsData(data, user?.id);
     },
   });
+}
+
+// Helper to process post data (URL signing, sorting media, nested original post)
+async function processPostsData(data: any[], currentUserId?: string): Promise<Post[]> {
+  const processUrl = async (url: string | undefined | null): Promise<string | undefined | null> => {
+    if (!url) return null;
+    if (url.startsWith('http') && !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
+      return url;
+    }
+    let path = url;
+    if (url.startsWith('http')) {
+      try {
+        const urlObject = new URL(url);
+        const pathParts = urlObject.pathname.split('/avatars/');
+        path = pathParts.length > 1 ? pathParts[1] : url;
+      } catch (e) {
+        return url;
+      }
+    }
+    const { data: signedUrlData } = await supabase.storage.from('avatars').createSignedUrl(path, 99999999);
+    return signedUrlData ? signedUrlData.signedUrl : url;
+  };
+
+  return await Promise.all(
+    data.map(async (post: any) => {
+      const avatarUrl = await processUrl(post.profiles?.avatar_url);
+      const sortedMedia = (post.post_media || []).sort(
+        (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
+      );
+
+      // Process original post if it exists
+      let originalPostProcessed = undefined;
+      if (post.original_post) {
+         const op = post.original_post;
+         const opAvatarUrl = await processUrl(op.profiles?.avatar_url);
+         const opSortedMedia = (op.post_media || []).sort(
+           (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
+         );
+         originalPostProcessed = {
+            id: op.id,
+            content: op.caption || '',
+            created_at: op.created_at,
+            likes: 0, // Default for original post in repost
+            comments: 0, // Default for original post in repost
+            user_id: op.user_id,
+            image_url: opSortedMedia[0]?.media_url,
+            media_type: opSortedMedia[0]?.media_type,
+            media: opSortedMedia,
+            user: {
+              username: op.profiles?.username || '',
+              displayName: op.profiles?.display_name || op.profiles?.username || '',
+              avatar: opAvatarUrl || '',
+              is_verified: op.profiles?.is_verified || null,
+            },
+         };
+      }
+
+      return {
+        id: post.id,
+        content: post.caption || '',
+        location: post.location,
+        created_at: post.created_at,
+        likes: post.likes_count || 0,
+        likes_count: post.likes_count || 0,
+        comments_count: post.comments_count || 0, // Add comments_count here
+        comments: post.comments_count || 0,
+        isLiked: post.likes.some((like: { user_id: string }) => like.user_id === currentUserId),
+        isBookmarked: false,
+        image_url: sortedMedia[0]?.media_url,
+        media_type: sortedMedia[0]?.media_type,
+        media: sortedMedia,
+        is_repost: post.is_repost,
+        original_post: originalPostProcessed,
+        user: {
+          username: post.profiles?.username || '',
+          displayName: post.profiles?.display_name || post.profiles?.username || '',
+          avatar: avatarUrl || '',
+          is_verified: post.profiles?.is_verified || null,
+        },
+        user_id: post.user_id,
+        profiles: post.profiles,
+      };
+    })
+  );
 }
 
 export function useTogglePostLike() {
@@ -434,21 +422,26 @@ export function useUpdatePost() {
 
         // Now, add the new ones
         const hashtagRegex = /#(\w+)/g;
-        const hashtags = content.match(hashtagRegex)?.map(tag => tag.substring(1).toLowerCase()) || [];
+        const hashtags =
+          content
+            .match(hashtagRegex)
+            ?.map((tag) => tag.substring(1).toLowerCase()) || [];
         const uniqueHashtags = [...new Set(hashtags)];
 
         if (uniqueHashtags.length > 0) {
-          const upsertedTags = await Promise.all(uniqueHashtags.map(async (tag) => {
-            const { data: hashtagData, error: upsertError } = await supabase
-              .from('hashtags')
-              .upsert({ name: tag }, { onConflict: 'name' })
-              .select('id')
-              .single();
-            if (upsertError) throw upsertError;
-            return hashtagData;
-          }));
+          const upsertedTags = await Promise.all(
+            uniqueHashtags.map(async (tag) => {
+              const { data: hashtagData, error: upsertError } = await supabase
+                .from('hashtags')
+                .upsert({ name: tag }, { onConflict: 'name' })
+                .select('id')
+                .single();
+              if (upsertError) throw upsertError;
+              return hashtagData;
+            })
+          );
 
-          const postHashtagRelations = upsertedTags.map(tag => ({
+          const postHashtagRelations = upsertedTags.map((tag) => ({
             post_id: postId,
             hashtag_id: tag.id,
           }));
@@ -485,7 +478,7 @@ export function usePostById(postId: string) {
       const { data, error } = await supabase
         .from('posts')
         .select(
-          `
+           `
           id,
           user_id,
           caption,
@@ -493,16 +486,35 @@ export function usePostById(postId: string) {
           created_at,
           likes_count,
           comments_count,
+          is_repost,
+          original_post_id,
           profiles!posts_user_id_fkey (
             username,
             display_name,
-            avatar_url
+            avatar_url,
+            is_verified
           ),
           post_media (
             media_url,
-            media_type
+            media_type,
+            order_index
           ),
-          likes(user_id)
+          likes(user_id),
+          original_post:posts!original_post_id (
+            id,
+            caption,
+            user_id,
+            created_at,
+            post_media (
+               media_url,
+               media_type
+            ),
+            profiles!posts_user_id_fkey (
+               username,
+               display_name,
+               avatar_url
+            )
+          )
         `
         )
         .eq('id', postId)
@@ -510,60 +522,7 @@ export function usePostById(postId: string) {
 
       if (error) throw error;
 
-      const processUrl = async (url: string | undefined | null): Promise<string | undefined | null> => {
-        if (!url) return null;
-        if (url.startsWith('http') && !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
-            return url;
-        }
-        let path = url;
-        if (url.startsWith('http')) {
-            try {
-                const urlObject = new URL(url);
-                const pathParts = urlObject.pathname.split('/avatars/');
-                if (pathParts.length > 1) {
-                    path = pathParts[1];
-                } else {
-                    return url;
-                }
-            } catch (e) {
-                return url;
-            }
-        }
-        const { data: signedUrlData } = await supabase.storage
-            .from('avatars')
-            .createSignedUrl(path, 99999999);
-        return signedUrlData ? signedUrlData.signedUrl : url;
-      };
-
-      const profile = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles;
-      const avatarUrl = await processUrl(profile?.avatar_url);
-      const sortedMedia = (data.post_media || []).sort((a: any, b: any) => 
-        (a.order_index || 0) - (b.order_index || 0)
-      );
-
-      return {
-        id: data.id,
-        content: data.caption || '',
-        location: data.location,
-        created_at: data.created_at,
-        likes: data.likes_count || 0,
-        likes_count: data.likes_count || 0,
-        comments: data.comments_count || 0,
-        isLiked: data.likes.some(
-          (like: { user_id: string }) => like.user_id === user?.id
-        ),
-        isBookmarked: false,
-        image_url: sortedMedia[0]?.media_url,
-        media_type: sortedMedia[0]?.media_type,
-        media: sortedMedia,
-        user: {
-          username: profile?.username || '',
-          displayName: profile?.display_name || profile?.username || '',
-          avatar: avatarUrl || '',
-        },
-        user_id: data.user_id,
-        profiles: data.profiles,
-      } as Post;
+      return (await processPostsData([data], user?.id))[0];
     },
     enabled: !!postId,
   });

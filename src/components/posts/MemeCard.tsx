@@ -15,9 +15,9 @@ import {
 } from '@/components/ui/popover';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLikes } from '@/hooks/useLikes';
-import { useMemeComments } from '@/hooks/useComments';
 import { useBookmarks } from '@/hooks/useBookmarks';
+import { useMemeComments } from '@/hooks/useComments';
+import { useLikes } from '@/hooks/useLikes';
 import { Meme, useAddMemeBadge, useBadges } from '@/hooks/useMemes';
 import {
   Bookmark,
@@ -31,8 +31,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { UnifiedCommentModal } from './UnifiedCommentModal';
 import { BookmarkFolderDialog } from './BookmarkFolderDialog';
+import { UnifiedCommentModal } from './UnifiedCommentModal';
 
 interface MemeCardProps {
   meme: Meme;
@@ -113,7 +113,7 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
     createBookmark,
     deleteBookmark,
   } = useBookmarks();
-  
+
   // Note: Memes don't have a separate bookmark table, we reuse posts bookmark
   // For now we'll use meme.id as if it were a post
   const isBookmarked = bookmarks?.some((bookmark) => bookmark.post_id === meme.id) || false;
@@ -147,10 +147,27 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
       setShowBookmarkDialog(true);
     }
   };
+  const handleRepost = async () => {
+    if (!user) {
+      toast({
+        title: 'Login required',
+        description: 'You must be logged in to repost memes.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    // Implement repost logic here, e.g., calling an API to create a new meme referencing the original
+    // For now, we'll just show a toast message.
+    toast({
+      title: 'Repost functionality coming soon!',
+      description: 'Stay tuned for updates.',
+      variant: 'default',
+    });
+  };
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/memes/${meme.id}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -197,7 +214,7 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
         {/* Header */}
         <div className="flex items-center justify-between p-4">
           <Link
-            to={`/profile/${meme.user.username}`}
+            to={`/profile/${meme.user.id}`}
             className="flex items-center space-x-3"
           >
             <Avatar className="h-10 w-10 ring-2 ring-primary/20">
@@ -212,6 +229,13 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
               <div className="flex items-center gap-2">
                 <p className="font-semibold text-sm">
                   {meme.user.displayName || meme.user.username}
+                  {meme.user.is_verified === 'verified' && (
+                    <span className="inline-flex items-center gap-0.2 text-xs text-blue-500 font-medium">
+                      <svg className="h-4 w-5 fill-current" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  )}
                 </p>
                 <Laugh className="h-4 w-4 text-primary" />
               </div>
@@ -230,13 +254,20 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Follow @{meme.user.username}</DropdownMenuItem>
+              {user?.id !== meme.user_id && (
+                <DropdownMenuItem>Follow @{meme.user.username}</DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={handleShare}>
                 Share meme
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">
-                Report
+              <DropdownMenuItem onClick={handleRepost}>
+                Repost
               </DropdownMenuItem>
+              {user?.id !== meme.user_id && (
+                <DropdownMenuItem className="text-destructive">
+                  Report
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -264,11 +295,10 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleLike}
-                className={`flex items-center gap-2 text-sm transition-colors ${
-                  isLiked
-                    ? 'text-red-500'
-                    : 'text-muted-foreground hover:text-red-500'
-                }`}
+                className={`flex items-center gap-2 text-sm transition-colors ${isLiked
+                  ? 'text-red-500'
+                  : 'text-muted-foreground hover:text-red-500'
+                  }`}
               >
                 <Heart
                   className={`h-6 w-6 ${isLiked ? 'fill-red-500' : ''}`}
@@ -306,11 +336,10 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
               disabled={bookmarksLoading}
             >
               <Bookmark
-                className={`h-6 w-6 transition-colors ${
-                  isBookmarked
-                    ? 'fill-orange-500 text-orange-500'
-                    : 'hover:text-orange-500'
-                }`}
+                className={`h-6 w-6 transition-colors ${isBookmarked
+                  ? 'fill-orange-500 text-orange-500'
+                  : 'hover:text-orange-500'
+                  }`}
               />
             </Button>
           </div>
@@ -353,7 +382,7 @@ export const MemeCard = ({ meme }: MemeCardProps) => {
 
           {/* Comments Link */}
           {commentsForMeme.length > 0 && (
-            <button 
+            <button
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setShowComments(true)}
             >

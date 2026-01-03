@@ -1,34 +1,27 @@
-import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Navigation } from "@/components/layout/Navigation";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingTags } from "@/components/posts/TrendingTags";
-import { useTrendingTags, usePostsByTag } from "@/hooks/useTags";
-import { useFollowStatus, useToggleFollow } from "@/hooks/useFollow";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  Search,
-  TrendingUp,
-  Hash,
-  MapPin,
-  Users,
-  Image as ImageIcon,
-  Video,
-  Heart,
-  MessageCircle,
-  User,
-  Loader2,
-  Compass,
-} from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { Post } from "@/hooks/usePosts";
 import { PostDetailModal } from "@/components/posts/PostDetailModal";
+import { TrendingTags } from "@/components/posts/TrendingTags";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFollowStatus, useToggleFollow } from "@/hooks/useFollow";
+import { Post } from "@/hooks/usePosts";
+import { usePostsByTag, useTrendingTags } from "@/hooks/useTags";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Hash,
+  Heart,
+  Loader2,
+  MapPin,
+  MessageCircle,
+  TrendingUp,
+  Users
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 
 type UserProfile = {
   id: string;
@@ -138,7 +131,7 @@ const Explore = () => {
 
 const TrendingContent = ({ onPostClick }: { onPostClick: (post: Post) => void }) => {
   const { user } = useAuth();
-  const { data: posts, isLoading } = useQuery<Post[]>({ 
+  const { data: posts, isLoading } = useQuery<Post[]>({
     queryKey: ["trending_posts"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -165,7 +158,7 @@ const TrendingContent = ({ onPostClick }: { onPostClick: (post: Post) => void })
         .order("likes_count", { ascending: false })
         .limit(18);
       if (error) throw error;
-      
+
       return data.map((post: any) => ({
         id: post.id,
         content: post.caption || '',
@@ -212,10 +205,10 @@ const TrendingContent = ({ onPostClick }: { onPostClick: (post: Post) => void })
                 alt="Trending post"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-2xl"
               />
-            ) : caption ? (
+            ) : post.content ? (
               <div className="p-4 text-left w-full h-full flex items-center justify-center">
                 <div className="bg-white/80 rounded-xl p-4 w-full h-full flex items-center justify-center text-center">
-                  <p className="text-sm text-foreground line-clamp-6 px-2">{caption}</p>
+                  <p className="text-sm text-foreground line-clamp-6 px-2">{post.content}</p>
                 </div>
               </div>
             ) : (
@@ -259,7 +252,8 @@ const PeopleContent = () => {
           display_name,
           avatar_url,
           bio,
-          followers_count
+          followers_count,
+          is_verified
         `)
         .order("followers_count", { ascending: false })
       if (error) throw error;
@@ -306,9 +300,16 @@ const UserCard = ({ user, currentUser }) => {
         <div className="space-y-1 mb-4 text-center">
           <h3 className="font-semibold text-lg truncate" title={user.display_name || user.username}>
             {user.display_name || user.username}
+            {user.is_verified === 'verified' && (
+              <span className="inline-flex items-center gap-0.2 text-xs text-blue-500 font-medium">
+                <svg className="h-4 w-5 fill-current" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </span>
+            )}
           </h3>
           <p className="text-muted-foreground text-sm">@{user.username}</p>
-          <p className="text-sm text-muted-foreground">{user.followers_count.toLocaleString()} followers</p>
+          {/* <p className="text-sm text-muted-foreground">{user.followers_count.toLocaleString()} followers</p> */}
           <p className="text-sm line-clamp-2 h-12 mt-2">{user.bio}</p>
         </div>
         {user.user_id !== currentUser?.id && user.id !== currentUser?.id && (

@@ -56,7 +56,7 @@ export const EmailField = ({ value, onChange, error }: { value: string; onChange
     label="Email"
     icon={<Mail className="h-4 w-4" />}
     type="email"
-    placeholder="your@email.com"
+    placeholder="your@gmail.com"
     value={value}
     onChange={onChange}
     error={error}

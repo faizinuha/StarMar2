@@ -18,6 +18,10 @@ import { useTrendingTags } from '@/hooks/useTags';
 import { supabase } from '@/integrations/supabase/client';
 import { Image, Laugh, Loader2, Upload, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { EffectsPicker } from './EffectsPicker';
+import { UsersTagPicker } from './UsersTagPicker';
+import { LocationPicker } from './LocationPicker';
+import { applyEffect } from '@/lib/effects';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -25,15 +29,25 @@ interface CreatePostModalProps {
   defaultTab?: 'post' | 'meme';
 }
 
+interface TaggedUser {
+  user_id: string;
+  username: string;
+  displayName: string;
+  avatar: string;
+}
+
 export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: CreatePostModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [caption, setCaption] = useState('');
   const [location, setLocation] = useState('');
+  const [locationEnabled, setLocationEnabled] = useState(true);
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [selectedEffect, setSelectedEffect] = useState<string>();
+  const [selectedUsers, setSelectedUsers] = useState<TaggedUser[]>([]);
 
   const [selectedBadges, setSelectedBadges] = useState<number[]>([]);
   const { data: availableBadges, isLoading: isLoadingBadges } = useBadges();
@@ -47,7 +61,10 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
     setPreviews([]);
     setCaption('');
     setLocation('');
+    setLocationEnabled(true);
     setSelectedBadges([]);
+    setSelectedEffect(undefined);
+    setSelectedUsers([]);
   }, [activeTab]);
   
   useEffect(() => {
@@ -88,6 +105,38 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
     );
   };
 
+  const addTaggedUser = (user: TaggedUser) => {
+    setSelectedUsers((prev) => {
+      const exists = prev.some((u) => u.user_id === user.user_id);
+      if (exists) return prev;
+      return [...prev, user];
+    });
+  };
+
+  const removeTaggedUser = (userId: string) => {
+    setSelectedUsers((prev) => prev.filter((u) => u.user_id !== userId));
+  };
+
+  const handleApplyEffect = async (index: number, effectId: string) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      applyEffect(effectId, canvas);
+      
+      // Update preview
+      const updatedPreviews = [...previews];
+      updatedPreviews[index] = canvas.toDataURL();
+      setPreviews(updatedPreviews);
+    };
+    img.src = previews[index];
+  };
+
   const resetFormAndClose = () => {
     resetForm();
     onClose();
@@ -96,9 +145,12 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
   const resetForm = () => {
     setCaption('');
     setLocation('');
+    setLocationEnabled(true);
     setFiles([]);
     setPreviews([]);
     setSelectedBadges([]);
+    setSelectedEffect(undefined);
+    setSelectedUsers([]);
   };
 
   const handleSubmit = async () => {
@@ -161,7 +213,7 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
           .insert({ 
             user_id: user.id, 
             caption, 
-            location: location || null,
+            location: locationEnabled ? location || null : null,
             likes_count: 0,
             comments_count: 0
           })
@@ -185,7 +237,19 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
           .insert(mediaInserts);
         if (mediaError) throw mediaError;
 
-        // --- START CLIENT-SIDE HASHTAG PROCESSING ---
+        // Insert tagged users
+        if (selectedUsers.length > 0) {
+          const taggedUsersInserts = selectedUsers.map((taggedUser) => ({
+            post_id: post.id,
+            tagged_user_id: taggedUser.user_id,
+          }));
+          const { error: tagError } = await supabase
+            .from('post_tagged_users')
+            .insert(taggedUsersInserts);
+          if (tagError) console.error('Error tagging users:', tagError);
+        }
+
+        // Handle hashtags client-side
         if (caption) {
           const hashtagRegex = /#(\w+)/g;
           const hashtags = caption.match(hashtagRegex)?.map(tag => tag.substring(1).toLowerCase()) || [];
@@ -193,7 +257,6 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
 
           if (uniqueHashtags.length > 0) {
             try {
-              // 1. Upsert hashtags to ensure they exist and get their IDs
               const upsertedTags = await Promise.all(uniqueHashtags.map(async (tag) => {
                 const { data: hashtagData, error: upsertError } = await supabase
                   .from('hashtags')
@@ -204,7 +267,6 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
                 return hashtagData;
               }));
 
-              // 2. Create the post-hashtag relationships
               const postHashtagRelations = upsertedTags.map(tag => ({
                 post_id: post.id,
                 hashtag_id: tag.id,
@@ -218,11 +280,9 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
 
             } catch (e) {
               console.error('Error processing hashtags:', e);
-              // We don't re-throw here, as failing to add hashtags shouldn't block post creation
             }
           }
         }
-        // --- END CLIENT-SIDE HASHTAG PROCESSING ---
       }
 
       toast({
@@ -311,6 +371,17 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
                               />
                             )}
                           </div>
+                          {files[index]?.type.startsWith('image/') && (
+                            <div className="absolute bottom-1 left-1 right-1 flex gap-1">
+                              <EffectsPicker
+                                selectedEffect={selectedEffect}
+                                onSelectEffect={(effectId) => {
+                                  setSelectedEffect(effectId);
+                                  handleApplyEffect(index, effectId);
+                                }}
+                              />
+                            </div>
+                          )}
                           <Button
                             variant="destructive"
                             size="icon"
@@ -394,12 +465,20 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
                 </div>
               </div>
               <div>
-                <Label htmlFor="location">Location (Optional)</Label>
-                <LocationInput
+                <Label htmlFor="location">Location</Label>
+                <LocationPicker
                   value={location}
                   onChange={setLocation}
-                  placeholder="Add location..."
-                  className="mt-2"
+                  onEnableChange={setLocationEnabled}
+                  enabled={locationEnabled}
+                />
+              </div>
+              <div>
+                <Label>Tag Users</Label>
+                <UsersTagPicker
+                  onSelectUser={addTaggedUser}
+                  selectedUsers={selectedUsers}
+                  onRemoveUser={removeTaggedUser}
                 />
               </div>
             </div>

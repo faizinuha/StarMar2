@@ -422,7 +422,7 @@ const AdminContent = () => {
                         <TableCell>
                           <Link to={`/profile/${user.user_id}`}>
                             <Avatar className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary transition-all">
-                              <AvatarImage src={user.avatar_url || 'https://avatar.vercel.sh/' + user.username} alt={user.username || ''} />
+                              <AvatarImage src={user.avatar_url || '/assets/Place/cewek.png'} alt={user.username || ''} />
                               <AvatarFallback>{user.username?.charAt(0) || 'U'}</AvatarFallback>
                             </Avatar>
                           </Link>

@@ -73,6 +73,15 @@ export const EditPostModal = ({
             Make changes to your post here. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
+        {post.media_type?.startsWith('video/') ? (
+          <div className="rounded-lg overflow-hidden my-4">
+            <video src={post.image_url} controls className="w-full max-h-[300px] object-cover"></video>
+          </div>
+        ) : (
+          <div className="rounded-lg overflow-hidden my-4">
+            <img src={post.image_url} alt="Post" className="w-full max-h-[300px] object-cover" />
+          </div>
+        )}
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}

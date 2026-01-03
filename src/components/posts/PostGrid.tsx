@@ -36,7 +36,7 @@ const PostGridItem = ({ post, onClick }: PostGridItemProps) => {
     if (post.image_url && typeof post.image_url === 'string' && post.image_url.startsWith('http')) {
       return post.image_url;
     }
-    
+
     // Check media array
     if (post.media && Array.isArray(post.media) && post.media.length > 0) {
       const firstMedia = post.media[0];
@@ -44,7 +44,7 @@ const PostGridItem = ({ post, onClick }: PostGridItemProps) => {
         return firstMedia.media_url;
       }
     }
-    
+
     return null;
   };
 
@@ -53,7 +53,7 @@ const PostGridItem = ({ post, onClick }: PostGridItemProps) => {
     if (post.media_type) {
       return post.media_type;
     }
-    
+
     // Check media array for type
     if (post.media && Array.isArray(post.media) && post.media.length > 0) {
       const firstMedia = post.media[0];
@@ -61,7 +61,7 @@ const PostGridItem = ({ post, onClick }: PostGridItemProps) => {
         return firstMedia.media_type;
       }
     }
-    
+
     return 'image';
   };
 
@@ -81,7 +81,6 @@ const PostGridItem = ({ post, onClick }: PostGridItemProps) => {
           <>
             <video
               src={imageUrl}
-              poster={imageUrl}
               preload="metadata"
               muted
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"

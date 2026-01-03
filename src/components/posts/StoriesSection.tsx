@@ -1,15 +1,13 @@
-import { useState } from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useStories } from "@/hooks/useStories";
-import { StoryViewer } from "./StoryViewer";
-import { CreateStoryModal } from "./CreateStoryModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOptimizedStories } from "@/hooks/useOptimizedStories";
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import { CreateStoryModal } from "./CreateStoryModal";
+import { StoryViewer } from "./StoryViewer";
 
 export const StoriesSection = () => {
   const { user } = useAuth();
-  const { data: stories = [] } = useStories();
+  const { data: stories = [] } = useOptimizedStories();
   const [selectedStoryIndex, setSelectedStoryIndex] = useState<number | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -56,7 +54,7 @@ export const StoriesSection = () => {
       <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide">
         {/* Add Story Button */}
         {user && (
-          <div 
+          <div
             className="flex-shrink-0 cursor-pointer group"
             onClick={() => setShowCreateModal(true)}
           >
@@ -78,15 +76,18 @@ export const StoriesSection = () => {
           >
             <div className="relative">
               <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-primary/20 group-hover:border-primary transition-colors">
-                <Avatar className="w-full h-full rounded-2xl">
-                  <AvatarImage 
-                    src={group.user.avatar} 
-                    className="object-cover"
+                {group.latestStory.media_type?.startsWith('video') ? (
+                  <video
+                    src={group.latestStory.media_url}
+                    className="w-full h-full object-cover"
                   />
-                  <AvatarFallback className="rounded-2xl text-lg">
-                    {group.user.displayName?.[0] || group.user.username?.[0]}
-                  </AvatarFallback>
-                </Avatar>
+                ) : (
+                  <img
+                    src={group.latestStory.media_url}
+                    className="w-full h-full object-cover"
+                    alt="Story"
+                  />
+                )}
               </div>
               {group.stories.length > 1 && (
                 <div className="absolute -bottom-1 -right-1 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">

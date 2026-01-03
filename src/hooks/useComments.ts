@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { sanitizeComment } from "@/lib/sanitizeComment";
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { sanitizeComment } from '@/lib/sanitizeComment';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export interface CommentUser {
   username: string;
@@ -26,9 +26,12 @@ export interface Comment {
 }
 
 // Helper function to build a nested comment tree
-const buildCommentTree = (comments: Comment[], parentId: string | null = null): Comment[] => {
+const buildCommentTree = (
+  comments: Comment[],
+  parentId: string | null = null
+): Comment[] => {
   const nestedComments: Comment[] = [];
-  comments.forEach(comment => {
+  comments.forEach((comment) => {
     if (comment.parent_comment_id === parentId) {
       const children = buildCommentTree(comments, comment.id);
       if (children.length) {
@@ -42,14 +45,15 @@ const buildCommentTree = (comments: Comment[], parentId: string | null = null): 
 
 export function usePostComments(postId: string) {
   const { user } = useAuth();
-  
+
   return useQuery({
-    queryKey: ["comments", "post", postId],
+    queryKey: ['comments', 'post', postId],
     queryFn: async (): Promise<Comment[]> => {
       // First fetch comments
       const { data: commentsData, error: commentsError } = await supabase
-        .from("comments")
-        .select(`
+        .from('comments')
+        .select(
+          `
           id,
           content,
           image_url,
@@ -64,9 +68,10 @@ export function usePostComments(postId: string) {
             display_name,
             avatar_url
           )
-        `)
-        .eq("post_id", postId)
-        .order("created_at", { ascending: true });
+        `
+        )
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
 
       if (commentsError) throw commentsError;
 
@@ -75,13 +80,15 @@ export function usePostComments(postId: string) {
       if (user && commentsData.length > 0) {
         const commentIds = commentsData.map((c: any) => c.id);
         const { data: likesData } = await supabase
-          .from("likes")
-          .select("comment_id")
-          .eq("user_id", user.id)
-          .in("comment_id", commentIds);
-        
+          .from('likes')
+          .select('comment_id')
+          .eq('user_id', user.id)
+          .in('comment_id', commentIds);
+
         if (likesData) {
-          userLikedCommentIds = new Set(likesData.map((l: any) => l.comment_id));
+          userLikedCommentIds = new Set(
+            likesData.map((l: any) => l.comment_id)
+          );
         }
       }
 
@@ -98,7 +105,8 @@ export function usePostComments(postId: string) {
         isLiked: userLikedCommentIds.has(comment.id),
         user: {
           username: comment.profiles?.username || '',
-          displayName: comment.profiles?.display_name || comment.profiles?.username || '',
+          displayName:
+            comment.profiles?.display_name || comment.profiles?.username || '',
           avatar: comment.profiles?.avatar_url || '',
         },
       }));
@@ -111,14 +119,15 @@ export function usePostComments(postId: string) {
 
 export function useMemeComments(memeId: string) {
   const { user } = useAuth();
-  
+
   return useQuery({
-    queryKey: ["comments", "meme", memeId],
+    queryKey: ['comments', 'meme', memeId],
     queryFn: async (): Promise<Comment[]> => {
       // First fetch comments
       const { data: commentsData, error: commentsError } = await supabase
-        .from("comments")
-        .select(`
+        .from('comments')
+        .select(
+          `
           id,
           content,
           image_url,
@@ -133,9 +142,10 @@ export function useMemeComments(memeId: string) {
             display_name,
             avatar_url
           )
-        `)
-        .eq("meme_id", memeId)
-        .order("created_at", { ascending: true });
+        `
+        )
+        .eq('meme_id', memeId)
+        .order('created_at', { ascending: true });
 
       if (commentsError) throw commentsError;
 
@@ -144,13 +154,15 @@ export function useMemeComments(memeId: string) {
       if (user && commentsData.length > 0) {
         const commentIds = commentsData.map((c: any) => c.id);
         const { data: likesData } = await supabase
-          .from("likes")
-          .select("comment_id")
-          .eq("user_id", user.id)
-          .in("comment_id", commentIds);
-        
+          .from('likes')
+          .select('comment_id')
+          .eq('user_id', user.id)
+          .in('comment_id', commentIds);
+
         if (likesData) {
-          userLikedCommentIds = new Set(likesData.map((l: any) => l.comment_id));
+          userLikedCommentIds = new Set(
+            likesData.map((l: any) => l.comment_id)
+          );
         }
       }
 
@@ -167,7 +179,8 @@ export function useMemeComments(memeId: string) {
         isLiked: userLikedCommentIds.has(comment.id),
         user: {
           username: comment.profiles?.username || '',
-          displayName: comment.profiles?.display_name || comment.profiles?.username || '',
+          displayName:
+            comment.profiles?.display_name || comment.profiles?.username || '',
           avatar: comment.profiles?.avatar_url || '',
         },
       }));
@@ -183,34 +196,34 @@ export function useCreateComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ 
-      content, 
+    mutationFn: async ({
+      content,
       imageUrl,
-      postId, 
-      memeId, 
+      postId,
+      memeId,
       parentCommentId,
       postOwnerId,
-      memeOwnerId
-    }: { 
+      memeOwnerId,
+    }: {
       content: string;
       imageUrl?: string;
-      postId?: string; 
-      memeId?: string; 
+      postId?: string;
+      memeId?: string;
       parentCommentId?: string;
       postOwnerId?: string;
       memeOwnerId?: string;
     }) => {
-      if (!user) throw new Error("User not authenticated");
+      if (!user) throw new Error('User not authenticated');
 
       // Sanitize content - strip HTML tags
       const sanitizedContent = sanitizeComment(content);
-      
+
       if (!sanitizedContent.trim() && !imageUrl) {
-        throw new Error("Comment cannot be empty");
+        throw new Error('Comment cannot be empty');
       }
 
       const { data, error } = await supabase
-        .from("comments")
+        .from('comments')
         .insert({
           content: sanitizedContent,
           image_url: imageUrl,
@@ -227,10 +240,10 @@ export function useCreateComment() {
       // Create notification for post/meme owner (don't notify yourself)
       const ownerId = postOwnerId || memeOwnerId;
       if (ownerId && ownerId !== user.id) {
-        await supabase.from("notifications").insert({
+        await supabase.from('notifications').insert({
           user_id: ownerId,
           from_user_id: user.id,
-          type: "comment",
+          type: 'comment',
           post_id: postId,
           meme_id: memeId,
           comment_id: data.id,
@@ -241,10 +254,14 @@ export function useCreateComment() {
     },
     onSuccess: (_, variables) => {
       if (variables.postId) {
-        queryClient.invalidateQueries({ queryKey: ["comments", "post", variables.postId] });
+        queryClient.invalidateQueries({
+          queryKey: ['comments', 'post', variables.postId],
+        });
       }
       if (variables.memeId) {
-        queryClient.invalidateQueries({ queryKey: ["comments", "meme", variables.memeId] });
+        queryClient.invalidateQueries({
+          queryKey: ['comments', 'meme', variables.memeId],
+        });
       }
     },
   });
@@ -255,26 +272,30 @@ export function useToggleCommentLike() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ commentId, isLiked }: { commentId: string; isLiked: boolean }) => {
-      if (!user) throw new Error("User not authenticated");
+    mutationFn: async ({
+      commentId,
+      isLiked,
+    }: {
+      commentId: string;
+      isLiked: boolean;
+    }) => {
+      if (!user) throw new Error('User not authenticated');
 
       if (isLiked) {
         // Remove like
         const result = await (supabase as any)
-          .from("likes")
+          .from('likes')
           .delete()
-          .eq("user_id", user.id)
-          .eq("comment_id", commentId);
+          .eq('user_id', user.id)
+          .eq('comment_id', commentId);
 
         if (result.error) throw result.error;
       } else {
         // Add like
-        const result = await (supabase as any)
-          .from("likes")
-          .insert({
-            user_id: user.id,
-            comment_id: commentId,
-          });
+        const result = await (supabase as any).from('likes').insert({
+          user_id: user.id,
+          comment_id: commentId,
+        });
 
         if (result.error) throw result.error;
       }
@@ -282,7 +303,29 @@ export function useToggleCommentLike() {
       return true;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments"] });
+      queryClient.invalidateQueries({ queryKey: ['comments'] });
+    },
+  });
+}
+
+export function useDeleteComment() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (commentId: string) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { error } = await supabase
+        .from('comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('user_id', user.id); // Ensure user owns the comment
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments'] });
     },
   });
 }

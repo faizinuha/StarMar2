@@ -2,6 +2,7 @@ import { Navigation } from '@/components/layout/Navigation';
 import { PostDetailModal } from '@/components/posts/PostDetailModal';
 import { PostGrid } from '@/components/posts/PostGrid';
 import { FollowListModal } from '@/components/profile/FollowListModal';
+import { ProfileMenu } from '@/components/profile/ProfileMenu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,6 @@ import {
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ProfileMenu } from '@/components/profile/ProfileMenu';
 
 const ProfilePageContent = ({ profile, isLoading, error }) => {
   const { user: authUser } = useAuth();
@@ -111,7 +111,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                 src={
                   profile.cover_img ||
                   profile.avatar_url ||
-                  '/placeholder-cover.jpg'
+                  'src/assets/Place/cewek.png'
                 }
                 alt="Cover"
                 className="w-full h-full object-cover"
@@ -141,15 +141,20 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
 
                       try {
                         const ext = file.name.split('.').pop();
-                        const filePath = `${authUser.id
-                          }/cover-${Date.now()}.${ext}`;
+                        const filePath = `${authUser.id}/cover-${Date.now()}.${ext}`;
                         const { error: uploadErr } = await supabase.storage
                           .from('avatars')
                           .upload(filePath, file, { upsert: true });
                         if (uploadErr) throw uploadErr;
                         await updateProfile({ cover_img: filePath });
+                        // Invalidate query to fetch fresh data with new signed URL
+                        await queryClient.invalidateQueries({
+                          queryKey: ['profile', authUser.id],
+                        });
+                        toast.success('Cover updated successfully!');
                       } catch (err) {
                         console.error('Cover upload failed', err);
+                        toast.error('Failed to upload cover');
                         queryClient.invalidateQueries({
                           queryKey: ['profile', authUser.id],
                         });
@@ -180,7 +185,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                   <div className="relative inline-block">
                     <Avatar className="h-32 w-32 border-4 border-background shadow-xl">
                       <AvatarImage
-                        src={profile.avatar_url || '/placeholder-avatar.jpg'}
+                        src={profile.avatar_url || 'src/assets/Place/cewek.png'}
                         alt={profile.display_name}
                       />
                       <AvatarFallback className="text-2xl">
@@ -214,16 +219,21 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
 
                             try {
                               const ext = file.name.split('.').pop();
-                              const filePath = `${authUser.id
-                                }/avatar-${Date.now()}.${ext}`;
+                              const filePath = `${authUser.id}/avatar-${Date.now()}.${ext}`;
                               const { error: uploadErr } =
                                 await supabase.storage
                                   .from('avatars')
                                   .upload(filePath, file, { upsert: true });
                               if (uploadErr) throw uploadErr;
                               await updateProfile({ avatar_url: filePath });
+                              // Invalidate query to fetch fresh data with new signed URL
+                              await queryClient.invalidateQueries({
+                                queryKey: ['profile', authUser.id],
+                              });
+                              toast.success('Avatar updated successfully!');
                             } catch (err) {
                               console.error('Avatar upload failed', err);
+                              toast.error('Failed to upload avatar');
                               queryClient.invalidateQueries({
                                 queryKey: ['profile', authUser.id],
                               });
@@ -252,7 +262,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                         {profile.display_name || profile.username}
                       </h1>
                       {profile.is_verified && (
-                        <Badge className="starmar-gradient text-white border-0">
+                        <Badge className="starmar-gradient text-white border-0 mt-2">
                           ✓ Verified
                         </Badge>
                       )}

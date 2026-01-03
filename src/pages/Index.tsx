@@ -1,22 +1,31 @@
-import { useState } from "react";
-import { PostDetailModal } from "@/components/posts/PostDetailModal";
-import { SuggestedFriends } from "@/components/posts/SuggestedFriends";
-import { StoriesSection } from "@/components/posts/StoriesSection";
-import { CreatePost } from "@/components/posts/CreatePost";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Navigation } from "@/components/layout/Navigation";
 import { MaintenanceBanner } from "@/components/MaintenanceBanner";
-import { useAllPosts, Post } from "@/hooks/usePosts";
-import { useAuth } from "@/contexts/AuthContext";
-import { Grid3X3, LayoutGrid } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { PostCardSkeleton } from "@/components/skeletons/PostCardSkeleton";
-import { SuggestedFriendsSkeleton } from "@/components/skeletons/SuggestedFriendsSkeleton";
-import { StoriesSkeleton } from "@/components/skeletons/StoriesSkeleton";
+import { CreatePost } from "@/components/posts/CreatePost";
 import { PostCard } from "@/components/posts/PostCard";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PostDetailModal } from "@/components/posts/PostDetailModal";
+import { StoriesSection } from "@/components/posts/StoriesSection";
+import { SuggestedFriends } from "@/components/posts/SuggestedFriends";
+import { PostCardSkeleton } from "@/components/skeletons/PostCardSkeleton";
+import { StoriesSkeleton } from "@/components/skeletons/StoriesSkeleton";
+import { SuggestedFriendsSkeleton } from "@/components/skeletons/SuggestedFriendsSkeleton";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { Post, useAllPosts } from "@/hooks/usePosts";
+import { useProfile } from "@/hooks/useProfile";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const { loading: authLoading } = useAuth();
+  const { loading: authLoading, user } = useAuth();
+  const { data: userProfile, isLoading: isProfileLoading } = useProfile(user?.id);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && !isProfileLoading && userProfile && !userProfile.username) {
+      navigate('/onboarding');
+    }
+  }, [user, userProfile, isProfileLoading, navigate]);
   const { data: posts = [], isLoading, error } = useAllPosts();
   const [viewMode, setViewMode] = useState<'feed' | 'grid'>('feed');
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -100,15 +109,15 @@ const Index = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               <MaintenanceBanner />
-              
+
               <ErrorBoundary>
                 <StoriesSection />
               </ErrorBoundary>
-              
+
               <ErrorBoundary>
                 <CreatePost />
               </ErrorBoundary>
-              
+
               {/* View Mode Toggle */}
               <div className="flex items-center justify-between">
               </div>
@@ -124,7 +133,7 @@ const Index = () => {
                   </div>
                 ) : null}
               </ErrorBoundary>
-              
+
               {posts.length === 0 && (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📝</div>

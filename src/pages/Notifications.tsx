@@ -145,7 +145,7 @@ export const Notifications = () => {
     if (!user) return;
 
     // Buat instance Audio di luar handler agar tidak dibuat ulang setiap saat
-    const notificationSound = new Audio('/assets/sounds/notification.mp3');
+    const notificationSound = new Audio('/assets/sounds/chatify/new-message-sound.mp3');
 
     const handleNewNotification = () => {
       // Invalidate query untuk memicu refetch

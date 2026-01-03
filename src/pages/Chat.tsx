@@ -137,7 +137,7 @@ export default function Chat() {
   const getConversationName = (conv: Conversation) => {
     if (conv.is_group) return conv.name || 'Group Chat';
     const otherMember = conv.members.find((m: any) => m.user_id !== user?.id);
-    return otherMember?.display_name || otherMember?.username || 'Unknown';
+    return otherMember?.display_name || otherMember?.username || 'Tidak Dikenal';
   };
 
   const getConversationAvatar = (conv: Conversation) => {
@@ -396,7 +396,7 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
   const otherUser = currentConversation?.members.find(m => m.user_id !== user?.id);
   const conversationName = currentConversation?.is_group ? currentConversation.name || 'Group Chat' : otherUser?.display_name || otherUser?.username || 'Unknown';
   const conversationAvatar = currentConversation?.is_group ? currentConversation.avatar_url : otherUser?.avatar_url;
-  
+
   // Check apakah user masih member grup
   const isUserMember = currentConversation?.members?.some(m => m.user_id === user?.id);
   const isGroupChat = currentConversation?.is_group;
@@ -637,12 +637,12 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
           <Button variant="ghost" size="icon" onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} disabled={!isUserMember && isGroupChat}>
             {isRecording ? <Square className="h-5 w-5 text-destructive" /> : <Mic className="h-5 w-5" />}
           </Button>
-          <Input 
-            placeholder={isUserMember || !isGroupChat ? "Ketik pesan..." : "Anda bukan anggota grup"} 
-            value={newMessage} 
-            onChange={(e) => setNewMessage(e.target.value)} 
-            onKeyPress={handleKeyPress} 
-            className="flex-1" 
+          <Input
+            placeholder={isUserMember || !isGroupChat ? "Ketik pesan..." : "Anda bukan anggota grup"}
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="flex-1"
             disabled={!isUserMember && isGroupChat}
           />
           <Button onClick={handleSend} size="icon" disabled={!isUserMember && isGroupChat}><Send className="h-5 w-5" /></Button>

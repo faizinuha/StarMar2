@@ -1,15 +1,14 @@
-import { useState } from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { X, UserPlus, UserMinus } from "lucide-react";
-import { useFollowStatus, useToggleFollow } from "@/hooks/useFollow";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
-import { Separator } from "@/components/ui/separator";
-import { useProfile } from "@/hooks/useProfile";
-import { useAllProfiles } from "@/hooks/useAllProfiles";
 import { ProfileHoverCard } from "@/components/profile/ProfileHoverCard";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAllProfiles } from "@/hooks/useAllProfiles";
+import { useFollowStatus, useToggleFollow } from "@/hooks/useFollow";
+import { useProfile } from "@/hooks/useProfile";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 interface SuggestedUser {
@@ -21,6 +20,7 @@ interface SuggestedUser {
   bio?: string | null;
   followers_count?: number;
   following_count?: number;
+  is_verified?: string;
 }
 
 export const SuggestedFriends = () => {
@@ -42,6 +42,7 @@ export const SuggestedFriends = () => {
       bio: u.bio,
       followers_count: u.followers_count,
       following_count: u.following_count,
+      is_verified: u.is_verified,
     }));
 
   return (
@@ -56,7 +57,13 @@ export const SuggestedFriends = () => {
               <AvatarFallback>{currentUserProfile.display_name?.charAt(0) || currentUserProfile.username?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-semibold text-base">{currentUserProfile.display_name || currentUserProfile.username}</h3>
+              <h3 className="font-semibold text-base">{currentUserProfile.display_name || currentUserProfile.username} {currentUserProfile.is_verified === 'verified' && (
+                <span className="inline-flex items-center gap-0.2 text-xs text-blue-500 font-medium mr-5">
+                  <svg className="h-4 w-5 fill-current" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </span>
+              )}</h3>
               <p className="text-sm text-muted-foreground">@{currentUserProfile.username}</p>
             </div>
           </div>
@@ -125,7 +132,16 @@ const SuggestedUserCard = ({ user: suggestedUser }: SuggestedUserCardProps) => {
           </Link>
           <div>
             <Link to={`/profile/${suggestedUser.id}`} className="hover:underline">
-              <h3 className="font-semibold text-sm">{suggestedUser.displayName || suggestedUser.username}</h3>
+              <h3 className="font-semibold text-sm">
+                {suggestedUser.displayName || suggestedUser.username}
+                {suggestedUser.is_verified === 'verified' && (
+                  <span className="inline-flex items-center gap-0.2 text-xs text-blue-500 font-medium ml-1">
+                    <svg className="h-3 w-3 fill-current" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                )}
+              </h3>
             </Link>
             <p className="text-sm text-muted-foreground">@{suggestedUser.username || 'user'}</p>
           </div>

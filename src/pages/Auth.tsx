@@ -1,18 +1,22 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import starMarLogo from '@/assets/Logo/StarMar-.png';
+import loginSound from '@/assets/sounds/login.wav';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Github, Chrome } from 'lucide-react';
+import { Chrome, Github } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { DownloadProofModal } from '../components/DownloadProofModal';
 import { DiscordIcon } from '../components/ui/icons/DiscordIcon';
 import { SpotifyIcon } from '../components/ui/icons/SpotifyIcon';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '../contexts/AuthContext';
 import {
   DisplayNameField,
@@ -20,11 +24,7 @@ import {
   PasswordField,
   UsernameField,
 } from '../contexts/AuthFormFields';
-import starMarLogo from '../../assets/Logo/StarMar-.png';
-import loginSound from '../../assets/sounds/login.wav';
-import { DownloadProofModal } from '../components/DownloadProofModal';
 import { generateAndDownloadProofFile } from '../lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export function Auth() {
   const {
@@ -76,14 +76,16 @@ export function Auth() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
-    // Email validation
+
+    // Email validation - hanya menerima Gmail
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
+    } else if (!formData.email.toLowerCase().endsWith('@gmail.com')) {
+      newErrors.email = 'Only Gmail addresses are allowed';
     }
-    
+
     // Password validation
     if (!formData.password) {
       newErrors.password = 'Password is required';
@@ -96,7 +98,7 @@ export function Auth() {
     } else if (!/[0-9]/.test(formData.password)) {
       newErrors.password = 'Password must contain at least one number';
     }
-    
+
     // Registration-specific validations
     if (!isLogin) {
       // Username validation
@@ -109,7 +111,7 @@ export function Auth() {
       } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
         newErrors.username = 'Username can only contain letters, numbers, and underscores';
       }
-      
+
       // Display name validation
       if (!formData.displayName) {
         newErrors.displayName = 'Display name is required';
@@ -118,7 +120,7 @@ export function Auth() {
       } else if (formData.displayName.length > 50) {
         newErrors.displayName = 'Display name must be less than 50 characters';
       }
-      
+
       // Confirm password validation
       if (!formData.confirmPassword) {
         newErrors.confirmPassword = 'Please confirm your password';
@@ -126,7 +128,7 @@ export function Auth() {
         newErrors.confirmPassword = "Passwords don't match";
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -171,23 +173,25 @@ export function Auth() {
     if (!value) return '';
 
     switch (name) {
-      case 'email':
+      case 'email': {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
+        if (!value.toLowerCase().endsWith('@gmail.com')) return 'Only Gmail addresses are allowed';
         return '';
+      }
       case 'password':
-        if (value.length < 8) return 'Password must be at least 8 characters';
+        if (value.length < 6) return 'Password must be at least 8 characters';
         if (!/[A-Z]/.test(value)) return 'Password must contain at least one uppercase letter';
         if (!/[a-z]/.test(value)) return 'Password must contain at least one lowercase letter';
         if (!/[0-9]/.test(value)) return 'Password must contain at least one number';
         return '';
       case 'username':
         if (!isLogin && value.length < 3) return 'Username must be at least 3 characters';
-        if (!isLogin && value.length > 20) return 'Username must be less than 20 characters';
+        if (!isLogin && value.length > 10) return 'Username must be less than 20 characters';
         if (!isLogin && !/^[a-zA-Z0-9_]+$/.test(value)) return 'Username can only contain letters, numbers, and underscores';
         return '';
       case 'displayName':
         if (!isLogin && value.length < 2) return 'Display name must be at least 2 characters';
-        if (!isLogin && value.length > 50) return 'Display name must be less than 50 characters';
+        if (!isLogin && value.length > 30) return 'Display name must be less than 50 characters';
         return '';
       case 'confirmPassword':
         if (!isLogin && currentData.password !== value) return "Passwords don't match";
@@ -409,7 +413,7 @@ export function Auth() {
                   </div>
                   {!isLogin && (
                     <p className="text-sm text-muted-foreground">
-                        Password must be at least 8 characters.
+                      Password must be at least 8 characters.
                     </p>
                   )}
                   <Button

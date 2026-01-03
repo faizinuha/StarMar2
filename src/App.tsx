@@ -1,31 +1,32 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import AdminRoute from "./components/AdminRoute";
+import { BannedUserRedirect } from "./components/BannedUserRedirect";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { GlobalPlayer } from "./components/layout/GlobalPlayer";
+import PrivateRoute from "./components/PrivateRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LoadingProvider } from "./contexts/LoadingContext";
-import { ErrorBoundary } from "./components/ErrorBoundary";
-import { BannedUserRedirect } from "./components/BannedUserRedirect";
-import Index from "./pages/Index";
-import { Auth } from "./pages/Auth";
-import ForgotPassword from "./pages/ForgotPassword";
-import { AuthCallback } from "./pages/AuthCallback";
-import Profile from "./pages/Profile";
-import Explore from "./pages/Explore";
-import { Memes } from "./pages/Memes";
-import { Notifications } from "./pages/Notifications";
-import { Settings } from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import Admin from "./pages/Admin";
-import Checkpoint from "./pages/Checkpoint";
-import Onboarding from "./pages/Onboarding";
-import PrivateRoute from "./components/PrivateRoute";
-import AdminRoute from "./components/AdminRoute";
-import Chat from "./pages/Chat";
-import { GlobalPlayer } from "./components/layout/GlobalPlayer";
 import { MusicProvider } from "./contexts/Music";
+import Admin from "./pages/Admin";
+import { Auth } from "./pages/Auth";
+import { AuthCallback } from "./pages/AuthCallback";
+import Chat from "./pages/Chat";
+import Checkpoint from "./pages/Checkpoint";
+import Explore from "./pages/Explore";
+import ForgotPassword from "./pages/ForgotPassword";
+import Index from "./pages/Index";
+import { Memes } from "./pages/Memes";
+import NotFound from "./pages/NotFound";
+import { Notifications } from "./pages/Notifications";
+import Onboarding from "./pages/Onboarding";
 import PlayPage from "./pages/play";
+import Profile from "./pages/Profile";
+import Reelms from "./pages/Reelms";
+import { Settings } from "./pages/Settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,13 +52,13 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <LoadingProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+  <BrowserRouter>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <LoadingProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
             <AuthProvider>
               <MusicProvider>
                 <BannedUserRedirect />
@@ -67,6 +68,7 @@ const App = () => (
                   <Route path="/auth/forgot-password" element={<ForgotPassword />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/profile" element={<Profile />} />{" "}
+                  <Route path="/reelms" element={<Reelms />} />
                   {/* This route is likely for the current user's profile */}
                   <Route path="/mymusic/music" element={<PlayPage />} />
                   <Route path="/play/:trackId" element={<PlayPage />} />
@@ -106,11 +108,11 @@ const App = () => (
                 <GlobalPlayer />
               </MusicProvider>
             </AuthProvider>
-          </BrowserRouter>
-        </TooltipProvider>
-      </LoadingProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
+          </TooltipProvider>
+        </LoadingProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  </BrowserRouter>
 );
 
 export default App;

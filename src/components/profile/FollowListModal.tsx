@@ -14,7 +14,7 @@ const fetchFollowList = async (userId: string, type: 'followers' | 'following') 
 
   // Step 1: Get the list of relevant user IDs from the 'follows' table.
   const targetColumn = type === 'followers' ? 'follower_id' : 'following_id';
-  const filterColumn = type === 'followers' ? 'following_id' : 'follower_id';
+  const filterColumn = type === 'followers' ? 'follower_id' : 'following_id';
 
   const { data: follows, error: followsError } = await supabase
     .from('followers')
