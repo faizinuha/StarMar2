@@ -377,7 +377,7 @@ export const CreateStoryModal = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md w-full max-h-[90vh] h-[800px] flex flex-col p-6 overflow-hidden sm:rounded-2xl">
         <DialogHeader className="mb-2 shrink-0">
-          <DialogTitle className="text-xl font-bold text-center">
+          <DialogTitle className="text-xl font-bold">
             {isCameraOpen ? 'Ambil Foto' : isEditing ? 'Edit Cerita' : 'Buat Cerita Baru'}
           </DialogTitle>
         </DialogHeader>

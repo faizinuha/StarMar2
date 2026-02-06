@@ -26,6 +26,8 @@ import {
   Share
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { BookmarkFolderDialog } from './BookmarkFolderDialog';
 import { EditPostModal } from './EditPostModal';
 import { PostCaption } from './PostCaption';
@@ -134,6 +136,20 @@ export const PostCard = ({ post }: PostCardProps) => {
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [showRepostModal, setShowRepostModal] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Query repost count for this post
+  const { data: repostCount = 0 } = useQuery({
+    queryKey: ['repostCount', post.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('original_post_id', post.id)
+        .eq('is_repost', true);
+      if (error) return 0;
+      return count || 0;
+    },
+  });
 
   // Determine effective media to show (Original Post's if repost, else Post's)
   const displayMedia = post.is_repost && post.original_post ? post.original_post.media : post.media;
@@ -332,7 +348,7 @@ export const PostCard = ({ post }: PostCardProps) => {
             <div className="flex items-center space-x-4">
               <button onClick={handleLike} disabled={likesLoading} className={`flex items-center gap-2 text-sm transition-colors ${isLikedPost ? 'text-red-500' : 'text-muted-foreground hover:text-red-500'}`}><Heart className={`h-6 w-6 ${isLikedPost ? 'fill-red-500' : ''}`} /><span className="font-semibold">{likesCountPost.toLocaleString()}</span></button>
               <button onClick={() => setShowComments(true)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-blue-500 transition-colors"><MessageCircle className="h-6 w-6" /><span className="font-semibold">{commentsForPost.length.toLocaleString()}</span></button>
-              <button onClick={handleRepost} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-green-500 transition-colors"><Repeat className="h-6 w-6" /></button>
+              <button onClick={handleRepost} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-green-500 transition-colors"><Repeat className="h-6 w-6" />{repostCount > 0 && <span className="font-semibold">{repostCount}</span>}</button>
               <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handleShare}><Share className="h-6 w-6 hover:text-green-500 transition-colors" /></Button>
             </div>
             <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handleBookmark} disabled={bookmarksLoading}><Bookmark className={`h-6 w-6 transition-colors ${isBookmarked ? 'fill-orange-500 text-orange-500' : 'hover:text-orange-500'}`} /></Button>

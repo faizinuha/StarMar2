@@ -9,6 +9,7 @@ interface MusicContextType {
   togglePlayPause: () => void;
   playNext: () => void;
   playPrev: () => void;
+  stopTrack: () => void;
   duration: number;
   currentTime: number;
   seek: (time: number) => void;
@@ -156,6 +157,18 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const stopTrack = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.src = '';
+    }
+    setCurrentTrack(null);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+  };
+
   return (
     <MusicContext.Provider value={{ 
       isPlaying, 
@@ -165,6 +178,7 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
       togglePlayPause,
       playNext,
       playPrev,
+      stopTrack,
       duration,
       currentTime,
       seek
