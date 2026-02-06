@@ -275,7 +275,7 @@ export const Settings = () => {
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {['light', 'dark', 'system'].map((t) => (
-                  <div key={t} className={cn('cursor-pointer rounded-lg border-2 p-4 text-center transition-all', theme === t ? 'border-primary scale-105' : 'border-muted hover:border-muted-foreground')} onClick={() => setTheme(t)}>
+                  <div key={t} className={cn('cursor-pointer rounded-lg border-2 p-4 text-center transition-all', theme === t ? 'border-primary scale-105' : 'border-muted hover:border-muted-foreground')} onClick={() => setTheme(t as "light" | "dark" | "system")}>
                     {t === 'light' && <Sun className="mx-auto mb-2 h-6 w-6" />}
                     {t === 'dark' && <Moon className="mx-auto mb-2 h-6 w-6" />}
                     {t === 'system' && <Laptop className="mx-auto mb-2 h-6 w-6" />}

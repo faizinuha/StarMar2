@@ -16,6 +16,7 @@ import { useConversations } from '@/hooks/useConversations';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Heart,
   Home,
@@ -38,11 +39,13 @@ export const Navigation = () => {
   const { user, loading: authLoading } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { totalUnread } = useConversations();
-  const { unreadCount, refetch: refetchNotifications } = useNotifications();
+  const { unreadCount } = useNotifications();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!user) return;
@@ -55,41 +58,16 @@ export const Navigation = () => {
           table: 'notifications', 
           filter: `user_id=eq.${user.id}` 
         },
-        async (payload) => {
-          console.log('New notification received:', payload);
-          
-          const newNotification = payload.new as any;
-          
-          // Ambil profil pengirim notifikasi
-          const { data: senderProfile, error: profileError } = await supabase
-            .from('profiles')
-            .select('username, avatar_url')
-            .eq('id', newNotification.sender_id)
-            .single();
-
-          if (profileError) {
-            console.error("Error fetching sender profile:", profileError);
-            return;
-          }
-          
-          // Tampilkan toast
-          toast({
-            title: "New Notification!",
-            description: `@${senderProfile.username} ${newNotification.type}d your post.`,
-            action: (
-                <Button variant="link" size="sm" onClick={() => navigate(`/post/${newNotification.post_id}`)}>View</Button>
-            )
-          });
-          
-          // Perbarui jumlah notifikasi
-          refetchNotifications();
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
         }
       ).subscribe();
 
       return () => {
         supabase.removeChannel(channel);
       }
-  }, [user, toast, navigate, refetchNotifications]);
+  }, [user, queryClient]);
 
   // Redirect to auth if not authenticated and not loading
   useEffect(() => {

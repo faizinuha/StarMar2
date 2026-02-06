@@ -53,7 +53,23 @@ export interface Post {
   isBookmarked: boolean;
   location?: string;
   is_repost?: boolean;
-  original_post?: Post;
+  original_post?: {
+    id: string;
+    content: string;
+    created_at: string;
+    user_id: string;
+    likes: number;
+    comments: number;
+    image_url?: string;
+    media_type?: string;
+    media?: PostMedia[];
+    user: {
+      username: string;
+      displayName: string;
+      avatar: string;
+      is_verified?: string | null;
+    };
+  };
   user: {
     username: string;
     displayName: string;

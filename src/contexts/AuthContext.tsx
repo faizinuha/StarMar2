@@ -384,12 +384,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const options: { redirectTo: string; scopes?: string } = { redirectTo: '' };
 
-    if (provider === 'spotify') {
-      options.redirectTo = `${window.location.origin}/spotify/music`;
-      options.scopes = 'playlist-read-private user-read-private user-read-email';
-    } else {
-      options.redirectTo = `${window.location.origin}/auth/callback`;
-    }
+    options.redirectTo = `${window.location.origin}/auth/callback`;
 
     await supabase.auth.signInWithOAuth({
       provider,
