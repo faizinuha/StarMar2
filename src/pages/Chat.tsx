@@ -197,7 +197,12 @@ export default function Chat() {
       <div className={`${chatId ? 'hidden md:flex' : 'flex'} w-full md:w-96 border-r flex-col bg-background`}>
         <div className="p-3 border-b">
           <div className="flex justify-between items-center mb-3">
-            <h1 className="text-xl font-bold">Messages</h1>
+            <div className="flex items-center gap-2">
+              <Button size="icon" variant="ghost" onClick={() => navigate('/')} className="md:hidden">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h1 className="text-xl font-bold">Messages</h1>
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="icon" variant="ghost"><Plus className="h-5 w-5" /></Button>

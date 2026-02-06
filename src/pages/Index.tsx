@@ -6,6 +6,7 @@ import { PostCard } from "@/components/posts/PostCard";
 import { PostDetailModal } from "@/components/posts/PostDetailModal";
 import { StoriesSection } from "@/components/posts/StoriesSection";
 import { SuggestedFriends } from "@/components/posts/SuggestedFriends";
+import { SuggestedFriendsInFeed } from "@/components/posts/SuggestedFriendsInFeed";
 import { PostCardSkeleton } from "@/components/skeletons/PostCardSkeleton";
 import { StoriesSkeleton } from "@/components/skeletons/StoriesSkeleton";
 import { SuggestedFriendsSkeleton } from "@/components/skeletons/SuggestedFriendsSkeleton";
@@ -125,9 +126,17 @@ const Index = () => {
               <ErrorBoundary>
                 {viewMode === 'feed' ? (
                   <div className="space-y-8">
-                    {posts.map((post) => (
+                    {posts.map((post, index) => (
                       <ErrorBoundary key={post.id}>
                         <PostCard post={post} />
+                        {/* Show suggested friends after the 3rd post */}
+                        {index === 2 && (
+                          <div className="lg:hidden">
+                            <ErrorBoundary>
+                              <SuggestedFriendsInFeed />
+                            </ErrorBoundary>
+                          </div>
+                        )}
                       </ErrorBoundary>
                     ))}
                   </div>

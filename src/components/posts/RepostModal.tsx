@@ -75,9 +75,11 @@ export const RepostModal = ({ isOpen, onClose, post }: RepostModalProps) => {
     onClose();
   };
 
-  // Determine media preview
-  const previewMedia = post.media && post.media.length > 0 ? post.media[0] : null;
-  const previewImage = previewMedia ? previewMedia.media_url : post.image_url;
+  // Determine media preview - check both media array and image_url
+  const postMedia = post.media && post.media.length > 0 ? post.media : 
+    (post.original_post?.media && post.original_post.media.length > 0 ? post.original_post.media : null);
+  const previewMedia = postMedia ? postMedia[0] : null;
+  const previewImage = previewMedia ? previewMedia.media_url : (post.image_url || post.original_post?.image_url);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

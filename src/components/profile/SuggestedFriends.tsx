@@ -20,20 +20,21 @@ const SuggestedFriendItem = ({ profile }: { profile: Profile }) => {
   const toggleFollow = useToggleFollow();
 
   return (
-    <div className="flex items-center justify-between">
-      <Link to={`/profile/${profile.username}`} className="flex items-center space-x-3">
-        <Avatar className="h-10 w-10">
+    <div className="flex items-center gap-3">
+      <Link to={`/profile/${profile.username}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <Avatar className="h-10 w-10 shrink-0">
           <AvatarImage src={profile.avatar_url || undefined} />
           <AvatarFallback>{profile.display_name?.[0] || profile.username?.[0] || 'U'}</AvatarFallback>
         </Avatar>
-        <div>
-          <p className="font-semibold text-sm text-foreground">{profile.display_name || profile.username}</p>
-          <p className="text-xs text-muted-foreground">Suggested for you</p>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-sm text-foreground truncate">{profile.display_name || profile.username}</p>
+          <p className="text-xs text-muted-foreground truncate">Suggested for you</p>
         </div>
       </Link>
       <Button
         size="sm"
         variant={isFollowing ? "outline" : "default"}
+        className="shrink-0 text-xs h-8"
         onClick={(e) => {
           e.preventDefault();
           toggleFollow.mutate({ userId: profile.user_id, isFollowing: !!isFollowing });

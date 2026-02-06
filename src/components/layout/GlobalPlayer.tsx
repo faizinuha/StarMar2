@@ -1,8 +1,10 @@
 import { useMusic } from '@/contexts/Music';
+import { Pause, Play, SkipBack, SkipForward, X, ChevronUp } from 'lucide-react';
+import { useState } from 'react';
 
 /**
  * A globally persistent music player component.
- * It renders only when there is a track currently active in the MusicContext.
+ * Renders as a compact bubble by default, expands to full player on click.
  */
 export const GlobalPlayer = () => {
     const { 
@@ -13,10 +15,12 @@ export const GlobalPlayer = () => {
         playPrev, 
         duration, 
         currentTime, 
-        seek 
+        seek,
+        stopTrack
     } = useMusic();
 
-    // If there's no active track, render nothing.
+    const [expanded, setExpanded] = useState(false);
+
     if (!currentTrack) {
         return null;
     }
@@ -28,43 +32,105 @@ export const GlobalPlayer = () => {
         return `${minutes}:${seconds}`;
     };
 
+    const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+    // Compact bubble mode
+    if (!expanded) {
+        return (
+            <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex items-center gap-2">
+                {/* Mini player pill */}
+                <div 
+                    className="flex items-center gap-2 bg-card/95 backdrop-blur-lg border border-border shadow-xl rounded-full pl-1 pr-3 py-1 cursor-pointer hover:shadow-2xl transition-all"
+                    onClick={() => setExpanded(true)}
+                >
+                    <img 
+                        src={currentTrack.image_url} 
+                        alt={currentTrack.name} 
+                        className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/30"
+                        style={{ animation: isPlaying ? 'spin 4s linear infinite' : 'none' }}
+                    />
+                    <div className="hidden sm:block max-w-[120px]">
+                        <p className="text-xs font-semibold truncate text-foreground">{currentTrack.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{currentTrack.artist}</p>
+                    </div>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    >
+                        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); stopTrack(); }}
+                        className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-muted transition-colors text-muted-foreground"
+                    >
+                        <X className="w-3 h-3" />
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Expanded player
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-900 bg-opacity-90 backdrop-blur-md p-4 text-white border-t border-gray-700 z-50">
-            <div className="flex items-center justify-between max-w-7xl mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border shadow-2xl z-50 transition-all">
+            {/* Progress bar at top */}
+            <div className="w-full h-1 bg-muted cursor-pointer" onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const pct = x / rect.width;
+                seek(pct * duration);
+            }}>
+                <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto gap-4">
                 {/* Track Info */}
-                <div className="flex items-center w-1/4 min-w-0">
-                    <img src={currentTrack.image_url} alt={currentTrack.name} className="w-14 h-14 rounded-md mr-4 object-cover" />
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <img 
+                        src={currentTrack.image_url} 
+                        alt={currentTrack.name} 
+                        className="w-12 h-12 rounded-lg object-cover shadow-md"
+                    />
                     <div className="min-w-0">
-                        <p className="font-semibold truncate">{currentTrack.name}</p>
-                        <p className="text-sm text-gray-400 truncate">{currentTrack.artist}</p>
+                        <p className="font-semibold text-sm truncate text-foreground">{currentTrack.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
                     </div>
                 </div>
                 
-                {/* Player Controls */}
-                <div className="flex flex-col items-center w-1/2">
-                    <div className="flex items-center gap-4">
-                        <button onClick={playPrev} className="text-gray-400 hover:text-white text-2xl transition-colors">⏮️</button>
-                        <button onClick={togglePlayPause} className="bg-white text-black rounded-full w-10 h-10 flex items-center justify-center text-3xl transform hover:scale-105 transition-transform">
-                            {isPlaying ? '⏸️' : '▶️'}
-                        </button>
-                        <button onClick={playNext} className="text-gray-400 hover:text-white text-2xl transition-colors">⏭️</button>
-                    </div>
-                    <div className="flex items-center gap-2 w-full mt-2">
-                        <span className="text-xs w-12 text-center">{formatTime(currentTime)}</span>
-                        <input
-                            type="range"
-                            min="0"
-                            max={duration || 0}
-                            value={currentTime}
-                            onChange={(e) => seek(Number(e.target.value))}
-                            className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-green-500"
-                        />
-                        <span className="text-xs w-12 text-center">{formatTime(duration)}</span>
-                    </div>
+                {/* Controls */}
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground w-8 text-right hidden sm:block">{formatTime(currentTime)}</span>
+                    <button onClick={playPrev} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors text-foreground">
+                        <SkipBack className="w-4 h-4" />
+                    </button>
+                    <button 
+                        onClick={togglePlayPause} 
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    >
+                        {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+                    </button>
+                    <button onClick={playNext} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors text-foreground">
+                        <SkipForward className="w-4 h-4" />
+                    </button>
+                    <span className="text-[10px] text-muted-foreground w-8 hidden sm:block">{formatTime(duration)}</span>
                 </div>
 
-                {/* Placeholder for other controls like volume */}
-                <div className="w-1/4">
+                {/* Collapse & Close */}
+                <div className="flex items-center gap-1">
+                    <button 
+                        onClick={() => setExpanded(false)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors text-muted-foreground"
+                        title="Minimize"
+                    >
+                        <ChevronUp className="w-4 h-4 rotate-180" />
+                    </button>
+                    <button
+                        onClick={stopTrack}
+                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors text-muted-foreground"
+                        title="Close"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
                 </div>
             </div>
         </div>

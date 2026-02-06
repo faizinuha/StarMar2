@@ -256,6 +256,24 @@ const ReelItem = ({ post, isActive }: { post: Post; isActive: boolean }) => {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                            const videoUrl = post.image_url;
+                            if (videoUrl) {
+                                const a = document.createElement('a');
+                                a.href = videoUrl;
+                                a.download = `reel-${post.id}.mp4`;
+                                a.target = '_blank';
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                toast({ title: 'Download started' });
+                            }
+                        }}>
+                            Download Video
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleShare}>
+                            Share to Friends
+                        </DropdownMenuItem>
                         {isOwnPost ? (
                             <DropdownMenuItem onClick={handleDelete} className="text-destructive">
                                 Delete Reel
