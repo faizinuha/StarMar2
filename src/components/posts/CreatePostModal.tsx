@@ -16,7 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useBadges } from '@/hooks/useMemes';
 import { useTrendingTags } from '@/hooks/useTags';
 import { supabase } from '@/integrations/supabase/client';
-import { Image, Laugh, Loader2, Upload, X } from 'lucide-react';
+import { Image as ImageIcon, Laugh, Loader2, Upload, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { EffectsPicker } from './EffectsPicker';
 import { UsersTagPicker } from './UsersTagPicker';
@@ -122,7 +122,7 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
@@ -237,17 +237,8 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
           .insert(mediaInserts);
         if (mediaError) throw mediaError;
 
-        // Insert tagged users
-        if (selectedUsers.length > 0) {
-          const taggedUsersInserts = selectedUsers.map((taggedUser) => ({
-            post_id: post.id,
-            tagged_user_id: taggedUser.user_id,
-          }));
-          const { error: tagError } = await supabase
-            .from('post_tagged_users')
-            .insert(taggedUsersInserts);
-          if (tagError) console.error('Error tagging users:', tagError);
-        }
+        // Tagged users - table doesn't exist yet, skip for now
+        // TODO: Create post_tagged_users table if needed
 
         // Handle hashtags client-side
         if (caption) {
@@ -312,7 +303,7 @@ export const CreatePostModal = ({ isOpen, onClose, defaultTab = 'post' }: Create
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'post' | 'meme')} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="post" className="flex items-center gap-2">
-              <Image className="h-4 w-4" />
+              <ImageIcon className="h-4 w-4" />
               Post
             </TabsTrigger>
             <TabsTrigger value="meme" className="flex items-center gap-2">
