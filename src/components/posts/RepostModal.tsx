@@ -13,6 +13,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Repeat } from 'lucide-react';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Post } from './PostCard';
 
 interface RepostModalProps {
@@ -25,6 +26,7 @@ export const RepostModal = ({ isOpen, onClose, post }: RepostModalProps) => {
   const { user } = useAuth();
   const { data: userProfile } = useProfile();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [caption, setCaption] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -55,6 +57,9 @@ export const RepostModal = ({ isOpen, onClose, post }: RepostModalProps) => {
 
       if (error) throw error;
 
+      // Invalidate queries so repost count and feed update
+      queryClient.invalidateQueries({ queryKey: ['allPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['repostCount', post.id] });
       toast({ title: "Reposted successfully!" });
       handleClose();
 
