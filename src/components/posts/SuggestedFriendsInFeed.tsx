@@ -22,13 +22,13 @@ const SuggestedItem = ({ profile }: { profile: Profile }) => {
 
   return (
     <div className="flex flex-col items-center gap-2 min-w-[120px] max-w-[140px] p-3">
-      <Link to={`/profile/${profile.username}`}>
+      <Link to={`/profile/${profile.user_id}`}>
         <Avatar className="h-16 w-16 ring-2 ring-primary/20">
           <AvatarImage src={profile.avatar_url || undefined} />
           <AvatarFallback className="text-lg">{profile.display_name?.[0] || profile.username?.[0] || 'U'}</AvatarFallback>
         </Avatar>
       </Link>
-      <Link to={`/profile/${profile.username}`} className="text-center min-w-0 w-full">
+      <Link to={`/profile/${profile.user_id}`} className="text-center min-w-0 w-full">
         <p className="font-semibold text-xs truncate text-foreground">{profile.display_name || profile.username}</p>
         <p className="text-[10px] text-muted-foreground truncate">@{profile.username}</p>
       </Link>
