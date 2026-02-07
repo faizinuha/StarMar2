@@ -131,11 +131,9 @@ const Index = () => {
                         <PostCard post={post} />
                         {/* Show suggested friends after the 3rd post */}
                         {index === 2 && (
-                          <div className="lg:hidden">
-                            <ErrorBoundary>
-                              <SuggestedFriendsInFeed />
-                            </ErrorBoundary>
-                          </div>
+                          <ErrorBoundary>
+                            <SuggestedFriendsInFeed />
+                          </ErrorBoundary>
                         )}
                       </ErrorBoundary>
                     ))}
