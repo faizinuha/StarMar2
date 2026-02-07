@@ -10,7 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react';
 
 // Available pages in the app
 const AVAILABLE_PAGES = [
@@ -28,6 +31,7 @@ const AVAILABLE_PAGES = [
 export const MaintenanceBannersTab = () => {
   const { data: banners, isLoading } = useMaintenanceMode();
   const { mutate: setMaintenanceMode, isPending } = useSetMaintenanceMode();
+  const queryClient = useQueryClient();
 
   const [selectedBanner, setSelectedBanner] = useState<Partial<MaintenanceMode> | null>(null);
   const [pagePath, setPagePath] = useState('');
@@ -36,10 +40,10 @@ export const MaintenanceBannersTab = () => {
   const [message, setMessage] = useState('');
   const [type, setType] = useState<'info' | 'warning' | 'maintenance' | 'blocked'>('warning');
   const [isActive, setIsActive] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedBanner) {
-      // Check if it's a predefined path
       const isPredefined = AVAILABLE_PAGES.some(p => p.path === selectedBanner.page_path);
       if (isPredefined) {
         setPagePath(selectedBanner.page_path || '');
@@ -53,7 +57,6 @@ export const MaintenanceBannersTab = () => {
       setType(selectedBanner.type || 'warning');
       setIsActive(selectedBanner.is_active || false);
     } else {
-      // Reset form
       setPagePath('');
       setCustomPath('');
       setTitle('');
@@ -88,6 +91,26 @@ export const MaintenanceBannersTab = () => {
     });
   };
 
+  const handleDelete = async (bannerId: string) => {
+    setDeleting(bannerId);
+    try {
+      const { error } = await supabase
+        .from('maintenance_mode')
+        .delete()
+        .eq('id', bannerId);
+      if (error) throw error;
+      toast.success('Banner berhasil dihapus!');
+      queryClient.invalidateQueries({ queryKey: ['maintenance-mode'] });
+      if (selectedBanner?.id === bannerId) {
+        setSelectedBanner(null);
+      }
+    } catch (error: any) {
+      toast.error(`Gagal menghapus: ${error.message}`);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       <div className="lg:col-span-3">
@@ -109,10 +132,11 @@ export const MaintenanceBannersTab = () => {
                     <TableHead>Status</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Title</TableHead>
+                    <TableHead className="w-[60px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {banners?.map((banner) => (
+                  {banners && banners.length > 0 ? banners.map((banner) => (
                     <TableRow key={banner.id} onClick={() => setSelectedBanner(banner)} className="cursor-pointer hover:bg-muted/50">
                       <TableCell className="font-medium">{banner.page_path}</TableCell>
                       <TableCell>
@@ -122,8 +146,28 @@ export const MaintenanceBannersTab = () => {
                       </TableCell>
                       <TableCell><Badge variant="secondary">{banner.type}</Badge></TableCell>
                       <TableCell>{banner.title}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(banner.id);
+                          }}
+                          disabled={deleting === banner.id}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        Belum ada banner maintenance.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             )}

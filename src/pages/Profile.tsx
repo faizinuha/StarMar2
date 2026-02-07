@@ -387,7 +387,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                 <div className="flex items-center space-x-6 pt-2">
                   <div className="text-center">
                     <p className="font-bold text-lg">
-                      {profile.posts_count.toLocaleString()}
+                      {(posts?.length || 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Posts</p>
                   </div>

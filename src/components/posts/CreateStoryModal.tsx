@@ -177,14 +177,7 @@ const EditView = ({
           />
         )}
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 text-white bg-black/50 hover:bg-black/70 rounded-full"
-          onClick={onCancel}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        {/* X button removed - Dialog provides its own close button */}
       </div>
 
       {/* Effects and Content Controls */}

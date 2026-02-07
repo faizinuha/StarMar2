@@ -153,9 +153,16 @@ export const Settings = () => {
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/avatar.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, file, { upsert: true });
+      const filePath = `${user.id}/avatar-${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
+
+      // Save the storage path to the profiles table
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: filePath })
+        .eq('user_id', user.id);
+      if (updateError) throw updateError;
 
       await queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
       await queryClient.refetchQueries({ queryKey: ['profile', user.id] });
