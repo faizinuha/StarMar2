@@ -175,25 +175,42 @@ const POST_SELECT_QUERY = `
     media_type,
     order_index
   ),
-  likes(user_id),
-  original_post:posts!posts_original_post_id_fkey (
-    id,
-    caption,
-    user_id,
-    created_at,
-    post_media (
-      media_url,
-      media_type,
-      order_index
-    ),
-    profiles!posts_user_id_fkey (
-      username,
-      display_name,
-      avatar_url,
-      is_verified
-    )
-  )
+  likes(user_id)
 `;
+
+// Fetch original posts for reposts separately (self-referencing FK not supported by PostgREST hints)
+async function fetchOriginalPosts(originalPostIds: string[]) {
+  if (originalPostIds.length === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from('posts')
+    .select(`
+      id,
+      caption,
+      user_id,
+      created_at,
+      post_media (
+        media_url,
+        media_type,
+        order_index
+      ),
+      profiles!posts_user_id_fkey (
+        username,
+        display_name,
+        avatar_url,
+        is_verified
+      )
+    `)
+    .in('id', originalPostIds);
+
+  if (error || !data) return new Map();
+
+  const map = new Map();
+  for (const op of data) {
+    map.set(op.id, op);
+  }
+  return map;
+}
 
 export function useUserPosts(userId?: string) {
   const { user } = useAuth();
@@ -212,7 +229,13 @@ export function useUserPosts(userId?: string) {
 
       if (error) throw error;
 
-      return await processPostsData(data, user?.id);
+      // Collect original_post_ids for reposts
+      const originalPostIds = data
+        .filter((p: any) => p.is_repost && p.original_post_id)
+        .map((p: any) => p.original_post_id);
+      const originalPostsMap = await fetchOriginalPosts(originalPostIds);
+
+      return await processPostsData(data, user?.id, originalPostsMap);
     },
     enabled: !!targetUserId,
   });
@@ -232,13 +255,19 @@ export function useAllPosts() {
 
       if (error) throw error;
 
-      return await processPostsData(data, user?.id);
+      // Collect original_post_ids for reposts
+      const originalPostIds = data
+        .filter((p: any) => p.is_repost && p.original_post_id)
+        .map((p: any) => p.original_post_id);
+      const originalPostsMap = await fetchOriginalPosts(originalPostIds);
+
+      return await processPostsData(data, user?.id, originalPostsMap);
     },
   });
 }
 
 // Helper to process post data (URL signing, sorting media, nested original post)
-async function processPostsData(data: any[], currentUserId?: string): Promise<Post[]> {
+async function processPostsData(data: any[], currentUserId?: string, originalPostsMap?: Map<string, any>): Promise<Post[]> {
   const processUrl = async (url: string | undefined | null): Promise<string | undefined | null> => {
     if (!url) return null;
     if (url.startsWith('http') && !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
@@ -265,17 +294,16 @@ async function processPostsData(data: any[], currentUserId?: string): Promise<Po
         (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
       );
 
-      // Process original post if it exists - handle both object and array formats
+      // Process original post from the separately-fetched map
       let originalPostProcessed = undefined;
-      const rawOriginal = post.original_post;
-      const op = Array.isArray(rawOriginal) ? rawOriginal[0] : rawOriginal;
-      
-      if (op && op.id) {
-         const opAvatarUrl = await processUrl(op.profiles?.avatar_url);
-         const opSortedMedia = (op.post_media || []).sort(
-           (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
-         );
-         originalPostProcessed = {
+      if (post.is_repost && post.original_post_id && originalPostsMap) {
+        const op = originalPostsMap.get(post.original_post_id);
+        if (op) {
+          const opAvatarUrl = await processUrl(op.profiles?.avatar_url);
+          const opSortedMedia = (op.post_media || []).sort(
+            (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
+          );
+          originalPostProcessed = {
             id: op.id,
             content: op.caption || '',
             created_at: op.created_at,
@@ -291,7 +319,8 @@ async function processPostsData(data: any[], currentUserId?: string): Promise<Po
               avatar: opAvatarUrl || '',
               is_verified: op.profiles?.is_verified || null,
             },
-         };
+          };
+        }
       }
 
       return {
@@ -479,52 +508,18 @@ export function usePostById(postId: string) {
 
       const { data, error } = await supabase
         .from('posts')
-        .select(
-           `
-          id,
-          user_id,
-          caption,
-          location,
-          created_at,
-          likes_count,
-          comments_count,
-          is_repost,
-          original_post_id,
-          profiles!posts_user_id_fkey (
-            username,
-            display_name,
-            avatar_url,
-            is_verified
-          ),
-          post_media (
-            media_url,
-            media_type,
-            order_index
-          ),
-          likes(user_id),
-          original_post:posts!posts_original_post_id_fkey (
-            id,
-            caption,
-            user_id,
-            created_at,
-            post_media (
-               media_url,
-               media_type
-            ),
-            profiles!posts_user_id_fkey (
-               username,
-               display_name,
-               avatar_url
-            )
-          )
-        `
-        )
+        .select(POST_SELECT_QUERY)
         .eq('id', postId)
         .single();
 
       if (error) throw error;
 
-      return (await processPostsData([data], user?.id))[0];
+      // Fetch original post if it's a repost
+      const originalPostsMap = data.is_repost && data.original_post_id
+        ? await fetchOriginalPosts([data.original_post_id])
+        : new Map();
+
+      return (await processPostsData([data], user?.id, originalPostsMap))[0];
     },
     enabled: !!postId,
   });

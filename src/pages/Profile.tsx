@@ -35,16 +35,28 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 
-// Component to fetch real follower/following counts from the followers table
+// Component to fetch real follower/following counts - only counts users with existing profiles
 const ProfileStats = ({ userId, postsCount, onClickFollowers, onClickFollowing }: { userId: string; postsCount: number; onClickFollowers: () => void; onClickFollowing: () => void }) => {
   const { data: actualCounts } = useQuery({
     queryKey: ['actual-follow-counts', userId],
     queryFn: async () => {
-      const [{ count: followersCount }, { count: followingCount }] = await Promise.all([
-        supabase.from('followers').select('*', { count: 'exact', head: true }).eq('following_id', userId),
-        supabase.from('followers').select('*', { count: 'exact', head: true }).eq('follower_id', userId),
-      ]);
-      return { followers: followersCount || 0, following: followingCount || 0 };
+      // Get followers who have profiles
+      const { data: followerRows } = await supabase
+        .from('followers')
+        .select('follower_id, profiles!followers_follower_id_fkey(user_id)')
+        .eq('following_id', userId);
+      
+      // Get following who have profiles
+      const { data: followingRows } = await supabase
+        .from('followers')
+        .select('following_id, profiles!followers_following_id_fkey(user_id)')
+        .eq('follower_id', userId);
+
+      // Count only those with existing profiles (non-null join result)
+      const followersWithProfiles = (followerRows || []).filter((r: any) => r.profiles?.user_id).length;
+      const followingWithProfiles = (followingRows || []).filter((r: any) => r.profiles?.user_id).length;
+
+      return { followers: followersWithProfiles, following: followingWithProfiles };
     },
     enabled: !!userId,
   });
