@@ -10,18 +10,17 @@ export function MaintenanceBanner() {
   const location = useLocation();
   const { user } = useAuth();
   const [currentPath, setCurrentPath] = useState(location.pathname);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   
-  // Update path when location changes
   useEffect(() => {
     setCurrentPath(location.pathname);
   }, [location.pathname]);
 
-  // Check if user is admin
+  // Check user role (admin or moderator)
   useEffect(() => {
-    const checkAdmin = async () => {
+    const checkRole = async () => {
       if (!user) {
-        setIsAdmin(false);
+        setUserRole(null);
         return;
       }
       
@@ -31,18 +30,17 @@ export function MaintenanceBanner() {
         .eq('user_id', user.id)
         .single();
       
-      setIsAdmin(data?.role === 'admin');
+      setUserRole(data?.role || null);
     };
     
-    checkAdmin();
+    checkRole();
   }, [user]);
 
+  const isPrivileged = userRole === 'admin' || userRole === 'moderator';
+
   const { data: maintenance, isLoading } = useMaintenanceMode(currentPath);
-  
-  // Also check for site-wide maintenance (path = "/")
   const { data: siteWideMaintenance } = useMaintenanceMode('/');
 
-  // Use site-wide maintenance if no page-specific one exists
   const activeMaintenance = maintenance || (currentPath !== '/' ? siteWideMaintenance : null);
 
   if (isLoading || !activeMaintenance || !activeMaintenance.is_active) return null;
@@ -56,8 +54,8 @@ export function MaintenanceBanner() {
 
   const Icon = icons[activeMaintenance.type as keyof typeof icons] || AlertCircle;
 
-  // If maintenance is active and user is NOT admin, show full page block
-  if (!isAdmin && (activeMaintenance.type === 'maintenance' || activeMaintenance.type === 'blocked')) {
+  // If maintenance is active and user is NOT admin/moderator, show full page block
+  if (!isPrivileged && (activeMaintenance.type === 'maintenance' || activeMaintenance.type === 'blocked')) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
         <div className="max-w-md mx-auto p-8 text-center space-y-6">
@@ -74,7 +72,7 @@ export function MaintenanceBanner() {
     );
   }
 
-  // For admins or info/warning type, show banner only
+  // For admins/moderators or info/warning type, show banner only
   const variants = {
     info: 'default' as const,
     warning: 'default' as const,
@@ -91,7 +89,7 @@ export function MaintenanceBanner() {
       <AlertTitle>{activeMaintenance.title}</AlertTitle>
       <AlertDescription>
         {activeMaintenance.message}
-        {isAdmin && <span className="ml-2 text-xs">(Admin view)</span>}
+        {isPrivileged && <span className="ml-2 text-xs">({userRole} view)</span>}
       </AlertDescription>
     </Alert>
   );

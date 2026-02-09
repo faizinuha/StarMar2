@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFollowStatus, useToggleFollow } from '@/hooks/useFollow';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -21,7 +21,7 @@ const SuggestedItem = ({ profile }: { profile: Profile }) => {
   const toggleFollow = useToggleFollow();
 
   return (
-    <div className="flex flex-col items-center gap-2 min-w-[120px] max-w-[140px] p-3">
+    <div className="flex flex-col items-center gap-2 min-w-[120px] max-w-[140px] p-3 flex-shrink-0 select-none">
       <Link to={`/profile/${profile.user_id}`}>
         <Avatar className="h-16 w-16 ring-2 ring-primary/20">
           <AvatarImage src={profile.avatar_url || undefined} />
@@ -50,6 +50,35 @@ export const SuggestedFriendsInFeed = () => {
   const { user } = useAuth();
   const [suggestions, setSuggestions] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    isDragging.current = true;
+    startX.current = e.pageX - scrollRef.current.offsetLeft;
+    scrollLeft.current = scrollRef.current.scrollLeft;
+    scrollRef.current.style.cursor = 'grabbing';
+    scrollRef.current.style.userSelect = 'none';
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging.current || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    scrollRef.current.scrollLeft = scrollLeft.current - walk;
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    isDragging.current = false;
+    if (scrollRef.current) {
+      scrollRef.current.style.cursor = 'grab';
+      scrollRef.current.style.userSelect = '';
+    }
+  }, []);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -90,7 +119,14 @@ export const SuggestedFriendsInFeed = () => {
         <p className="font-semibold text-sm text-foreground">Mungkin Anda Kenal</p>
         <p className="text-xs text-muted-foreground ml-auto">Mengikuti salah satu teman Anda</p>
       </div>
-      <div className="flex overflow-x-auto no-scrollbar py-3 px-2 gap-1">
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto no-scrollbar py-3 px-2 gap-1 cursor-grab"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
         {suggestions.map((profile) => (
           <SuggestedItem key={profile.id} profile={profile} />
         ))}

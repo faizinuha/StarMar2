@@ -176,7 +176,7 @@ const POST_SELECT_QUERY = `
     order_index
   ),
   likes(user_id),
-  original_post:posts!original_post_id (
+  original_post:posts!posts_original_post_id_fkey (
     id,
     caption,
     user_id,
@@ -265,10 +265,12 @@ async function processPostsData(data: any[], currentUserId?: string): Promise<Po
         (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
       );
 
-      // Process original post if it exists
+      // Process original post if it exists - handle both object and array formats
       let originalPostProcessed = undefined;
-      if (post.original_post) {
-         const op = post.original_post;
+      const rawOriginal = post.original_post;
+      const op = Array.isArray(rawOriginal) ? rawOriginal[0] : rawOriginal;
+      
+      if (op && op.id) {
          const opAvatarUrl = await processUrl(op.profiles?.avatar_url);
          const opSortedMedia = (op.post_media || []).sort(
            (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
@@ -277,8 +279,8 @@ async function processPostsData(data: any[], currentUserId?: string): Promise<Po
             id: op.id,
             content: op.caption || '',
             created_at: op.created_at,
-            likes: 0, // Default for original post in repost
-            comments: 0, // Default for original post in repost
+            likes: 0,
+            comments: 0,
             user_id: op.user_id,
             image_url: opSortedMedia[0]?.media_url,
             media_type: opSortedMedia[0]?.media_type,
@@ -500,7 +502,7 @@ export function usePostById(postId: string) {
             order_index
           ),
           likes(user_id),
-          original_post:posts!original_post_id (
+          original_post:posts!posts_original_post_id_fkey (
             id,
             caption,
             user_id,
