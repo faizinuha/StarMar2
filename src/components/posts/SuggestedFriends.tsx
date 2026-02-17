@@ -21,6 +21,7 @@ interface SuggestedUser {
   followers_count?: number;
   following_count?: number;
   is_verified?: string;
+  created_at?: string;
 }
 
 export const SuggestedFriends = () => {
@@ -39,10 +40,11 @@ export const SuggestedFriends = () => {
       username: u.username,
       displayName: u.display_name || u.username,
       avatar_url: u.avatar_url,
-      bio: u.bio,
-      followers_count: u.followers_count,
-      following_count: u.following_count,
+      bio: u.bio || null,
+      followers_count: u.followers_count || 0,
+      following_count: u.following_count || 0,
       is_verified: u.is_verified,
+      created_at: u.created_at,
     }));
 
   return (
@@ -118,6 +120,8 @@ const SuggestedUserCard = ({ user: suggestedUser }: SuggestedUserCardProps) => {
     bio: suggestedUser.bio,
     followers_count: suggestedUser.followers_count,
     following_count: suggestedUser.following_count,
+    is_verified: suggestedUser.is_verified,
+    created_at: (suggestedUser as any).created_at,
   };
 
   return (
