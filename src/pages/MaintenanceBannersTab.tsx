@@ -7,15 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Plus, Pencil } from 'lucide-react';
 
-// Available pages in the app
 const AVAILABLE_PAGES = [
   { path: '/', label: 'Home (Site-wide)' },
   { path: '/explore', label: 'Explore' },
@@ -23,8 +21,7 @@ const AVAILABLE_PAGES = [
   { path: '/chat', label: 'Chat' },
   { path: '/notifications', label: 'Notifications' },
   { path: '/settings', label: 'Settings' },
-  { path: '/profile', label: 'Profile (All)' },
-  { path: '/admin', label: 'Admin Dashboard' },
+  { path: '/profile', label: 'Profile' },
   { path: '/reelms', label: 'Reelms' },
 ];
 
@@ -33,224 +30,190 @@ export const MaintenanceBannersTab = () => {
   const { mutate: setMaintenanceMode, isPending } = useSetMaintenanceMode();
   const queryClient = useQueryClient();
 
-  const [selectedBanner, setSelectedBanner] = useState<Partial<MaintenanceMode> | null>(null);
+  const [editing, setEditing] = useState<MaintenanceMode | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [pagePath, setPagePath] = useState('');
-  const [customPath, setCustomPath] = useState('');
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [type, setType] = useState<'info' | 'warning' | 'maintenance' | 'blocked'>('warning');
-  const [isActive, setIsActive] = useState(false);
+  const [type, setType] = useState<'info' | 'warning' | 'maintenance' | 'blocked'>('maintenance');
+  const [isActive, setIsActive] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (selectedBanner) {
-      const isPredefined = AVAILABLE_PAGES.some(p => p.path === selectedBanner.page_path);
-      if (isPredefined) {
-        setPagePath(selectedBanner.page_path || '');
-        setCustomPath('');
-      } else {
-        setPagePath('custom');
-        setCustomPath(selectedBanner.page_path || '');
-      }
-      setTitle(selectedBanner.title || '');
-      setMessage(selectedBanner.message || '');
-      setType(selectedBanner.type || 'warning');
-      setIsActive(selectedBanner.is_active || false);
-    } else {
-      setPagePath('');
-      setCustomPath('');
-      setTitle('');
-      setMessage('');
-      setType('warning');
-      setIsActive(false);
-    }
-  }, [selectedBanner]);
+  const resetForm = () => {
+    setEditing(null);
+    setIsCreating(false);
+    setPagePath('');
+    setTitle('');
+    setMessage('');
+    setType('maintenance');
+    setIsActive(true);
+  };
+
+  const startEdit = (banner: MaintenanceMode) => {
+    setEditing(banner);
+    setIsCreating(false);
+    setPagePath(banner.page_path);
+    setTitle(banner.title);
+    setMessage(banner.message);
+    setType(banner.type);
+    setIsActive(banner.is_active);
+  };
+
+  const startCreate = () => {
+    resetForm();
+    setIsCreating(true);
+  };
 
   const handleSave = () => {
-    const finalPath = pagePath === 'custom' ? customPath : pagePath;
-    
-    if (!finalPath || !title || !message) {
-      toast.error('Page Path, Title, dan Message wajib diisi.');
+    if (!pagePath || !title || !message) {
+      toast.error('Semua field wajib diisi.');
       return;
     }
-    
-    setMaintenanceMode({
-      page_path: finalPath,
-      title,
-      message,
-      type,
-      is_active: isActive,
-    }, {
+    setMaintenanceMode({ page_path: pagePath, title, message, type, is_active: isActive }, {
       onSuccess: () => {
-        toast.success('Banner berhasil disimpan!');
-        setSelectedBanner(null);
+        toast.success(editing ? 'Banner diperbarui!' : 'Banner dibuat!');
+        resetForm();
       },
-      onError: (error) => {
-        toast.error(`Gagal menyimpan: ${error.message}`);
-      }
     });
   };
 
-  const handleDelete = async (bannerId: string) => {
-    setDeleting(bannerId);
-    try {
-      const { error } = await supabase
-        .from('maintenance_mode')
-        .delete()
-        .eq('id', bannerId);
-      if (error) throw error;
-      toast.success('Banner berhasil dihapus!');
+  const handleDelete = async (id: string) => {
+    setDeleting(id);
+    const { error } = await supabase.from('maintenance_mode').delete().eq('id', id);
+    if (error) toast.error(`Gagal menghapus: ${error.message}`);
+    else {
+      toast.success('Banner dihapus!');
       queryClient.invalidateQueries({ queryKey: ['maintenance-mode'] });
-      if (selectedBanner?.id === bannerId) {
-        setSelectedBanner(null);
-      }
-    } catch (error: any) {
-      toast.error(`Gagal menghapus: ${error.message}`);
-    } finally {
-      setDeleting(null);
+      if (editing?.id === id) resetForm();
     }
+    setDeleting(null);
   };
 
+  const handleToggle = async (banner: MaintenanceMode) => {
+    const { error } = await supabase
+      .from('maintenance_mode')
+      .update({ is_active: !banner.is_active, updated_at: new Date().toISOString() })
+      .eq('id', banner.id);
+    if (error) toast.error('Gagal update status');
+    else queryClient.invalidateQueries({ queryKey: ['maintenance-mode'] });
+  };
+
+  const showForm = isCreating || editing;
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-      <div className="lg:col-span-3">
-        <Card>
-          <CardHeader>
+    <div className="space-y-4">
+      {/* Banner List */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
             <CardTitle>Maintenance Banners</CardTitle>
-            <CardDescription>Manage site-wide or page-specific maintenance banners.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-2">
-                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Page Path</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead className="w-[60px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {banners && banners.length > 0 ? banners.map((banner) => (
-                    <TableRow key={banner.id} onClick={() => setSelectedBanner(banner)} className="cursor-pointer hover:bg-muted/50">
-                      <TableCell className="font-medium">{banner.page_path}</TableCell>
-                      <TableCell>
-                        <Badge variant={banner.is_active ? 'default' : 'outline'}>
-                          {banner.is_active ? 'Active' : 'Inactive'}
+            <CardDescription>Kelola banner maintenance per halaman. Halaman yang aktif akan diblokir untuk semua pengguna kecuali admin & moderator.</CardDescription>
+          </div>
+          <Button onClick={startCreate} size="sm" disabled={isCreating}>
+            <Plus className="h-4 w-4 mr-1" /> Buat
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+            </div>
+          ) : !banners || banners.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Belum ada banner maintenance.</p>
+          ) : (
+            <div className="space-y-2">
+              {banners.map(banner => (
+                <div key={banner.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Switch
+                      checked={banner.is_active}
+                      onCheckedChange={() => handleToggle(banner)}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{banner.title}</span>
+                        <Badge variant="outline" className="text-xs">{banner.page_path}</Badge>
+                        <Badge variant={banner.type === 'blocked' ? 'destructive' : 'secondary'} className="text-xs">
+                          {banner.type}
                         </Badge>
-                      </TableCell>
-                      <TableCell><Badge variant="secondary">{banner.type}</Badge></TableCell>
-                      <TableCell>{banner.title}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(banner.id);
-                          }}
-                          disabled={deleting === banner.id}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        Belum ada banner maintenance.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      <div className="lg:col-span-2">
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">{banner.message}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 ml-2">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(banner)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(banner.id)}
+                      disabled={deleting === banner.id}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create/Edit Form */}
+      {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>{selectedBanner ? 'Edit Banner' : 'Create Banner'}</CardTitle>
-            <CardDescription>
-              {selectedBanner ? `Editing banner for ${selectedBanner.page_path}` : 'Pilih halaman atau masukkan path custom.'}
-            </CardDescription>
+            <CardTitle className="text-lg">{editing ? 'Edit Banner' : 'Buat Banner Baru'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="pagePath">Page Path</Label>
-              <Select 
-                value={pagePath} 
-                onValueChange={(v) => {
-                  setPagePath(v);
-                  if (v !== 'custom') setCustomPath('');
-                }}
-                disabled={!!selectedBanner}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih halaman..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {AVAILABLE_PAGES.map((page) => (
-                    <SelectItem key={page.path} value={page.path}>
-                      {page.label}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="custom">Custom Path...</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              {pagePath === 'custom' && (
-                <Input 
-                  placeholder="/custom/path" 
-                  value={customPath} 
-                  onChange={(e) => setCustomPath(e.target.value)}
-                  disabled={!!selectedBanner}
-                  className="mt-2"
-                />
-              )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Halaman</Label>
+                <Select value={pagePath} onValueChange={setPagePath} disabled={!!editing}>
+                  <SelectTrigger><SelectValue placeholder="Pilih halaman..." /></SelectTrigger>
+                  <SelectContent>
+                    {AVAILABLE_PAGES.map(p => (
+                      <SelectItem key={p.path} value={p.path}>{p.label} ({p.path})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Tipe</Label>
+                <Select value={type} onValueChange={(v: any) => setType(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="maintenance">🔧 Maintenance (blokir halaman)</SelectItem>
+                    <SelectItem value="blocked">🔒 Blocked (blokir halaman)</SelectItem>
+                    <SelectItem value="warning">⚠️ Warning (banner saja)</SelectItem>
+                    <SelectItem value="info">ℹ️ Info (banner saja)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input id="title" placeholder="System Maintenance" value={title} onChange={(e) => setTitle(e.target.value)} />
+              <Label>Judul</Label>
+              <Input placeholder="Contoh: Sedang Maintenance" value={title} onChange={e => setTitle(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="message">Message</Label>
-              <Textarea id="message" placeholder="We are currently undergoing maintenance." value={message} onChange={(e) => setMessage(e.target.value)} />
+              <Label>Pesan</Label>
+              <Textarea placeholder="Penjelasan untuk pengguna..." value={message} onChange={e => setMessage(e.target.value)} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="type">Banner Type</Label>
-              <Select value={type} onValueChange={(v: any) => setType(v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="info">Info</SelectItem>
-                  <SelectItem value="warning">Warning</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="blocked">Blocked</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-2">
+              <Switch checked={isActive} onCheckedChange={setIsActive} />
+              <Label>Aktifkan langsung</Label>
             </div>
-            <div className="flex items-center space-x-2">
-              <Switch id="isActive" checked={isActive} onCheckedChange={setIsActive} />
-              <Label htmlFor="isActive">Active</Label>
-            </div>
-            <div className="flex justify-end space-x-2 pt-2">
-              {selectedBanner && (
-                <Button variant="ghost" onClick={() => setSelectedBanner(null)} disabled={isPending}>Clear</Button>
-              )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={resetForm} disabled={isPending}>Batal</Button>
               <Button onClick={handleSave} disabled={isPending}>
-                {isPending ? 'Saving...' : 'Save Banner'}
+                {isPending ? 'Menyimpan...' : editing ? 'Update' : 'Simpan'}
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
     </div>
   );
 };

@@ -7,6 +7,7 @@ import AdminRoute from "./components/AdminRoute";
 import { BannedUserRedirect } from "./components/BannedUserRedirect";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { GlobalPlayer } from "./components/layout/GlobalPlayer";
+import { MaintenanceGuard } from "./components/MaintenanceGuard";
 import PrivateRoute from "./components/PrivateRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LoadingProvider } from "./contexts/LoadingContext";
@@ -62,6 +63,7 @@ const App = () => (
             <AuthProvider>
               <MusicProvider>
                 <BannedUserRedirect />
+                <MaintenanceGuard>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
@@ -105,6 +107,7 @@ const App = () => (
                   <Route path="/onboarding" element={<Onboarding />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
+                </MaintenanceGuard>
                 <GlobalPlayer />
               </MusicProvider>
             </AuthProvider>
