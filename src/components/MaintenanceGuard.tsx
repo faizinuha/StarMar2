@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Lock, Wrench } from 'lucide-react';
+import { Navigation } from '@/components/layout/Navigation';
 
 interface MaintenanceEntry {
   id: string;
@@ -87,23 +88,26 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
 
   if (blocked && maintenance) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background">
-        <div className="max-w-md mx-auto p-8 text-center space-y-6">
-          <div className="mx-auto w-24 h-24 rounded-full bg-muted flex items-center justify-center">
-            {maintenance.type === 'blocked' ? (
-              <Lock className="h-12 w-12 text-destructive" />
-            ) : (
-              <Wrench className="h-12 w-12 text-muted-foreground" />
-            )}
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="md:ml-72 min-h-screen flex items-center justify-center pb-20 md:pb-8">
+          <div className="max-w-md mx-auto p-8 text-center space-y-6">
+            <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center">
+              {maintenance.type === 'blocked' ? (
+                <Lock className="h-10 w-10 text-destructive" />
+              ) : (
+                <Wrench className="h-10 w-10 text-muted-foreground" />
+              )}
+            </div>
+            <h1 className="text-2xl font-bold">{maintenance.title}</h1>
+            <p className="text-muted-foreground">{maintenance.message}</p>
+            <div className="pt-4 border-t border-border">
+              <p className="text-sm text-muted-foreground">
+                Halaman ini sedang dalam maintenance. Silakan coba lagi nanti.
+              </p>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold">{maintenance.title}</h1>
-          <p className="text-muted-foreground text-lg">{maintenance.message}</p>
-          <div className="pt-4 border-t border-border">
-            <p className="text-sm text-muted-foreground">
-              Halaman ini sedang dalam maintenance. Silakan coba lagi nanti.
-            </p>
-          </div>
-        </div>
+        </main>
       </div>
     );
   }

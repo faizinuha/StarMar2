@@ -40,21 +40,40 @@ const ProfileStats = ({ userId, postsCount, onClickFollowers, onClickFollowing }
   const { data: actualCounts } = useQuery({
     queryKey: ['actual-follow-counts', userId],
     queryFn: async () => {
-      // Get followers who have profiles
+      // Get follower IDs
       const { data: followerRows } = await supabase
         .from('followers')
-        .select('follower_id, profiles!followers_follower_id_fkey(user_id)')
+        .select('follower_id')
         .eq('following_id', userId);
       
-      // Get following who have profiles
+      // Get following IDs
       const { data: followingRows } = await supabase
         .from('followers')
-        .select('following_id, profiles!followers_following_id_fkey(user_id)')
+        .select('following_id')
         .eq('follower_id', userId);
 
-      // Count only those with existing profiles (non-null join result)
-      const followersWithProfiles = (followerRows || []).filter((r: any) => r.profiles?.user_id).length;
-      const followingWithProfiles = (followingRows || []).filter((r: any) => r.profiles?.user_id).length;
+      const followerIds = (followerRows || []).map(r => r.follower_id);
+      const followingIds = (followingRows || []).map(r => r.following_id);
+
+      // Verify which IDs have existing profiles
+      let followersWithProfiles = 0;
+      let followingWithProfiles = 0;
+
+      if (followerIds.length > 0) {
+        const { data: fp } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .in('user_id', followerIds);
+        followersWithProfiles = fp?.length || 0;
+      }
+
+      if (followingIds.length > 0) {
+        const { data: fp } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .in('user_id', followingIds);
+        followingWithProfiles = fp?.length || 0;
+      }
 
       return { followers: followersWithProfiles, following: followingWithProfiles };
     },
