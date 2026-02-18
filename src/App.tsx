@@ -10,6 +10,7 @@ import { GlobalPlayer } from "./components/layout/GlobalPlayer";
 import { MaintenanceGuard } from "./components/MaintenanceGuard";
 import PrivateRoute from "./components/PrivateRoute";
 import { AuthProvider } from "./contexts/AuthContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import { LoadingProvider } from "./contexts/LoadingContext";
 import { MusicProvider } from "./contexts/Music";
 import Admin from "./pages/Admin";
@@ -61,6 +62,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <AuthProvider>
+              <LanguageProvider>
               <MusicProvider>
                 <BannedUserRedirect />
                 <MaintenanceGuard>
@@ -110,6 +112,7 @@ const App = () => (
                 </MaintenanceGuard>
                 <GlobalPlayer />
               </MusicProvider>
+              </LanguageProvider>
             </AuthProvider>
           </TooltipProvider>
         </LoadingProvider>
