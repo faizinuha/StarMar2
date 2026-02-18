@@ -1,35 +1,13 @@
 import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from '@/components/ui/input-otp';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
@@ -37,25 +15,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
-import { Factor } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft,
-  Camera,
-  Github,
-  Laptop,
-  Loader2,
-  Mail,
-  Moon,
-  ShieldAlert,
-  Sun,
-  Palette,
-  Bell,
-  KeyRound,
-  User as UserIcon,
-  Users,
+  ArrowLeft, Camera, Github, Laptop, Loader2, Mail, Moon,
+  ShieldAlert, Sun, Palette, Bell, KeyRound, User as UserIcon,
+  Users, Globe, Link2, Unlink2, CheckCircle2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -87,22 +54,15 @@ export const Settings = () => {
   const { data: profile } = useProfile();
   const updateProfile = useUpdateProfile();
   const { theme, setTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState(TABS.PROFILE);
 
   const {
-    mfaFactors,
-    showMfaDialog,
-    setShowMfaDialog,
-    mfaEnrollData,
-    verificationCode,
-    setVerificationCode,
-    isEnrolling,
-    isVerifying,
-    handleMfaEnroll,
-    handleMfaVerify,
-    handleMfaUnenroll,
+    mfaFactors, showMfaDialog, setShowMfaDialog, mfaEnrollData,
+    verificationCode, setVerificationCode, isEnrolling, isVerifying,
+    handleMfaEnroll, handleMfaVerify, handleMfaUnenroll,
   } = useMfa();
 
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
@@ -112,6 +72,13 @@ export const Settings = () => {
   const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
+
+  // Password change states
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   const { data: settings, refetch: refetchSettings } = useQuery({
     queryKey: ['user-settings', user?.id],
@@ -149,24 +116,16 @@ export const Settings = () => {
     if (!e.target.files || !user) return;
     const file = e.target.files[0];
     if (!file) return;
-
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
       const filePath = `${user.id}/avatar-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
-
-      // Save the storage path to the profiles table
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: filePath })
-        .eq('user_id', user.id);
+      const { error: updateError } = await supabase.from('profiles').update({ avatar_url: filePath }).eq('user_id', user.id);
       if (updateError) throw updateError;
-
       await queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
       await queryClient.refetchQueries({ queryKey: ['profile', user.id] });
-      
       toast({ title: 'Profile photo updated!' });
     } catch (error: any) {
       toast({ title: 'Error uploading photo', description: error.message, variant: 'destructive' });
@@ -187,12 +146,8 @@ export const Settings = () => {
   const updateNotificationSetting = async (key: keyof Omit<UserSettings, 'user_id'>, value: boolean) => {
     if (!user) return;
     try {
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({ user_id: user.id, [key]: value }, { onConflict: 'user_id' });
-
+      const { error } = await supabase.from('user_settings').upsert({ user_id: user.id, [key]: value }, { onConflict: 'user_id' });
       if (error) throw error;
-      
       await refetchSettings();
       toast({ title: 'Notification settings updated' });
     } catch (error: any) {
@@ -208,6 +163,62 @@ export const Settings = () => {
       toast({ title: 'Password reset email sent', description: 'Check your email for instructions.' });
     } catch (error: any) {
       toast({ title: 'Error sending reset email', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: 'Password too short', description: 'Password must be at least 6 characters.', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Passwords do not match', variant: 'destructive' });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: 'Password updated successfully!' });
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordForm(false);
+    } catch (error: any) {
+      toast({ title: 'Error updating password', description: error.message, variant: 'destructive' });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleLinkProvider = async (provider: 'google' | 'github') => {
+    setLinkingProvider(provider);
+    try {
+      const { error } = await supabase.auth.linkIdentity({
+        provider,
+        options: { redirectTo: `${window.location.origin}/settings` },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast({ title: `Error linking ${provider}`, description: error.message, variant: 'destructive' });
+      setLinkingProvider(null);
+    }
+  };
+
+  const handleUnlinkProvider = async (provider: string) => {
+    if (!user?.identities) return;
+    if (linkedProviders.length <= 1) {
+      toast({ title: 'Cannot unlink', description: 'You must have at least one login method.', variant: 'destructive' });
+      return;
+    }
+    const identity = user.identities.find(id => id.provider === provider);
+    if (!identity) return;
+    try {
+      const { error } = await supabase.auth.unlinkIdentity(identity);
+      if (error) throw error;
+      setLinkedProviders(prev => prev.filter(p => p !== provider));
+      toast({ title: `${provider} unlinked successfully` });
+    } catch (error: any) {
+      toast({ title: `Error unlinking ${provider}`, description: error.message, variant: 'destructive' });
     }
   };
 
@@ -236,12 +247,12 @@ export const Settings = () => {
   }
 
   const sidebarNav = [
-    { id: TABS.PROFILE, label: 'Edit Profile', icon: UserIcon },
-    { id: TABS.APPEARANCE, label: 'Appearance', icon: Palette },
-    { id: TABS.SECURITY, label: 'Security', icon: KeyRound },
-    { id: TABS.NOTIFICATIONS, label: 'Notifications', icon: Bell },
-    { id: TABS.ACCOUNT, label: 'Account', icon: Users },
-    { id: TABS.DANGER, label: 'Danger Zone', icon: ShieldAlert, className: 'text-destructive hover:text-destructive hover:bg-destructive/10' },
+    { id: TABS.PROFILE, label: t('Edit Profile'), icon: UserIcon },
+    { id: TABS.APPEARANCE, label: t('Appearance'), icon: Palette },
+    { id: TABS.SECURITY, label: t('Security'), icon: KeyRound },
+    { id: TABS.NOTIFICATIONS, label: t('Notifications'), icon: Bell },
+    { id: TABS.ACCOUNT, label: t('Account'), icon: Users },
+    { id: TABS.DANGER, label: t('Danger Zone'), icon: ShieldAlert, className: 'text-destructive hover:text-destructive hover:bg-destructive/10' },
   ];
 
   const renderContent = () => {
@@ -249,7 +260,7 @@ export const Settings = () => {
       case TABS.PROFILE:
         return (
           <Card>
-            <CardHeader><CardTitle>Profile Information</CardTitle><CardDescription>Update your public profile information.</CardDescription></CardHeader>
+            <CardHeader><CardTitle>{t('Profile Information')}</CardTitle><CardDescription>{t('Update your public profile information.')}</CardDescription></CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center gap-6">
                 <div className="relative">
@@ -266,67 +277,124 @@ export const Settings = () => {
                 </div>
               </div>
               <div className="space-y-4 pt-4">
-                <div><Label htmlFor="display-name">Display Name</Label><Input id="display-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your display name" /></div>
-                <div><Label htmlFor="bio">Bio</Label><Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell us about yourself" rows={3} /></div>
+                <div><Label htmlFor="display-name">{t('Display Name')}</Label><Input id="display-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your display name" /></div>
+                <div><Label htmlFor="bio">{t('Bio')}</Label><Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell us about yourself" rows={3} /></div>
                 <Separator />
                 <SocialLinksEditor links={socialLinks} onChange={setSocialLinks} maxLinks={6} />
-                <Button onClick={handleProfileUpdate} disabled={updateProfile.isPending}>{updateProfile.isPending ? 'Saving...' : 'Save Changes'}</Button>
+                <Button onClick={handleProfileUpdate} disabled={updateProfile.isPending}>{updateProfile.isPending ? t('Saving...') : t('Save Changes')}</Button>
               </div>
             </CardContent>
           </Card>
         );
       case TABS.APPEARANCE:
         return (
-          <Card>
-            <CardHeader><CardTitle>Appearance</CardTitle><CardDescription>Choose your preferred theme.</CardDescription></CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {['light', 'dark', 'system'].map((t) => (
-                  <div key={t} className={cn('cursor-pointer rounded-lg border-2 p-4 text-center transition-all', theme === t ? 'border-primary scale-105' : 'border-muted hover:border-muted-foreground')} onClick={() => setTheme(t as "light" | "dark" | "system")}>
-                    {t === 'light' && <Sun className="mx-auto mb-2 h-6 w-6" />}
-                    {t === 'dark' && <Moon className="mx-auto mb-2 h-6 w-6" />}
-                    {t === 'system' && <Laptop className="mx-auto mb-2 h-6 w-6" />}
-                    <span className="font-medium capitalize">{t}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader><CardTitle>{t('Appearance')}</CardTitle><CardDescription>{t('Choose your preferred theme.')}</CardDescription></CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {['light', 'dark', 'system'].map((th) => (
+                    <div key={th} className={cn('cursor-pointer rounded-lg border-2 p-4 text-center transition-all', theme === th ? 'border-primary scale-105' : 'border-muted hover:border-muted-foreground')} onClick={() => setTheme(th as "light" | "dark" | "system")}>
+                      {th === 'light' && <Sun className="mx-auto mb-2 h-6 w-6" />}
+                      {th === 'dark' && <Moon className="mx-auto mb-2 h-6 w-6" />}
+                      {th === 'system' && <Laptop className="mx-auto mb-2 h-6 w-6" />}
+                      <span className="font-medium capitalize">{th}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Language */}
+            <Card>
+              <CardHeader><CardTitle><Globe className="inline mr-2 h-5 w-5" />{t('Language')}</CardTitle><CardDescription>{t('Change the display language of the app.')}</CardDescription></CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {LANGUAGES.map((lang) => (
+                    <div
+                      key={lang.code}
+                      className={cn(
+                        'cursor-pointer rounded-lg border-2 p-3 text-center transition-all text-sm',
+                        language === lang.code ? 'border-primary bg-primary/10 scale-[1.02]' : 'border-muted hover:border-muted-foreground'
+                      )}
+                      onClick={() => setLanguage(lang.code)}
+                    >
+                      <span className="text-lg mr-1">{lang.flag}</span>
+                      <span className="font-medium">{lang.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         );
       case TABS.SECURITY:
         return (
           <div className="space-y-6">
             <Card>
-              <CardHeader><CardTitle>Password & Privacy</CardTitle><CardDescription>Manage your account privacy and security settings.</CardDescription></CardHeader>
+              <CardHeader><CardTitle>{t('Password & Privacy')}</CardTitle><CardDescription>{t('Manage your account privacy and security settings.')}</CardDescription></CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <div><Label>Private Account</Label><p className="text-sm text-muted-foreground">Only approved followers can see your posts.</p></div>
+                  <div><Label>{t('Private Account')}</Label><p className="text-sm text-muted-foreground">{t('Only approved followers can see your posts.')}</p></div>
                   <Switch checked={profile.is_private} onCheckedChange={(checked) => updateProfile.mutate({ is_private: checked })} />
                 </div>
                 <Separator />
+                
+                {/* Change Password (direct) */}
                 <div>
-                  <Label>Change Password</Label>
-                  <p className="text-sm text-muted-foreground mb-2">If you use social login, you may need to link an email first.</p>
-                  <Button variant="outline" onClick={handlePasswordReset} disabled={!linkedProviders.includes('email')}>Reset Password via Email</Button>
+                  <Label>{t('Change Password')}</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {linkedProviders.includes('email') ? 'Update your password directly or via email.' : 'If you use social login, you may need to link an email first.'}
+                  </p>
+                  {showPasswordForm ? (
+                    <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+                      <div><Label htmlFor="new-password">New Password</Label><Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 6 characters" /></div>
+                      <div><Label htmlFor="confirm-password">Confirm Password</Label><Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" /></div>
+                      <div className="flex gap-2">
+                        <Button onClick={handleChangePassword} disabled={changingPassword}>{changingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}{changingPassword ? 'Updating...' : 'Update Password'}</Button>
+                        <Button variant="ghost" onClick={() => { setShowPasswordForm(false); setNewPassword(''); setConfirmPassword(''); }}>Cancel</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 flex-wrap">
+                      <Button variant="outline" onClick={() => setShowPasswordForm(true)}>
+                        <KeyRound className="mr-2 h-4 w-4" />{t('Change Password')}
+                      </Button>
+                      <Button variant="outline" onClick={handlePasswordReset} disabled={!linkedProviders.includes('email')}>
+                        <Mail className="mr-2 h-4 w-4" />{t('Reset Password via Email')}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
-             <Card>
-              <CardHeader><CardTitle>Two-Factor Authentication (2FA)</CardTitle><CardDescription>Add an extra layer of security to your account.</CardDescription></CardHeader>
+            <Card>
+              <CardHeader><CardTitle>{t('Two-Factor Authentication (2FA)')}</CardTitle><CardDescription>{t('Add an extra layer of security to your account.')}</CardDescription></CardHeader>
               <CardContent className="space-y-4">
                 {mfaFactors?.all && mfaFactors.all.length > 0 ? (
                   <div>
-                    <p className="text-sm font-medium text-green-600 mb-2">2FA is enabled.</p>
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <p className="text-sm font-medium text-green-600">{t('2FA is enabled.')}</p>
+                    </div>
                     <ul className="space-y-2">
                       {mfaFactors.all.map((factor: any) => (
-                        <li key={factor.id} className="flex items-center justify-between text-sm p-2 border rounded-md">
-                          <span>{factor.friendly_name || `Authenticator App`}</span>
-                          <Button variant="destructive" size="sm" onClick={() => handleMfaUnenroll(factor.id)}>Disable</Button>
+                        <li key={factor.id} className="flex items-center justify-between text-sm p-3 border rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <KeyRound className="h-4 w-4 text-muted-foreground" />
+                            <span>{factor.friendly_name || 'Authenticator App'}</span>
+                          </div>
+                          <Button variant="destructive" size="sm" onClick={() => handleMfaUnenroll(factor.id)}>{t('Disable')}</Button>
                         </li>
                       ))}
                     </ul>
                   </div>
-                ) : ( <Button onClick={handleMfaEnroll} disabled={isEnrolling}>{isEnrolling ? 'Loading...' : 'Enable 2FA'}</Button> )}
+                ) : (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-3">Use an authenticator app like Google Authenticator or Authy to generate one-time codes.</p>
+                    <Button onClick={handleMfaEnroll} disabled={isEnrolling}>{isEnrolling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="mr-2 h-4 w-4" />}{isEnrolling ? 'Loading...' : t('Enable 2FA')}</Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -334,43 +402,75 @@ export const Settings = () => {
       case TABS.NOTIFICATIONS:
         return (
           <Card>
-            <CardHeader><CardTitle>Notifications</CardTitle><CardDescription>Choose what notifications you want to receive.</CardDescription></CardHeader>
+            <CardHeader><CardTitle>{t('Notifications')}</CardTitle><CardDescription>{t('Choose what notifications you want to receive.')}</CardDescription></CardHeader>
             <CardContent className="space-y-6">
               {settings ? (
                 <>
                   <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                    <div><Label className="text-base">Enable Notifications</Label><p className="text-sm text-muted-foreground">Master control for all app notifications.</p></div>
+                    <div><Label className="text-base">{t('Enable Notifications')}</Label><p className="text-sm text-muted-foreground">Master control for all app notifications.</p></div>
                     <Switch checked={settings.notifications_enabled} onCheckedChange={(c) => updateNotificationSetting('notifications_enabled', c)} />
                   </div>
                   <Separator />
                   <div className={cn('space-y-4 pt-4', !settings.notifications_enabled && 'opacity-50 pointer-events-none')}>
-                    <p className="text-sm text-muted-foreground">Fine-tune the notifications you want to see when notifications are enabled.</p>
-                    <div className="flex items-center justify-between"><Label>Likes</Label><Switch checked={settings.like_notifications} onCheckedChange={(c) => updateNotificationSetting('like_notifications', c)} disabled={!settings.notifications_enabled} /></div>
-                    <div className="flex items-center justify-between"><Label>Comments</Label><Switch checked={settings.comment_notifications} onCheckedChange={(c) => updateNotificationSetting('comment_notifications', c)} disabled={!settings.notifications_enabled} /></div>
-                    <div className="flex items-center justify-between"><Label>New Followers</Label><Switch checked={settings.follow_notifications} onCheckedChange={(c) => updateNotificationSetting('follow_notifications', c)} disabled={!settings.notifications_enabled} /></div>
+                    <div className="flex items-center justify-between"><Label>{t('Likes')}</Label><Switch checked={settings.like_notifications} onCheckedChange={(c) => updateNotificationSetting('like_notifications', c)} disabled={!settings.notifications_enabled} /></div>
+                    <div className="flex items-center justify-between"><Label>{t('Comments')}</Label><Switch checked={settings.comment_notifications} onCheckedChange={(c) => updateNotificationSetting('comment_notifications', c)} disabled={!settings.notifications_enabled} /></div>
+                    <div className="flex items-center justify-between"><Label>{t('New Followers')}</Label><Switch checked={settings.follow_notifications} onCheckedChange={(c) => updateNotificationSetting('follow_notifications', c)} disabled={!settings.notifications_enabled} /></div>
                   </div>
                 </>
-              ) : (<div>Loading settings...</div>)}
+              ) : (<div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading settings...</div>)}
             </CardContent>
           </Card>
         );
       case TABS.ACCOUNT:
         return (
           <Card>
-            <CardHeader><CardTitle>Account Management</CardTitle><CardDescription>Manage how you sign in.</CardDescription></CardHeader>
+            <CardHeader><CardTitle>{t('Account Management')}</CardTitle><CardDescription>{t('Manage how you sign in.')}</CardDescription></CardHeader>
             <CardContent className="space-y-4">
-               <p className="text-sm text-muted-foreground">You are currently signed in with <span className="font-semibold capitalize text-primary">{user?.app_metadata.provider || 'email'}</span>.</p>
+              <p className="text-sm text-muted-foreground">
+                You are currently signed in with <span className="font-semibold capitalize text-primary">{user?.app_metadata.provider || 'email'}</span>.
+              </p>
               <div className="space-y-2">
                 {[
-                  { provider: 'google', icon: <img src="/assets/icons/google.svg" alt="Google" className="w-5 h-5" /> },
-                  { provider: 'github', icon: <Github className="w-5 h-5" /> },
-                  { provider: 'email', icon: <Mail className="w-5 h-5" /> },
-                ].map(({ provider, icon }) => {
+                  { provider: 'google', icon: <img src="/assets/icons/google.svg" alt="Google" className="w-5 h-5" />, label: 'Google' },
+                  { provider: 'github', icon: <Github className="w-5 h-5" />, label: 'GitHub' },
+                  { provider: 'email', icon: <Mail className="w-5 h-5" />, label: 'Email' },
+                ].map(({ provider, icon, label }) => {
                   const isLinked = linkedProviders.includes(provider);
+                  const isLinking = linkingProvider === provider;
                   return (
-                    <div key={provider} className="flex items-center justify-between rounded-md border p-3">
-                      <div className="flex items-center gap-3">{icon}<span className="font-medium capitalize">{provider}</span></div>
-                      <Button variant="outline" size="sm" disabled>{isLinked ? 'Linked' : 'Coming Soon'}</Button>
+                    <div key={provider} className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="flex items-center gap-3">
+                        {icon}
+                        <div>
+                          <span className="font-medium">{label}</span>
+                          {isLinked && <span className="ml-2 text-xs text-green-600 font-semibold">✓ {t('Linked')}</span>}
+                        </div>
+                      </div>
+                      {provider === 'email' ? (
+                        <Button variant="outline" size="sm" disabled>
+                          {isLinked ? t('Linked') : 'N/A'}
+                        </Button>
+                      ) : isLinked ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleUnlinkProvider(provider)}
+                          disabled={linkedProviders.length <= 1}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Unlink2 className="mr-1 h-3 w-3" />{t('Unlink')}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleLinkProvider(provider as 'google' | 'github')}
+                          disabled={isLinking}
+                        >
+                          {isLinking ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Link2 className="mr-1 h-3 w-3" />}
+                          {t('Link')}
+                        </Button>
+                      )}
                     </div>
                   );
                 })}
@@ -381,10 +481,12 @@ export const Settings = () => {
       case TABS.DANGER:
         return (
           <Card className="border-destructive">
-            <CardHeader><CardTitle className="text-destructive">Danger Zone</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-destructive">{t('Danger Zone')}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">Be careful, these actions are irreversible.</p>
-              <Button variant="destructive" className="w-full sm:w-auto" onClick={() => setShowDeleteDialog(true)}><ShieldAlert className="mr-2 h-4 w-4" />Delete My Account</Button>
+              <p className="text-sm text-muted-foreground">{t('Be careful, these actions are irreversible.')}</p>
+              <Button variant="destructive" className="w-full sm:w-auto" onClick={() => setShowDeleteDialog(true)}>
+                <ShieldAlert className="mr-2 h-4 w-4" />{t('Delete My Account')}
+              </Button>
             </CardContent>
           </Card>
         );
@@ -396,12 +498,12 @@ export const Settings = () => {
     <div className="min-h-screen bg-background">
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8 flex items-center gap-4">
-           <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => navigate('/')}>
-              <ArrowLeft className="h-6 w-6" />
-           </Button>
+          <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => navigate('/')}>
+            <ArrowLeft className="h-6 w-6" />
+          </Button>
           <div>
-            <h1 className="text-3xl font-bold">Settings</h1>
-            <p className="text-muted-foreground mt-1">Manage your account and preferences.</p>
+            <h1 className="text-3xl font-bold">{t('Settings')}</h1>
+            <p className="text-muted-foreground mt-1">{t('Manage your account and preferences.')}</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -426,22 +528,46 @@ export const Settings = () => {
         </div>
       </main>
 
-      {/* Dialogs */}
+      {/* 2FA Dialog */}
       <Dialog open={showMfaDialog} onOpenChange={setShowMfaDialog}>
-        <DialogContent><DialogHeader><DialogTitle>Enable Two-Factor Authentication</DialogTitle><DialogDescription>Scan the QR code with your authenticator app.</DialogDescription></DialogHeader>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('Two-Factor Authentication (2FA)')}</DialogTitle>
+            <DialogDescription>Scan the QR code with your authenticator app (Google Authenticator, Authy, etc).</DialogDescription>
+          </DialogHeader>
           <div className="flex flex-col items-center gap-6 py-4">
-            {mfaEnrollData && 'qr_code' in mfaEnrollData && <img src={(mfaEnrollData as any).qr_code} alt="2FA QR Code" className="p-2 bg-white rounded-lg" />}
-            <p className="text-sm text-muted-foreground">Then, enter the 6-digit code from your app below.</p>
-            <InputOTP maxLength={6} value={verificationCode} onChange={setVerificationCode}><InputOTPGroup><InputOTPSlot index={0} /><InputOTPSlot index={1} /><InputOTPSlot index={2} /><InputOTPSlot index={3} /><InputOTPSlot index={4} /><InputOTPSlot index={5} /></InputOTPGroup></InputOTP>
-            <Button onClick={handleMfaVerify} disabled={isVerifying || verificationCode.length < 6} className="w-full">{isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify and Enable'}</Button>
+            {mfaEnrollData && 'qr_code' in mfaEnrollData && (
+              <div className="p-3 bg-white rounded-xl shadow-sm">
+                <img src={(mfaEnrollData as any).qr_code} alt="2FA QR Code" className="w-48 h-48" />
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground text-center">Enter the 6-digit code from your authenticator app:</p>
+            <InputOTP maxLength={6} value={verificationCode} onChange={setVerificationCode}>
+              <InputOTPGroup>
+                <InputOTPSlot index={0} /><InputOTPSlot index={1} /><InputOTPSlot index={2} />
+                <InputOTPSlot index={3} /><InputOTPSlot index={4} /><InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
+            <Button onClick={handleMfaVerify} disabled={isVerifying || verificationCode.length < 6} className="w-full">
+              {isVerifying ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {isVerifying ? 'Verifying...' : 'Verify and Enable'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Account Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete your account and remove your data from our servers. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete your account and remove your data from our servers. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteAccount} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">{isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'I understand, delete my account'}</AlertDialogAction>
+            <AlertDialogAction onClick={handleDeleteAccount} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'I understand, delete my account'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
