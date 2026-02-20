@@ -1,4 +1,4 @@
-import starMarLogo from '@/assets/Logo/StarMar-.png';
+import nekoPawLogo from '@/assets/Logo/NekoPaw.png';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -423,7 +423,7 @@ export default function Onboarding() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <img src={starMarLogo} alt="StarMar" className="w-16 h-16 mx-auto mb-2" />
+          <img src={nekoPawLogo} alt="NekoPaw" className="w-16 h-16 mx-auto mb-2 rounded-xl" />
           <CardTitle className="text-xl">Complete Your Profile</CardTitle>
           <CardDescription>Step {currentStepIndex + 1} of {steps.length}</CardDescription>
           <div className="flex gap-1 mt-4">{steps.map((s, i) => (<div key={s} className={`h-1 flex-1 rounded-full transition-colors ${i <= currentStepIndex ? 'bg-primary' : 'bg-muted'}`} />))}</div>

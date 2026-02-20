@@ -1,4 +1,4 @@
-import starMarLogo from '@/assets/Logo/StarMar-.png';
+import nekoPawLogo from '@/assets/Logo/NekoPaw.png';
 import { CreatePostModal } from '@/components/posts/CreatePostModal';
 import { NavigationSkeleton } from '@/components/skeletons/NavigationSkeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -69,110 +69,37 @@ export const Navigation = () => {
       }
   }, [user, queryClient]);
 
-  // Redirect to auth if not authenticated and not loading
   useEffect(() => {
     if (!authLoading && !user && location.pathname !== '/auth' && location.pathname !== '/auth/callback' && location.pathname !== '/auth/forgot-password') {
       navigate('/auth');
     }
   }, [user, authLoading, navigate, location.pathname]);
 
-  // Show skeleton while auth is loading or if we're checking authentication
   if (authLoading || (profileLoading && user)) {
     return <NavigationSkeleton />;
   }
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/', active: location.pathname === '/' },
-    {
-      icon: Search,
-      label: 'Explore',
-      path: '/explore',
-      active: location.pathname === '/explore',
-    },
-    {
-      icon: Play,
-      label: 'Play',
-      path: '/Reelms',
-      active: location.pathname === '/Reelms',
-    },
-    {
-      icon: PlusSquare,
-      label: 'Create',
-      path: '#',
-      active: false,
-      onClick: () => setShowCreateModal(true),
-    },
-    {
-      icon: Laugh,
-      label: 'Memes',
-      path: '/memes',
-      active: location.pathname === '/memes',
-    },
-    {
-      icon: MessageCircle,
-      label: 'Chat',
-      path: '/chat',
-      badge: totalUnread > 0 ? totalUnread : null,
-      active: location.pathname.startsWith('/chat'),
-    },
-    {
-      icon: Heart,
-      label: 'Notifications',
-      path: '/notifications',
-      badge: unreadCount > 0 ? unreadCount : null,
-      active: location.pathname === '/notifications',
-    },
-    {
-      icon: Music,
-      label: 'MyMusic',
-      path: '/mymusic/music',
-      active: location.pathname === '/mymusic/music',
-    },
-    {
-      icon: Settings,
-      label: 'Settings',
-      path: '/settings',
-      active: location.pathname === '/settings'
-    }
+    { icon: Search, label: 'Explore', path: '/explore', active: location.pathname === '/explore' },
+    { icon: Play, label: 'Play', path: '/Reelms', active: location.pathname === '/Reelms' },
+    { icon: PlusSquare, label: 'Create', path: '#', active: false, onClick: () => setShowCreateModal(true) },
+    { icon: Laugh, label: 'Memes', path: '/memes', active: location.pathname === '/memes' },
+    { icon: MessageCircle, label: 'Chat', path: '/chat', badge: totalUnread > 0 ? totalUnread : null, active: location.pathname.startsWith('/chat') },
+    { icon: Heart, label: 'Notifications', path: '/notifications', badge: unreadCount > 0 ? unreadCount : null, active: location.pathname === '/notifications' },
+    { icon: Music, label: 'MyMusic', path: '/mymusic/music', active: location.pathname === '/mymusic/music' },
+    { icon: Settings, label: 'Settings', path: '/settings', active: location.pathname === '/settings' }
   ];
 
   const mobileBottomNavItems = [
     { icon: Home, label: 'Home', path: '/', active: location.pathname === '/' },
-    {
-      icon: Search,
-      label: 'Explore',
-      path: '/explore',
-      active: location.pathname === '/explore',
-    },
-    {
-      icon: Play,
-      label: 'Play',
-      path: '/reelms',
-      active: location.pathname === '/reelms',
-    },
-    {
-      icon: PlusSquare,
-      label: 'Create',
-      path: '#',
-      active: false,
-      onClick: () => setShowCreateModal(true),
-    },
-    {
-      icon: Heart,
-      label: 'Notifications',
-      path: '/notifications',
-      badge: unreadCount > 0 ? unreadCount : null,
-      active: location.pathname === '/notifications',
-    },
-    {
-      icon: User,
-      label: 'Profile',
-      path: '/profile',
-      active: location.pathname === '/profile',
-    }
+    { icon: Search, label: 'Explore', path: '/explore', active: location.pathname === '/explore' },
+    { icon: Play, label: 'Play', path: '/reelms', active: location.pathname === '/reelms' },
+    { icon: PlusSquare, label: 'Create', path: '#', active: false, onClick: () => setShowCreateModal(true) },
+    { icon: Heart, label: 'Notifications', path: '/notifications', badge: unreadCount > 0 ? unreadCount : null, active: location.pathname === '/notifications' },
+    { icon: User, label: 'Profile', path: '/profile', active: location.pathname === '/profile' }
   ];
 
-  // Don't render navigation if user is not authenticated
   if (!user) {
     return null;
   }
@@ -189,7 +116,6 @@ export const Navigation = () => {
     navigate('/profile');
   };
 
-  // Check if there are more menu items to show
   const hasMoreItems = profile?.role === 'admin' || profile?.role === 'moderator';
 
   return (
@@ -198,32 +124,33 @@ export const Navigation = () => {
       <nav className="hidden md:flex fixed left-0 top-0 h-full w-72 bg-card border-r border-border p-6 flex-col justify-between z-40">
         <div className="space-y-8">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
             <img
-              src={starMarLogo}
-              alt="StarMar"
-              className="w-10 h-10 object-contain"
+              src={nekoPawLogo}
+              alt="NekoPaw"
+              className="w-10 h-10 object-contain rounded-xl"
             />
-            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              StarMar
+            <span className="text-2xl font-bold text-primary">
+              NekoPaw
             </span>
+            <span className="text-lg">🐾</span>
           </div>
 
           {/* Navigation Items */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             {navItems.map((item, index) => {
               const Icon = item.icon;
               return (
                 <Button
                   key={index}
                   variant={item.active ? 'secondary' : 'ghost'}
-                  className="w-full justify-start space-x-3 h-12 text-base"
+                  className={`w-full justify-start space-x-3 h-12 text-base rounded-xl ${item.active ? 'bg-primary/10 text-primary font-semibold' : ''}`}
                   onClick={() => handleNavigation(item.path, item.onClick)}
                 >
                   <div className="relative">
                     <Icon className="h-6 w-6" />
                     {item.badge && (
-                      <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs starmar-gradient border-0">
+                      <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs nekopaw-gradient border-0 text-primary-foreground">
                         {item.badge}
                       </Badge>
                     )}
@@ -233,13 +160,12 @@ export const Navigation = () => {
               );
             })}
 
-            {/* More Menu - Only show if there are additional items */}
             {hasMoreItems && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start space-x-3 h-12 text-base"
+                    className="w-full justify-start space-x-3 h-12 text-base rounded-xl"
                   >
                     <MoreHorizontal className="h-6 w-6" />
                     <span>More</span>
@@ -260,15 +186,14 @@ export const Navigation = () => {
 
         {/* User Profile & Account Switcher */}
         <div className="space-y-4">
-
-          <div className="flex items-center space-x-3 p-3 rounded-2xl bg-secondary">
+          <div className="flex items-center space-x-3 p-3 rounded-2xl bg-secondary/50">
             <div
               className="flex-1 min-w-0 flex items-center space-x-3 cursor-pointer"
               onClick={handleProfileClick}
             >
-              <Avatar className="h-10 w-10">
+              <Avatar className="h-10 w-10 ring-2 ring-primary/20">
                 <AvatarImage src={profile?.avatar_url} />
-                <AvatarFallback>
+                <AvatarFallback className="bg-primary/10 text-primary">
                   {profile?.display_name?.[0] || profile?.username?.[0] || 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -289,20 +214,20 @@ export const Navigation = () => {
       {/* Mobile Navigation */}
       <div className="md:hidden">
         {/* Top Bar */}
-        <header className="fixed top-0 left-0 right-0 bg-card border-b border-border p-4 flex items-center justify-between z-50">
-          <div className="flex items-center space-x-3">
+        <header className="fixed top-0 left-0 right-0 bg-card/95 backdrop-blur-md border-b border-border p-4 flex items-center justify-between z-50">
+          <div className="flex items-center space-x-2">
             <img
-              src={starMarLogo}
-              alt="StarMar"
-              className="w-8 h-8 object-contain"
+              src={nekoPawLogo}
+              alt="NekoPaw"
+              className="w-8 h-8 object-contain rounded-lg"
             />
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              StarMar
+            <span className="text-xl font-bold text-primary">
+              NekoPaw
             </span>
+            <span className="text-sm">🐾</span>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Message Icon with Badge */}
             <Button
               variant="ghost"
               size="icon"
@@ -311,13 +236,12 @@ export const Navigation = () => {
             >
               <MessageCircle className={`h-6 w-6 ${location.pathname.startsWith('/chat') ? 'text-primary' : ''}`} />
               {totalUnread > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs starmar-gradient border-0">
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs nekopaw-gradient border-0 text-primary-foreground">
                   {totalUnread}
                 </Badge>
               )}
             </Button>
 
-            {/* Settings Icon */}
             <Button
               variant="ghost"
               size="icon"
@@ -328,8 +252,8 @@ export const Navigation = () => {
           </div>
         </header>
 
-        {/* Bottom Navigation - 5 items */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-2 flex justify-around z-40">
+        {/* Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border p-2 flex justify-around z-40">
           {mobileBottomNavItems.map((item, index) => {
             const Icon = item.icon;
             return (
@@ -337,14 +261,12 @@ export const Navigation = () => {
                 key={index}
                 variant="ghost"
                 size="icon"
-                className="h-12 w-12 relative"
+                className={`h-12 w-12 relative rounded-xl ${item.active ? 'text-primary bg-primary/10' : ''}`}
                 onClick={() => handleNavigation(item.path, item.onClick)}
               >
-                <Icon
-                  className={`h-6 w-6 ${item.active ? 'text-primary' : ''}`}
-                />
+                <Icon className={`h-6 w-6 ${item.active ? 'text-primary' : ''}`} />
                 {item.badge && (
-                  <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-xs starmar-gradient border-0">
+                  <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-xs nekopaw-gradient border-0 text-primary-foreground">
                     {item.badge > 9 ? '9+' : item.badge}
                   </Badge>
                 )}
