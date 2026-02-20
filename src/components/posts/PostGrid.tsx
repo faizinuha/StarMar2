@@ -1,5 +1,5 @@
 import { Post } from "@/hooks/usePosts";
-import { Heart, MessageCircle, Play } from "lucide-react";
+import { Heart, MessageCircle, Play, Eye } from "lucide-react";
 import { useState } from "react";
 
 interface PostGridProps {

@@ -58,9 +58,13 @@ export function useProfile(userId?: string) {
         .select('*')
         .eq('user_id', targetUserId)
         .limit(1)
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle() to handle not found gracefully
 
       if (error) throw error;
+      
+      if (!data) {
+        throw new Error('Profile not found for this user ID');
+      }
 
       if (data) {
         const processUrl = async (
@@ -133,9 +137,13 @@ export function useProfileByUsername(username?: string) {
         .select('*')
         .eq('username', username)
         .limit(1)
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle() to handle not found gracefully
 
       if (error) throw error;
+      
+      if (!data) {
+        throw new Error(`Profile with username "${username}" not found`);
+      }
 
       if (data) {
         const processUrl = async (

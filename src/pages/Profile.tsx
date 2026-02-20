@@ -165,7 +165,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      <main className="md:ml-64 min-h-screen pb-20 md:pb-8">
+      <main className="md:ml-64 min-h-screen pb-24 sm:pb-20 md:pb-8">
         <div className="max-w-4xl mx-auto px-4 py-8">
           {/* Profile Header */}
           <Card className="mb-6 overflow-hidden animate-fade-in">

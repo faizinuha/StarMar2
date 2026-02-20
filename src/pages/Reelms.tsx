@@ -17,10 +17,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { usePostComments } from "@/hooks/useComments";
 import { useLikes } from "@/hooks/useLikes";
+import { useViews, formatViews } from "@/hooks/useViews";
 import { Post, useAllPosts } from "@/hooks/usePosts";
 import { useDeletePost } from "@/hooks/useProfile";
 import {
     Bookmark,
+    Eye,
     Heart,
     Loader2,
     MessageCircle,
@@ -66,6 +68,8 @@ const ReelItem = ({ post, isActive }: { post: Post; isActive: boolean }) => {
 
     const { data: comments = [] } = usePostComments(post.id);
 
+    const { views, trackView } = useViews(post.id);
+
     const {
         bookmarks,
         isLoading: bookmarksLoading,
@@ -77,11 +81,11 @@ const ReelItem = ({ post, isActive }: { post: Post; isActive: boolean }) => {
     const isBookmarked = bookmarks?.some((b: any) => b.post_id === post.id) || false;
     const isOwnPost = currentUser?.id === post.user_id;
 
-    // Handle video play/pause based on active state
+    // Track view when reel becomes active
     useEffect(() => {
         if (isActive) {
+            trackView();
             videoRef.current?.play().catch(() => {
-                // Autoplay might be blocked
                 setIsPlaying(false);
             });
             setIsPlaying(true);
@@ -89,7 +93,7 @@ const ReelItem = ({ post, isActive }: { post: Post; isActive: boolean }) => {
             videoRef.current?.pause();
             setIsPlaying(false);
         }
-    }, [isActive]);
+    }, [isActive, trackView]);
 
     const togglePlay = () => {
         if (videoRef.current) {
@@ -191,6 +195,14 @@ const ReelItem = ({ post, isActive }: { post: Post; isActive: boolean }) => {
 
             {/* Right Side Actions */}
             <div className="absolute right-4 bottom-24 flex flex-col gap-6 items-center z-10">
+                {/* View Count */}
+                <div className="flex flex-col items-center gap-1">
+                    <div className="rounded-full h-12 w-12 hover:bg-black/20 flex items-center justify-center">
+                        <Eye className="w-8 h-8 text-white" />
+                    </div>
+                    <span className="text-white text-xs font-medium">{formatViews(views)}</span>
+                </div>
+
                 {/* Like */}
                 <div className="flex flex-col items-center gap-1">
                     <Button

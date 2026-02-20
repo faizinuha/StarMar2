@@ -13,9 +13,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { usePostComments as useComments } from '@/hooks/useComments';
 import { useLikes } from '@/hooks/useLikes';
+import { useViews } from '@/hooks/useViews';
 import { useDeletePost } from '@/hooks/useProfile';
 import {
   Bookmark,
+  Eye,
   Flag,
   Heart,
   Laugh,
@@ -118,6 +120,8 @@ export const PostCard = ({ post }: PostCardProps) => {
     toggleLike: togglePostLike,
     loading: likesLoading,
   } = useLikes('post', post.id, post.user_id);
+
+  const { views, trackView } = useViews(post.id);
 
   const {
     bookmarks,

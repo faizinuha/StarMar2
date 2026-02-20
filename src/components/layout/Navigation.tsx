@@ -252,33 +252,37 @@ export const Navigation = () => {
         </header>
 
         {/* Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border p-2 flex justify-around z-40">
+        <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-2 sm:p-3 flex justify-around items-center z-40 md:hidden gap-1 sm:gap-2 h-20 sm:h-24">
           {mobileBottomNavItems.map((item, index) => {
             const Icon = item.icon;
             return (
-              <Button
-                key={index}
-                variant="ghost"
-                size="icon"
-                className={`h-12 w-12 relative rounded-lg ${item.active ? 'text-primary bg-primary/10' : ''}`}
-                onClick={() => handleNavigation(item.path, item.onClick)}
-              >
-                <Icon className={`h-6 w-6 ${item.active ? 'text-primary' : ''}`} />
-                {item.badge && (
-                  <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-xs nekopaw-gradient border-0 text-primary-foreground">
-                    {item.badge > 9 ? '9+' : item.badge}
-                  </Badge>
-                )}
-              </Button>
+              <div key={index} className="flex flex-col items-center justify-center relative flex-1">
+                <Button
+                  variant={item.active ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className={`h-8 w-8 sm:h-10 sm:w-10 relative rounded-lg ${item.active ? 'bg-primary/10 text-primary' : ''}`}
+                  onClick={() => handleNavigation(item.path, item.onClick)}
+                >
+                  <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${item.active ? 'text-primary' : ''}`} />
+                  {item.badge && (
+                    <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-xs nekopaw-gradient border-0 text-primary-foreground">
+                      {item.badge > 9 ? '9+' : item.badge}
+                    </Badge>
+                  )}
+                </Button>
+                <span className={`text-xs mt-0.5 sm:mt-1 text-center leading-tight ${item.active ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                  {item.label}
+                </span>
+              </div>
             );
           })}
         </nav>
       </div>
 
       {/* Spacer for fixed navigation */}
-      <div className="hidden md:block w-72" />
-      <div className="md:hidden h-16" />
-      <div className="md:hidden h-16" />
+      <div className="hidden md:block w-64" />
+      {/* Mobile bottom nav spacer - h-24 untuk accommodate icon + label */}
+      <div className="md:hidden h-24" />
 
       {/* Create Post Modal */}
       <CreatePostModal
