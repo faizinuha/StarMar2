@@ -75,7 +75,7 @@ export function Auth() {
     const newErrors: Record<string, string> = {};
     if (!formData.email) {
       newErrors.email = 'Email is required';
-    } else if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(formData.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     } else if (!formData.email.toLowerCase().endsWith('@gmail.com')) {
       newErrors.email = 'Only Gmail addresses are allowed';
@@ -134,8 +134,7 @@ export function Auth() {
           setIsLogin(true);
         } else if (isLogin) {
           new Audio(loginSound).play();
-        } else {
-          navigate('/');
+          setTimeout(() => navigate('/'), 500);
         }
       }
     } catch {
@@ -149,18 +148,18 @@ export function Auth() {
     if (!value) return '';
     switch (name) {
       case 'email':
-        if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value)) return 'Please enter a valid email address';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
         if (!value.toLowerCase().endsWith('@gmail.com')) return 'Only Gmail addresses are allowed';
         return '';
       case 'password':
-        if (value.length < 6) return 'Password must be at least 8 characters';
+        if (value.length < 8) return 'Password must be at least 8 characters';
         if (!/[A-Z]/.test(value)) return 'Password must contain at least one uppercase letter';
         if (!/[a-z]/.test(value)) return 'Password must contain at least one lowercase letter';
         if (!/[0-9]/.test(value)) return 'Password must contain at least one number';
         return '';
       case 'username':
         if (!isLogin && value.length < 3) return 'Username must be at least 3 characters';
-        if (!isLogin && value.length > 10) return 'Username must be less than 20 characters';
+        if (!isLogin && value.length > 20) return 'Username must be less than 20 characters';
         if (!isLogin && !/^[a-zA-Z0-9_]+$/.test(value)) return 'Username can only contain letters, numbers, and underscores';
         return '';
       case 'displayName':
@@ -247,7 +246,7 @@ export function Auth() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 gap-3">
                   {accounts.map((account) => (
-                    <div key={account.user.id} className="flex items-center justify-between p-3 border rounded-xl hover:bg-muted/50 transition-colors">
+                    <div key={account.user.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="flex items-center gap-4 cursor-pointer flex-1 min-w-0" onClick={() => handleAccountSelect(account)}>
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={account.user.user_metadata?.avatar_url} alt={account.user.user_metadata?.display_name || account.user.email} />

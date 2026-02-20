@@ -56,7 +56,7 @@
     --shadow-large: 0 25px 50px -12px hsl(200 30% 50% / 0.2);
     --shadow-glow: 0 0 30px hsl(200 70% 65% / 0.25);
     
-    --radius: 1rem;
+    --radius: 0.5rem;
 
     --sidebar-background: 200 25% 98%;
     --sidebar-foreground: 210 15% 26%;
@@ -171,13 +171,13 @@
   }
   
   .post-card {
-    @apply bg-card border border-border rounded-3xl overflow-hidden transition-all duration-300;
+    @apply bg-card border border-primary/10 rounded-lg overflow-hidden transition-all duration-300;
     box-shadow: var(--shadow-soft);
   }
   
   .post-card:hover {
     box-shadow: var(--shadow-medium);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
   }
   
   .gradient-button {
@@ -188,7 +188,7 @@
   
   .gradient-button:hover {
     box-shadow: var(--shadow-glow);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
   }
   
   .like-animation {
@@ -204,6 +204,39 @@
     content: "🐾";
     font-size: 0.75em;
     margin-left: 0.25em;
+  }
+
+  /* Cute Input Styling */
+  .cute-input {
+    @apply rounded-lg border border-primary/20 px-4 py-3 focus-within:border-primary/50 transition-all;
+  }
+
+  /* Cute Card with shadow */
+  .cute-card {
+    @apply rounded-lg bg-card border border-primary/10 shadow-sm hover:shadow-md transition-all p-6;
+  }
+
+  /* Kawaii Badge */
+  .kawaii-badge {
+    @apply rounded-full px-3 py-1 text-xs font-semibold bg-primary/10 text-primary border border-primary/20;
+  }
+
+  /* Floating Animation */
+  .float-animation {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Paw Print Background */
+  .paw-background {
+    position: relative;
+  }
+
+  .paw-background::before {
+    content: "🐾";
+    position: absolute;
+    opacity: 0.08;
+    font-size: 200px;
+    pointer-events: none;
   }
 }
 
@@ -246,6 +279,17 @@
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 10px hsl(var(--primary) / 0.2); }
   50% { box-shadow: 0 0 20px hsl(var(--primary) / 0.4); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .animate-heart-beat {

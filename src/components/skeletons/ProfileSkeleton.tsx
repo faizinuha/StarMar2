@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export const ProfileSkeleton = () => {
   return (
     <div className="min-h-screen bg-background">
-      <div className="md:ml-72 min-h-screen pb-20 md:pb-8">
+      <div className="md:ml-64 min-h-screen pb-20 md:pb-8">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <Card className="p-8">
             {/* Profile Header */}

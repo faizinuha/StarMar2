@@ -114,7 +114,7 @@ export default function PlayPage() {
   return (
     <div className="bg-black text-white">
       <Navigation />
-      <main className="md:ml-72 min-h-screen p-8 pb-40">
+      <main className="md:ml-64 min-h-screen p-8 pb-40">
         <header className="mb-8 mt-8">
           <h1 className="text-4xl font-bold">Rekomendasi Lagu</h1>
           <p className="text-gray-400">Lagu-lagu pilihan yang mungkin Anda suka.</p>

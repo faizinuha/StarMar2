@@ -42,7 +42,7 @@ export const Memes = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <main className="md:ml-72 min-h-screen pb-20 md:pb-8">
+      <main className="md:ml-64 min-h-screen pb-20 md:pb-8">
         <div className="max-w-2xl mx-auto px-4 py-4">
           {/* Header with Search and Filter */}
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-4 space-y-3">

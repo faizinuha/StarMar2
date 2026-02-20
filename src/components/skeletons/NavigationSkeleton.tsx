@@ -4,7 +4,7 @@ export const NavigationSkeleton = () => {
   return (
     <>
       {/* Desktop Navigation Skeleton */}
-      <nav className="hidden md:flex fixed left-0 top-0 h-full w-72 bg-card border-r border-border p-6 flex-col justify-between z-40">
+      <nav className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-card border-r border-border p-4 flex-col justify-between z-40">
         <div className="space-y-8">
           {/* Logo Skeleton */}
           <div className="flex items-center space-x-3">

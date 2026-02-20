@@ -121,19 +121,18 @@ export const Navigation = () => {
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="hidden md:flex fixed left-0 top-0 h-full w-72 bg-card border-r border-border p-6 flex-col justify-between z-40">
-        <div className="space-y-8">
+      <nav className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-card border-r border-border p-4 flex-col justify-between z-40">
+        <div className="space-y-5">
           {/* Logo */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
             <img
               src={nekoPawLogo}
               alt="NekoPaw"
-              className="w-10 h-10 object-contain rounded-xl"
+              className="w-10 h-10 object-contain rounded-md"
             />
-            <span className="text-2xl font-bold text-primary">
+            <span className="text-lg font-bold text-primary">
               NekoPaw
             </span>
-            <span className="text-lg">🐾</span>
           </div>
 
           {/* Navigation Items */}
@@ -144,7 +143,7 @@ export const Navigation = () => {
                 <Button
                   key={index}
                   variant={item.active ? 'secondary' : 'ghost'}
-                  className={`w-full justify-start space-x-3 h-12 text-base rounded-xl ${item.active ? 'bg-primary/10 text-primary font-semibold' : ''}`}
+                  className={`w-full justify-start space-x-2 h-10 text-sm rounded-lg ${item.active ? 'bg-primary/10 text-primary font-semibold' : ''}`}
                   onClick={() => handleNavigation(item.path, item.onClick)}
                 >
                   <div className="relative">
@@ -165,7 +164,7 @@ export const Navigation = () => {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start space-x-3 h-12 text-base rounded-xl"
+                    className="w-full justify-start space-x-2 h-10 text-sm rounded-lg"
                   >
                     <MoreHorizontal className="h-6 w-6" />
                     <span>More</span>
@@ -261,7 +260,7 @@ export const Navigation = () => {
                 key={index}
                 variant="ghost"
                 size="icon"
-                className={`h-12 w-12 relative rounded-xl ${item.active ? 'text-primary bg-primary/10' : ''}`}
+                className={`h-12 w-12 relative rounded-lg ${item.active ? 'text-primary bg-primary/10' : ''}`}
                 onClick={() => handleNavigation(item.path, item.onClick)}
               >
                 <Icon className={`h-6 w-6 ${item.active ? 'text-primary' : ''}`} />

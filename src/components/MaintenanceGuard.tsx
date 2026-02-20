@@ -90,7 +90,7 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <main className="md:ml-72 min-h-screen flex items-center justify-center pb-20 md:pb-8">
+        <main className="md:ml-64 min-h-screen flex items-center justify-center pb-20 md:pb-8">
           <div className="max-w-md mx-auto p-8 text-center space-y-6">
             <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center">
               {maintenance.type === 'blocked' ? (

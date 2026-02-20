@@ -398,7 +398,7 @@ const Reelms = () => {
         <div className="min-h-screen bg-black">
             <Navigation />
 
-            <main className="md:ml-72 h-screen overflow-hidden">
+            <main className="md:ml-64 h-screen overflow-hidden">
                 {isLoading ? (
                     <div className="h-full flex items-center justify-center">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />

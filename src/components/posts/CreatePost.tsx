@@ -25,7 +25,7 @@ export const CreatePost = ({ defaultTab = 'post' }: CreatePostProps) => {
             </AvatarFallback>
           </Avatar>
           <div
-            className="flex-1 bg-secondary rounded-full px-4 py-3 text-muted-foreground cursor-pointer hover:bg-secondary/80 transition-colors"
+            className="flex-1 bg-primary/5 rounded-lg px-4 py-3 text-muted-foreground cursor-pointer hover:bg-primary/10 transition-colors border border-primary/10"
             onClick={() => setIsOpen(true)}
           >
             {defaultTab === 'meme' ? "Share a meme..." : "What's on your mind?"}

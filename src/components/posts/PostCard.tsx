@@ -209,7 +209,7 @@ export const PostCard = ({ post }: PostCardProps) => {
         {/* Header */}
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+            <Avatar className="h-10 w-10">
               <AvatarImage src={post.user.avatar} alt={post.user.displayName} />
               <AvatarFallback>{post.user.displayName?.charAt(0)}</AvatarFallback>
             </Avatar>

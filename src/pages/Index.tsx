@@ -36,7 +36,7 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <main className="md:ml-72 min-h-screen pb-20 md:pb-8">
+        <main className="md:ml-64 min-h-screen pb-20 md:pb-8">
           <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Main Content Skeleton */}
@@ -82,7 +82,7 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <main className="md:ml-72 min-h-screen pb-20 md:pb-8">
+        <main className="md:ml-64 min-h-screen pb-20 md:pb-8">
           <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="text-center py-12">
               <div className="text-6xl mb-4">😞</div>
@@ -104,7 +104,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      <main className="md:ml-72 min-h-screen pb-20 md:pb-8">
+      <main className="md:ml-64 min-h-screen pb-20 md:pb-8">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
