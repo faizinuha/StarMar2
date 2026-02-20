@@ -2,129 +2,131 @@
 @tailwind components;
 @tailwind utilities;
 
-/* StarMar Design System - Modern social media platform with dark/neutral theme */
+/* NekoPaw Design System - Kawaii cat-themed social media with baby blue pastel */
 
 @layer base {
   :root {
-    /* Core theme colors */
-    --background: 0 0% 100%;
-    --foreground: 220 15% 15%;
+    /* Core theme colors - Light mode */
+    --background: 200 30% 98%;
+    --foreground: 210 20% 15%;
     
     /* Surface colors */
-    --card: 0 0% 100%;
-    --card-foreground: 220 15% 15%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 15%;
+    --card: 200 25% 100%;
+    --card-foreground: 210 20% 15%;
+    --popover: 200 25% 100%;
+    --popover-foreground: 210 20% 15%;
     
-    /* Brand colors - StarMar dark/neutral theme */
-    --primary: 220 10% 15%; /* Dark charcoal */
+    /* Brand colors - Baby Blue Pastel */
+    --primary: 200 70% 65%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 220 10% 35%;
-    --primary-dark: 220 10% 8%;
+    --primary-light: 200 70% 78%;
+    --primary-dark: 200 70% 50%;
     
-    --accent: 220 15% 25%; /* Slate gray accent */
-    --accent-foreground: 0 0% 100%;
-    --accent-light: 220 15% 45%;
-    --accent-dark: 220 15% 15%;
+    --accent: 200 40% 88%;
+    --accent-foreground: 210 20% 20%;
+    --accent-light: 200 40% 92%;
+    --accent-dark: 200 40% 75%;
     
     /* Gradient combinations */
-    --gradient-primary: linear-gradient(135deg, hsl(220 10% 15%), hsl(220 15% 25%));
-    --gradient-subtle: linear-gradient(135deg, hsl(220 10% 90%), hsl(220 15% 95%));
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 100% / 0.8), hsl(0 0% 100% / 0.4));
+    --gradient-primary: linear-gradient(135deg, hsl(200 70% 65%), hsl(210 60% 55%));
+    --gradient-subtle: linear-gradient(135deg, hsl(200 30% 95%), hsl(200 25% 98%));
+    --gradient-card: linear-gradient(135deg, hsl(200 25% 100% / 0.9), hsl(200 30% 97% / 0.6));
+    --gradient-kawaii: linear-gradient(135deg, hsl(200 70% 78%), hsl(330 50% 80%));
     
     /* Neutral system */
-    --secondary: 220 10% 96%;
-    --secondary-foreground: 220 15% 25%;
-    --muted: 220 10% 96%;
-    --muted-foreground: 220 10% 45%;
+    --secondary: 200 20% 95%;
+    --secondary-foreground: 210 20% 25%;
+    --muted: 200 15% 94%;
+    --muted-foreground: 200 10% 45%;
     
     /* Interactive states */
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 220 10% 15%;
-    --destructive: 0 84% 60%;
+    --border: 200 20% 90%;
+    --input: 200 20% 90%;
+    --ring: 200 70% 65%;
+    --destructive: 0 72% 60%;
     --destructive-foreground: 0 0% 100%;
     
     /* Glass morphism */
-    --glass: 0 0% 100% / 0.1;
-    --glass-border: 0 0% 100% / 0.2;
+    --glass: 200 30% 98% / 0.6;
+    --glass-border: 200 30% 85% / 0.3;
     
-    /* Shadows */
-    --shadow-soft: 0 4px 6px -1px hsl(220 15% 15% / 0.1), 0 2px 4px -1px hsl(220 15% 15% / 0.06);
-    --shadow-medium: 0 10px 15px -3px hsl(220 15% 15% / 0.1), 0 4px 6px -2px hsl(220 15% 15% / 0.05);
-    --shadow-large: 0 25px 50px -12px hsl(220 15% 15% / 0.25);
-    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.2);
+    /* Shadows - soft blue tint */
+    --shadow-soft: 0 4px 6px -1px hsl(200 30% 50% / 0.08), 0 2px 4px -1px hsl(200 30% 50% / 0.04);
+    --shadow-medium: 0 10px 15px -3px hsl(200 30% 50% / 0.1), 0 4px 6px -2px hsl(200 30% 50% / 0.05);
+    --shadow-large: 0 25px 50px -12px hsl(200 30% 50% / 0.2);
+    --shadow-glow: 0 0 30px hsl(200 70% 65% / 0.25);
     
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 10% 26%;
-    --sidebar-primary: 220 10% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 10% 95%;
-    --sidebar-accent-foreground: 220 10% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 220 10% 50%;
+    --sidebar-background: 200 25% 98%;
+    --sidebar-foreground: 210 15% 26%;
+    --sidebar-primary: 200 70% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 200 25% 93%;
+    --sidebar-accent-foreground: 210 15% 15%;
+    --sidebar-border: 200 20% 90%;
+    --sidebar-ring: 200 70% 65%;
   }
 
   .dark {
-    /* Dark theme - Instagram style pure black */
-    --background: 0 0% 0%; /* Pure black like Instagram */
-    --foreground: 0 0% 100%;
+    /* Dark theme - Cozy dark with baby blue accents */
+    --background: 215 25% 8%;
+    --foreground: 200 20% 95%;
     
     /* Surface colors */
-    --card: 0 0% 0%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 100%;
+    --card: 215 25% 11%;
+    --card-foreground: 200 20% 95%;
+    --popover: 215 25% 13%;
+    --popover-foreground: 200 20% 95%;
     
-    /* Brand colors - Instagram style */
-    --primary: 209 100% 55%; /* Instagram blue for buttons */
-    --primary-foreground: 0 0% 100%;
-    --primary-light: 209 100% 65%;
-    --primary-dark: 209 100% 45%;
+    /* Brand colors - Baby Blue on dark */
+    --primary: 200 70% 65%;
+    --primary-foreground: 215 25% 8%;
+    --primary-light: 200 70% 75%;
+    --primary-dark: 200 70% 50%;
     
-    --accent: 0 0% 15%; /* Dark gray accent */
-    --accent-foreground: 0 0% 100%;
-    --accent-light: 0 0% 25%;
-    --accent-dark: 0 0% 10%;
+    --accent: 215 20% 18%;
+    --accent-foreground: 200 20% 95%;
+    --accent-light: 215 20% 25%;
+    --accent-dark: 215 20% 12%;
     
     /* Updated gradients for dark mode */
-    --gradient-primary: linear-gradient(135deg, hsl(209 100% 55%), hsl(209 100% 45%));
-    --gradient-subtle: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 12%));
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 0% / 0.8), hsl(0 0% 5% / 0.4));
+    --gradient-primary: linear-gradient(135deg, hsl(200 70% 65%), hsl(210 60% 55%));
+    --gradient-subtle: linear-gradient(135deg, hsl(215 25% 10%), hsl(215 25% 14%));
+    --gradient-card: linear-gradient(135deg, hsl(215 25% 11% / 0.9), hsl(215 25% 14% / 0.6));
+    --gradient-kawaii: linear-gradient(135deg, hsl(200 70% 55%), hsl(330 40% 60%));
     
-    /* Neutral system for dark - Instagram style */
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
+    /* Neutral system */
+    --secondary: 215 20% 16%;
+    --secondary-foreground: 200 20% 90%;
+    --muted: 215 20% 16%;
+    --muted-foreground: 200 15% 55%;
     
     /* Interactive states */
-    --border: 0 0% 20%;
-    --input: 0 0% 15%;
-    --ring: 209 100% 55%;
-    --destructive: 0 84% 60%;
+    --border: 215 20% 20%;
+    --input: 215 20% 16%;
+    --ring: 200 70% 65%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
     
     /* Glass morphism for dark */
-    --glass: 0 0% 15% / 0.3;
-    --glass-border: 0 0% 30% / 0.2;
+    --glass: 215 25% 15% / 0.4;
+    --glass-border: 200 30% 40% / 0.15;
     
-    /* Dark shadows */
-    --shadow-soft: 0 4px 6px -1px hsl(0 0% 0% / 0.5), 0 2px 4px -1px hsl(0 0% 0% / 0.3);
-    --shadow-medium: 0 10px 15px -3px hsl(0 0% 0% / 0.6), 0 4px 6px -2px hsl(0 0% 0% / 0.4);
-    --shadow-large: 0 25px 50px -12px hsl(0 0% 0% / 0.8);
-    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.2);
+    /* Dark shadows with blue tint */
+    --shadow-soft: 0 4px 6px -1px hsl(215 30% 5% / 0.4), 0 2px 4px -1px hsl(215 30% 5% / 0.2);
+    --shadow-medium: 0 10px 15px -3px hsl(215 30% 5% / 0.5), 0 4px 6px -2px hsl(215 30% 5% / 0.3);
+    --shadow-large: 0 25px 50px -12px hsl(215 30% 5% / 0.7);
+    --shadow-glow: 0 0 30px hsl(200 70% 65% / 0.15);
 
-    --sidebar-background: 0 0% 0%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 209 100% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 209 100% 55%;
+    --sidebar-background: 215 25% 9%;
+    --sidebar-foreground: 200 20% 90%;
+    --sidebar-primary: 200 70% 65%;
+    --sidebar-primary-foreground: 215 25% 8%;
+    --sidebar-accent: 215 20% 16%;
+    --sidebar-accent-foreground: 200 20% 90%;
+    --sidebar-border: 215 20% 20%;
+    --sidebar-ring: 200 70% 65%;
   }
 }
 
@@ -140,7 +142,20 @@
 }
 
 @layer components {
-  /* StarMar Component Styles */
+  /* NekoPaw Component Styles */
+  .nekopaw-gradient {
+    background: var(--gradient-primary);
+  }
+  
+  .nekopaw-gradient-subtle {
+    background: var(--gradient-subtle);
+  }
+
+  .nekopaw-gradient-kawaii {
+    background: var(--gradient-kawaii);
+  }
+  
+  /* Legacy alias */
   .starmar-gradient {
     background: var(--gradient-primary);
   }
@@ -183,6 +198,13 @@
   .notification-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+
+  /* Cat paw print decoration */
+  .paw-accent::after {
+    content: "🐾";
+    font-size: 0.75em;
+    margin-left: 0.25em;
+  }
 }
 
 @keyframes heartBeat {
@@ -192,36 +214,18 @@
 }
 
 @keyframes fadeIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideIn {
-  from { 
-    opacity: 0; 
-    transform: translateX(-20px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateX(0); 
-  }
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes scaleIn {
-  from { 
-    opacity: 0; 
-    transform: scale(0.9); 
-  }
-  to { 
-    opacity: 1; 
-    transform: scale(1); 
-  }
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes heart-beat {
