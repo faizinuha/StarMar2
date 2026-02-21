@@ -9,7 +9,7 @@ interface PostGridProps {
 
 export const PostGrid = ({ posts, onPostClick }: PostGridProps) => {
   return (
-    <div className="grid grid-cols-3 gap-1">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
       {posts.map((post) => (
         <PostGridItem
           key={post.id}
@@ -121,6 +121,10 @@ const PostGridItem = ({ post, onClick }: PostGridItemProps) => {
             <div className="flex items-center space-x-1">
               <MessageCircle className="h-5 w-5 fill-white" />
               <span className="font-semibold">{post.comments || post.comments_count || 0}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Eye className="h-4 w-4 fill-white" />
+              <span className="font-semibold text-sm">{post.views || post.views_count || 0}</span>
             </div>
           </div>
         </div>

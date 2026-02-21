@@ -188,58 +188,58 @@ const ReelItem = ({ post, isActive }: { post: Post; isActive: boolean }) => {
             {/* Mute Button */}
             <button
                 onClick={toggleMute}
-                className="absolute top-20 right-4 p-2 bg-black/50 rounded-full text-white hover:bg-black/70 transition md:top-8"
+                className="absolute top-16 md:top-8 right-2 md:right-4 p-2 bg-black/50 rounded-full text-white hover:bg-black/70 transition"
             >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                {isMuted ? <VolumeX className="w-4 md:w-5 h-4 md:h-5" /> : <Volume2 className="w-4 md:w-5 h-4 md:h-5" />}
             </button>
 
             {/* Right Side Actions */}
-            <div className="absolute right-4 bottom-24 flex flex-col gap-6 items-center z-10">
+            <div className="absolute right-2 md:right-4 bottom-20 md:bottom-24 flex flex-col gap-4 md:gap-6 items-center z-10">
                 {/* View Count */}
-                <div className="flex flex-col items-center gap-1">
-                    <div className="rounded-full h-12 w-12 hover:bg-black/20 flex items-center justify-center">
-                        <Eye className="w-8 h-8 text-white" />
+                <div className="flex flex-col items-center gap-0.5 md:gap-1">
+                    <div className="rounded-full h-10 md:h-12 w-10 md:w-12 hover:bg-black/20 flex items-center justify-center transition-colors">
+                        <Eye className="w-5 md:w-6 h-5 md:h-6 text-white" />
                     </div>
                     <span className="text-white text-xs font-medium">{formatViews(views)}</span>
                 </div>
 
                 {/* Like */}
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-0.5 md:gap-1">
                     <Button
                         size="icon"
                         variant="ghost"
-                        className="rounded-full h-12 w-12 hover:bg-black/20"
+                        className="rounded-full h-10 md:h-12 w-10 md:w-12 hover:bg-black/20 transition-colors"
                         onClick={handleLike}
                     >
                         <Heart
-                            className={`w-8 h-8 ${isLiked ? "fill-red-500 text-red-500" : "text-white"}`}
+                            className={`w-5 md:w-6 h-5 md:h-6 ${isLiked ? "fill-red-500 text-red-500" : "text-white"}`}
                         />
                     </Button>
                     <span className="text-white text-xs font-medium">{formatCount(likesCount)}</span>
                 </div>
 
                 {/* Comment */}
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-0.5 md:gap-1">
                     <Button
                         size="icon"
                         variant="ghost"
-                        className="rounded-full h-12 w-12 hover:bg-black/20"
+                        className="rounded-full h-10 md:h-12 w-10 md:w-12 hover:bg-black/20 transition-colors"
                         onClick={() => setShowComments(true)}
                     >
-                        <MessageCircle className="w-8 h-8 text-white" />
+                        <MessageCircle className="w-5 md:w-6 h-5 md:h-6 text-white" />
                     </Button>
                     <span className="text-white text-xs font-medium">{formatCount(comments.length)}</span>
                 </div>
 
                 {/* Share */}
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-0.5 md:gap-1">
                     <Button
                         size="icon"
                         variant="ghost"
-                        className="rounded-full h-12 w-12 hover:bg-black/20"
+                        className="rounded-full h-10 md:h-12 w-10 md:w-12 hover:bg-black/20 transition-colors"
                         onClick={handleShare}
                     >
-                        <Share className="w-8 h-8 text-white" />
+                        <Share className="w-5 md:w-6 h-5 md:h-6 text-white" />
                     </Button>
                     <span className="text-white text-xs font-medium">Share</span>
                 </div>
@@ -248,11 +248,11 @@ const ReelItem = ({ post, isActive }: { post: Post; isActive: boolean }) => {
                 <Button
                     size="icon"
                     variant="ghost"
-                    className="rounded-full h-12 w-12 hover:bg-black/20"
+                    className="rounded-full h-10 md:h-12 w-10 md:w-12 hover:bg-black/20 transition-colors"
                     onClick={handleBookmark}
                 >
                     <Bookmark
-                        className={`w-8 h-8 ${isBookmarked ? "fill-white text-white" : "text-white"}`}
+                        className={`w-5 md:w-6 h-5 md:h-6 ${isBookmarked ? "fill-white text-white" : "text-white"}`}
                     />
                 </Button>
 
@@ -262,9 +262,9 @@ const ReelItem = ({ post, isActive }: { post: Post; isActive: boolean }) => {
                         <Button
                             size="icon"
                             variant="ghost"
-                            className="rounded-full h-12 w-12 hover:bg-black/20"
+                            className="rounded-full h-10 md:h-12 w-10 md:w-12 hover:bg-black/20 transition-colors"
                         >
-                            <MoreHorizontal className="w-8 h-8 text-white" />
+                            <MoreHorizontal className="w-5 md:w-6 h-5 md:h-6 text-white" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -300,20 +300,20 @@ const ReelItem = ({ post, isActive }: { post: Post; isActive: boolean }) => {
             </div>
 
             {/* Bottom Info Area */}
-            <div className="absolute left-4 bottom-4 right-20 z-10 text-white space-y-4">
+            <div className="absolute left-2 md:left-4 bottom-4 right-12 md:right-20 z-10 text-white space-y-2 md:space-y-4">
                 {/* User Info */}
-                <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border-2 border-white">
+                <div className="flex items-center gap-2 md:gap-3">
+                    <Avatar className="h-8 md:h-10 w-8 md:w-10 border-2 border-white">
                         <AvatarImage src={post.user.avatar} />
                         <AvatarFallback>{post.user.username[0]}</AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm hover:underline cursor-pointer">
+                            <span className="font-semibold text-xs md:text-sm hover:underline cursor-pointer truncate">
                                 {post.user.displayName || post.user.username}
                             </span>
                             {post.user_id !== currentUser?.id && (
-                                <Button variant="outline" size="sm" className="h-6 text-xs bg-transparent text-white border-white hover:bg-white hover:text-black rounded-lg">
+                                <Button variant="outline" size="sm" className="h-5 md:h-6 text-xs bg-transparent text-white border-white hover:bg-white hover:text-black rounded-lg px-2 md:px-3 whitespace-nowrap flex-shrink-0">
                                     Follow
                                 </Button>
                             )}
@@ -322,7 +322,7 @@ const ReelItem = ({ post, isActive }: { post: Post; isActive: boolean }) => {
                 </div>
 
                 {/* Caption */}
-                <div className="text-sm">
+                <div className="text-xs md:text-sm">
                     <p className={`${!showFullCaption ? "line-clamp-2" : ""}`}>
                         {post.content}
                     </p>

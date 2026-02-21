@@ -80,11 +80,30 @@ const ProfileStats = ({ userId, postsCount, onClickFollowers, onClickFollowing }
     enabled: !!userId,
   });
 
+  const { data: totalViews = 0 } = useQuery({
+    queryKey: ['profile-views', userId],
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from('posts')
+        .select('views_count')
+        .eq('user_id', userId);
+
+      if (error || !rows) return 0;
+
+      return (rows as any[]).reduce((sum, r) => sum + (r.views_count || 0), 0);
+    },
+    enabled: !!userId,
+  });
+
   return (
     <div className="flex items-center space-x-6 pt-2">
       <div className="text-center">
         <p className="font-bold text-lg">{postsCount.toLocaleString()}</p>
         <p className="text-sm text-muted-foreground">Posts</p>
+      </div>
+      <div className="text-center">
+        <p className="font-bold text-lg">{totalViews.toLocaleString()}</p>
+        <p className="text-sm text-muted-foreground">Views</p>
       </div>
       <div className="text-center cursor-pointer hover:text-primary transition-colors" onClick={onClickFollowers}>
         <p className="font-bold text-lg">{(actualCounts?.followers ?? 0).toLocaleString()}</p>
