@@ -122,6 +122,11 @@ export const PostCard = ({ post }: PostCardProps) => {
   } = useLikes('post', post.id, post.user_id);
 
   const { views, trackView } = useViews(post.id);
+  const formatViewCount = (count: number): string => {
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+    return count.toString();
+  };
 
   const {
     bookmarks,
