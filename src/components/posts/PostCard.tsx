@@ -167,9 +167,13 @@ export const PostCard = ({ post }: PostCardProps) => {
 
   const hasMedia = displayImageUrl || (displayMedia && displayMedia.length > 0);
 
+  // Track view when post becomes visible
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
+        if (entry.isIntersecting) {
+          trackView();
+        }
         if (!entry.isIntersecting) {
           videoRef.current?.pause();
           setIsVideoPlaying(false);
@@ -178,7 +182,7 @@ export const PostCard = ({ post }: PostCardProps) => {
     );
     if (videoRef.current) observer.observe(videoRef.current);
     return () => { if (videoRef.current) observer.unobserve(videoRef.current); };
-  }, [displayMedia]); // Re-run if media changes
+  }, [displayMedia, trackView]);
 
   const handleLike = () => {
     if (!currentUser) return toast({ title: 'Login required', description: 'You need to be logged in.', variant: 'destructive' });
