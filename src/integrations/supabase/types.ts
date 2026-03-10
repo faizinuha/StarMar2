@@ -542,6 +542,50 @@ export type Database = {
           },
         ]
       }
+      live_streams: {
+        Row: {
+          created_at: string
+          description: string | null
+          ended_at: string | null
+          id: string
+          is_active: boolean
+          started_at: string
+          title: string
+          user_id: string
+          viewer_count: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          started_at?: string
+          title?: string
+          user_id: string
+          viewer_count?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          started_at?: string
+          title?: string
+          user_id?: string
+          viewer_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_streams_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       maintenance_mode: {
         Row: {
           created_at: string | null
