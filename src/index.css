@@ -291,15 +291,47 @@
     position: relative;
   }
 
-  .paw-background::before {
-    content: "🐾";
+  /* Small paw decorations (used in Auth and Chat) */
+  .small-paw {
     position: absolute;
-    opacity: 0.08;
-    font-size: 200px;
+    opacity: 0.12;
     pointer-events: none;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    font-size: 2.25rem;
+    transform-origin: center;
+    z-index: 40;
+  }
+
+  .small-paw.top-left {
+    top: 8px;
+    left: 8px;
+    transform: rotate(-20deg);
+  }
+
+  .small-paw.top-right {
+    top: 12px;
+    right: 12px;
+    transform: rotate(10deg);
+  }
+
+  .small-paw.bottom-right {
+    bottom: 12px;
+    right: 12px;
+    transform: rotate(15deg);
+  }
+
+  /* Paw overlay for avatar */
+  .avatar-paw {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 0.9rem;
+    background: hsl(var(--card));
+    border-radius: 9999px;
+    padding: 2px 4px;
+    opacity: 0.95;
+    pointer-events: none;
+    box-shadow: var(--shadow-soft);
+    z-index: 50;
   }
 
   /* Cat eye decoration */

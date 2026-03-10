@@ -18,8 +18,7 @@ import {
   MapPin,
   MessageCircle,
   TrendingUp,
-  Users,
-  Eye
+  Users
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -143,7 +142,6 @@ const TrendingContent = ({ onPostClick }: { onPostClick: (post: Post) => void })
           caption,
           location,
           created_at,
-          views_count,
           likes_count,
           comments_count,
           profiles!posts_user_id_fkey (
@@ -166,7 +164,6 @@ const TrendingContent = ({ onPostClick }: { onPostClick: (post: Post) => void })
         content: post.caption || '',
         location: post.location,
         created_at: post.created_at,
-        views: post.views_count || 0,
         likes: post.likes_count || 0,
         comments: post.comments_count || 0,
         isLiked: post.user_likes.some((like: { user_id: string }) => like.user_id === user?.id),
@@ -225,17 +222,13 @@ const TrendingContent = ({ onPostClick }: { onPostClick: (post: Post) => void })
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100 rounded-2xl">
               <div className="flex items-center space-x-6 text-white font-semibold">
                 <div className="flex items-center space-x-2">
-                  <Eye className="h-4 w-4" />
+                  <Heart className="h-5 w-5" />
                   <span className="text-sm">{post.likes?.toLocaleString?.() ?? 0}</span>
                 </div>
-                  <div className="flex items-center space-x-2">
-                    <MessageCircle className="h-5 w-5" />
-                    <span className="text-sm">{post.comments ?? 0}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Eye className="h-5 w-5" />
-                    <span className="text-sm">{post.views?.toLocaleString?.() ?? 0}</span>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <MessageCircle className="h-5 w-5" />
+                  <span className="text-sm">{post.comments ?? 0}</span>
+                </div>
               </div>
             </div>
           </div>

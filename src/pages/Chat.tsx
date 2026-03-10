@@ -162,7 +162,7 @@ export default function Chat() {
               <AvatarImage src={getConversationAvatar(conv) || undefined} />
               <AvatarFallback>{conv.is_group ? <Users className="h-5 w-5" /> : getConversationName(conv)[0]}</AvatarFallback>
             </Avatar>
-            {isConvFav(conv.id) && <div className="absolute -top-1 -right-1 bg-yellow-500 rounded-full p-0.5"><Star className="h-2.5 w-2.5 fill-white text-white" /></div>}
+            {isConvFav(conv.id) && <div className="absolute -top-1 -right-1 nekopaw-gradient rounded-full p-0.5 flex items-center justify-center text-primary-foreground"><Star className="h-2.5 w-2.5 fill-white text-white" /></div>}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-center mb-0.5">
@@ -173,7 +173,7 @@ export default function Chat() {
               <p className={`text-xs truncate flex-1 ${conv.unread_count > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
                 {conv.last_message || 'Mulai percakapan'}
               </p>
-              {conv.unread_count > 0 && chatId !== conv.id && <Badge className="h-4 min-w-[16px] text-[10px] px-1">{conv.unread_count}</Badge>}
+              {conv.unread_count > 0 && chatId !== conv.id && <Badge className="h-4 min-w-[16px] text-[10px] px-1 nekopaw-gradient text-primary-foreground">{conv.unread_count}</Badge>}
             </div>
           </div>
         </div>
@@ -194,7 +194,9 @@ export default function Chat() {
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {/* Sidebar chat list - WhatsApp style */}
-      <div className={`${chatId ? 'hidden md:flex' : 'flex'} w-full md:w-96 border-r flex-col bg-background`}>
+      <div className={`${chatId ? 'hidden md:flex' : 'flex'} w-full md:w-96 border-r flex-col bg-background paw-background relative`}>
+        <span className="small-paw top-left">🐾</span>
+        <span className="small-paw bottom-right">🐾</span>
         <div className="p-3 border-b">
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2">
@@ -507,7 +509,9 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
   );
 
   return (
-    <div className="flex flex-col flex-1 bg-background">
+    <div className="flex flex-col flex-1 bg-background relative">
+      <span className="small-paw top-right">🐾</span>
+      <span className="small-paw bottom-right">🐾</span>
       {/* Header */}
       <div className="border-b p-3 flex items-center justify-between bg-background sticky top-0 z-10">
         <div className="flex items-center gap-3 flex-1">
@@ -519,12 +523,15 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
             </>
           ) : (
             <>
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={conversationAvatar || undefined} />
-                <AvatarFallback>{currentConversation?.is_group ? <Users className="h-5 w-5" /> : conversationName[0]}</AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={conversationAvatar || undefined} />
+                  <AvatarFallback>{currentConversation?.is_group ? <Users className="h-5 w-5" /> : conversationName[0]}</AvatarFallback>
+                </Avatar>
+                {!currentConversation?.is_group && <span className="avatar-paw">🐾</span>}
+              </div>
               <div className="flex-1 min-w-0 cursor-pointer" onClick={() => currentConversation?.is_group && setShowGroupInfo(true)}>
-                <h3 className="font-semibold text-sm truncate">{conversationName}</h3>
+                <h3 className="font-semibold text-sm truncate paw-accent">{conversationName}</h3>
                 {currentConversation?.is_group && (
                   <p className="text-xs text-muted-foreground">{currentConversation.members.length} anggota</p>
                 )}
@@ -562,12 +569,15 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
                 <ContextMenuTrigger>
                   <div className={`flex gap-2 mb-3 ${isOwn ? 'justify-end' : ''}`}>
                     {!isOwn && (
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={msg.sender.avatar_url} />
-                        <AvatarFallback>{msg.sender.username?.[0]}</AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={msg.sender.avatar_url} />
+                          <AvatarFallback>{msg.sender.username?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <span className="avatar-paw">🐾</span>
+                      </div>
                     )}
-                    <div className={`max-w-[70%] ${isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'} rounded-lg p-3`}>
+                    <div className={`max-w-[70%] ${isOwn ? 'bg-primary text-primary-foreground' : 'cute-card'} rounded-lg p-3`}>
                       {msg.parent_message && (
                         <div className="text-xs opacity-70 border-l-2 border-current pl-2 mb-2">
                           <div className="font-semibold">{msg.parent_message.sender?.display_name || 'User'}</div>
@@ -647,7 +657,7 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="flex-1"
+            className="flex-1 cute-input"
             disabled={!isUserMember && isGroupChat}
           />
           <Button onClick={handleSend} size="icon" disabled={!isUserMember && isGroupChat}><Send className="h-5 w-5" /></Button>

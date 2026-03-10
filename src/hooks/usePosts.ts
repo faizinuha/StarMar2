@@ -7,8 +7,6 @@ export interface Post {
   user_id: string;
   content: string;
   image_url?: string;
-  views?: number;
-  views_count?: number;
   media_type?: string;
   created_at: string;
   likes: number;
@@ -162,7 +160,6 @@ const POST_SELECT_QUERY = `
   caption,
   location,
   created_at,
-  views_count,
   likes_count,
   comments_count,
   is_repost,
@@ -331,8 +328,6 @@ async function processPostsData(data: any[], currentUserId?: string, originalPos
         content: post.caption || '',
         location: post.location,
         created_at: post.created_at,
-        views: post.views_count || 0,
-        views_count: post.views_count || 0,
         likes: post.likes_count || 0,
         likes_count: post.likes_count || 0,
         comments_count: post.comments_count || 0, // Add comments_count here

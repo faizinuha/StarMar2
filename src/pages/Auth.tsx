@@ -219,7 +219,7 @@ export function Auth() {
         <div className="absolute bottom-20 right-16 text-5xl opacity-10 rotate-[15deg]">🐾</div>
         <div className="absolute top-1/3 right-10 text-4xl opacity-10 rotate-[45deg]">🐾</div>
         
-        <img src={nekoPawLogo} alt="NekoPaw Logo" className="w-48 mb-6 drop-shadow-lg" />
+        <img src={nekoPawLogo} alt="NekoPaw Logo" className="w-48 mb-6 drop-shadow-lg rounded-full" />
         <h1 className="text-4xl font-bold text-primary">Welcome to NekoPaw</h1>
         <p className="mt-4 text-lg text-muted-foreground">
           A purrfect way to connect with the world 🐱
@@ -233,7 +233,7 @@ export function Auth() {
       <div className="flex items-center justify-center py-12 px-4 relative">
         <div className="w-full max-w-md space-y-6">
           <div className="text-center lg:hidden">
-            <img src={nekoPawLogo} alt="NekoPaw Logo" className="w-24 mx-auto mb-4" />
+            <img src={nekoPawLogo} alt="NekoPaw Logo" className="w-24 mx-auto mb-4 rounded-full" />
             <p className="text-sm text-muted-foreground">🐾 NekoPaw</p>
           </div>
 

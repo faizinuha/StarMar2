@@ -36,9 +36,9 @@ const AvatarFallback = React.forwardRef<
       {children ? (
         children
       ) : (
-        <img 
-          src="/assets/Logo/NekoPaw.png" 
-          alt="Default avatar" 
+        <img
+          src="/assets/Logo/NekoPaw.png"
+          alt="Default avatar"
           className="h-full w-full object-cover"
         />
       )}
