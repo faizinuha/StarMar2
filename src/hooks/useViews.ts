@@ -13,20 +13,20 @@ export function useViews(postId: string) {
         .from('posts')
         .select('views_count')
         .eq('id', postId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching views:', error);
         return 0;
       }
 
-      return data?.views_count || 0;
+      return (data as any)?.views_count || 0;
     },
   });
 
   const incrementViewMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc('increment_views_count', {
+      const { error } = await (supabase.rpc as any)('increment_views_count', {
         post_id: postId,
       });
 

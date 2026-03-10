@@ -122,6 +122,11 @@ export const PostCard = ({ post }: PostCardProps) => {
   } = useLikes('post', post.id, post.user_id);
 
   const { views, trackView } = useViews(post.id);
+  const formatViewCount = (count: number): string => {
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+    return count.toString();
+  };
 
   const {
     bookmarks,
@@ -162,9 +167,13 @@ export const PostCard = ({ post }: PostCardProps) => {
 
   const hasMedia = displayImageUrl || (displayMedia && displayMedia.length > 0);
 
+  // Track view when post becomes visible
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
+        if (entry.isIntersecting) {
+          trackView();
+        }
         if (!entry.isIntersecting) {
           videoRef.current?.pause();
           setIsVideoPlaying(false);
@@ -173,7 +182,7 @@ export const PostCard = ({ post }: PostCardProps) => {
     );
     if (videoRef.current) observer.observe(videoRef.current);
     return () => { if (videoRef.current) observer.unobserve(videoRef.current); };
-  }, [displayMedia]); // Re-run if media changes
+  }, [displayMedia, trackView]);
 
   const handleLike = () => {
     if (!currentUser) return toast({ title: 'Login required', description: 'You need to be logged in.', variant: 'destructive' });
@@ -351,9 +360,10 @@ export const PostCard = ({ post }: PostCardProps) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button onClick={handleLike} disabled={likesLoading} className={`flex items-center gap-2 text-sm transition-colors ${isLikedPost ? 'text-red-500' : 'text-muted-foreground hover:text-red-500'}`}><Heart className={`h-6 w-6 ${isLikedPost ? 'fill-red-500' : ''}`} /><span className="font-semibold">{likesCountPost.toLocaleString()}</span></button>
-              <button onClick={() => setShowComments(true)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-blue-500 transition-colors"><MessageCircle className="h-6 w-6" /><span className="font-semibold">{commentsForPost.length.toLocaleString()}</span></button>
+              <button onClick={() => setShowComments(true)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"><MessageCircle className="h-6 w-6" /><span className="font-semibold">{commentsForPost.length.toLocaleString()}</span></button>
               <button onClick={handleRepost} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-green-500 transition-colors"><Repeat className="h-6 w-6" />{repostCount > 0 && <span className="font-semibold">{repostCount}</span>}</button>
-              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handleShare}><Share className="h-6 w-6 hover:text-green-500 transition-colors" /></Button>
+              <span className="flex items-center gap-1 text-sm text-muted-foreground"><Eye className="h-5 w-5" /><span className="font-semibold">{formatViewCount(views)}</span></span>
+              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handleShare}><Share className="h-6 w-6 hover:text-primary transition-colors" /></Button>
             </div>
             <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handleBookmark} disabled={bookmarksLoading}><Bookmark className={`h-6 w-6 transition-colors ${isBookmarked ? 'fill-orange-500 text-orange-500' : 'hover:text-orange-500'}`} /></Button>
           </div>

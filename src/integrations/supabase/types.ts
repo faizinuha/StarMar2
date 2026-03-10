@@ -885,6 +885,38 @@ export type Database = {
           },
         ]
       }
+      post_views: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          session_id: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          session_id?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          session_id?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_views_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           caption: string | null
@@ -902,6 +934,7 @@ export type Database = {
           reposted_by: string | null
           updated_at: string
           user_id: string
+          views_count: number
         }
         Insert: {
           caption?: string | null
@@ -919,6 +952,7 @@ export type Database = {
           reposted_by?: string | null
           updated_at?: string
           user_id: string
+          views_count?: number
         }
         Update: {
           caption?: string | null
@@ -936,6 +970,7 @@ export type Database = {
           reposted_by?: string | null
           updated_at?: string
           user_id?: string
+          views_count?: number
         }
         Relationships: [
           {
@@ -1508,6 +1543,11 @@ export type Database = {
         Returns: undefined
       }
       increment_likes_count: { Args: { post_id: string }; Returns: undefined }
+      increment_view: {
+        Args: { p_post_id: string; p_session_id?: string; p_viewer_id?: string }
+        Returns: undefined
+      }
+      increment_views_count: { Args: { post_id: string }; Returns: undefined }
       is_conversation_member: {
         Args: { p_conversation_id: string; p_user_id: string }
         Returns: boolean
