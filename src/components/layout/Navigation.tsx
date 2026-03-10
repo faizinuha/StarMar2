@@ -89,6 +89,7 @@ export const Navigation = () => {
     { icon: MessageCircle, label: 'Chat', path: '/chat', badge: totalUnread > 0 ? totalUnread : null, active: location.pathname.startsWith('/chat') },
     { icon: Heart, label: 'Notifications', path: '/notifications', badge: unreadCount > 0 ? unreadCount : null, active: location.pathname === '/notifications' },
     { icon: Music, label: 'MyMusic', path: '/mymusic/music', active: location.pathname === '/mymusic/music' },
+    { icon: Radio, label: 'Live', path: '/live', active: location.pathname === '/live' },
     { icon: Settings, label: 'Settings', path: '/settings', active: location.pathname === '/settings' }
   ];
 
