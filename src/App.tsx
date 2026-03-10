@@ -29,6 +29,7 @@ import PlayPage from "./pages/play";
 import Profile from "./pages/Profile";
 import Reelms from "./pages/Reelms";
 import { Settings } from "./pages/Settings";
+import Live from "./pages/Live";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,6 +82,7 @@ const App = () => (
                   <Route path="/memes" element={<Memes />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/live" element={<Live />} />
                   <Route
                     path="/chat"
                     element={
