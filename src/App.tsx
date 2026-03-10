@@ -29,6 +29,7 @@ import PlayPage from "./pages/play";
 import Profile from "./pages/Profile";
 import Reelms from "./pages/Reelms";
 import { Settings } from "./pages/Settings";
+import Live from "./pages/Live";
 
 const queryClient = new QueryClient({
   defaultOptions: {
