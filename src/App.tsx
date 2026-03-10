@@ -82,6 +82,7 @@ const App = () => (
                   <Route path="/memes" element={<Memes />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/live" element={<Live />} />
                   <Route
                     path="/chat"
                     element={
