@@ -30,6 +30,7 @@ import Profile from "./pages/Profile";
 import Reelms from "./pages/Reelms";
 import { Settings } from "./pages/Settings";
 import Live from "./pages/Live";
+import RequestVerification from "./pages/RequestVerification";
 
 const queryClient = new QueryClient({
   defaultOptions: {
