@@ -252,6 +252,7 @@ export const Settings = () => {
     { id: TABS.SECURITY, label: t('Security'), icon: KeyRound },
     { id: TABS.NOTIFICATIONS, label: t('Notifications'), icon: Bell },
     { id: TABS.ACCOUNT, label: t('Account'), icon: Users },
+    { id: 'verification', label: t('Verification'), icon: CheckCircle2, path: '/settings/verification' },
     { id: TABS.DANGER, label: t('Danger Zone'), icon: ShieldAlert, className: 'text-destructive hover:text-destructive hover:bg-destructive/10' },
   ];
 
@@ -513,8 +514,8 @@ export const Settings = () => {
                 <Button
                   key={tab.id}
                   variant={activeTab === tab.id ? 'secondary' : 'ghost'}
-                  className={cn('justify-start', tab.className)}
-                  onClick={() => setActiveTab(tab.id)}
+                  className={cn('justify-start', (tab as any).className)}
+                  onClick={() => (tab as any).path ? navigate((tab as any).path) : setActiveTab(tab.id)}
                 >
                   <tab.icon className="mr-2 h-4 w-4" />
                   {tab.label}

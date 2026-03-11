@@ -1,5 +1,6 @@
 import nekoPawLogo from '@/assets/Logo/NekoPaw.png';
 import { CreatePostModal } from '@/components/posts/CreatePostModal';
+import { CreateStoryModal } from '@/components/posts/CreateStoryModal';
 import { NavigationSkeleton } from '@/components/skeletons/NavigationSkeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   Heart,
   Home,
+  Image as ImageIcon,
   Laugh,
   MessageCircle,
   MoreHorizontal,
@@ -30,7 +32,8 @@ import {
   Search,
   Settings,
   Shield,
-  User
+  User,
+  Video,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -41,7 +44,9 @@ export const Navigation = () => {
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { totalUnread } = useConversations();
   const { unreadCount } = useNotifications();
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [showCreateMemeModal, setShowCreateMemeModal] = useState(false);
+  const [showCreateStoryModal, setShowCreateStoryModal] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -84,7 +89,6 @@ export const Navigation = () => {
     { icon: Home, label: 'Home', path: '/', active: location.pathname === '/' },
     { icon: Search, label: 'Explore', path: '/explore', active: location.pathname === '/explore' },
     { icon: Play, label: 'Play', path: '/Reelms', active: location.pathname === '/Reelms' },
-    { icon: PlusSquare, label: 'Create', path: '#', active: false, onClick: () => setShowCreateModal(true) },
     { icon: Laugh, label: 'Memes', path: '/memes', active: location.pathname === '/memes' },
     { icon: MessageCircle, label: 'Chat', path: '/chat', badge: totalUnread > 0 ? totalUnread : null, active: location.pathname.startsWith('/chat') },
     { icon: Heart, label: 'Notifications', path: '/notifications', badge: unreadCount > 0 ? unreadCount : null, active: location.pathname === '/notifications' },
@@ -97,7 +101,7 @@ export const Navigation = () => {
     { icon: Home, label: 'Home', path: '/', active: location.pathname === '/' },
     { icon: Search, label: 'Explore', path: '/explore', active: location.pathname === '/explore' },
     { icon: Play, label: 'Play', path: '/reelms', active: location.pathname === '/reelms' },
-    { icon: PlusSquare, label: 'Create', path: '#', active: false, onClick: () => setShowCreateModal(true) },
+    { icon: PlusSquare, label: 'Create', path: '#', active: false, isCreate: true },
     { icon: Heart, label: 'Notifications', path: '/notifications', badge: unreadCount > 0 ? unreadCount : null, active: location.pathname === '/notifications' },
     { icon: User, label: 'Profile', path: '/profile', active: location.pathname === '/profile' }
   ];
@@ -119,6 +123,33 @@ export const Navigation = () => {
   };
 
   const hasMoreItems = profile?.role === 'admin' || profile?.role === 'moderator';
+
+  // Create dropdown menu component
+  const CreateDropdown = ({ trigger }: { trigger: React.ReactNode }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        {trigger}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-48 bg-popover border border-border z-50" side="right" align="start">
+        <DropdownMenuItem onClick={() => setShowCreatePostModal(true)} className="cursor-pointer">
+          <ImageIcon className="mr-2 h-4 w-4" />
+          <span>Post</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setShowCreateMemeModal(true)} className="cursor-pointer">
+          <Laugh className="mr-2 h-4 w-4" />
+          <span>Meme</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setShowCreateStoryModal(true)} className="cursor-pointer">
+          <Video className="mr-2 h-4 w-4" />
+          <span>Story</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/live')} className="cursor-pointer">
+          <Radio className="mr-2 h-4 w-4" />
+          <span>Live</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <>
@@ -146,7 +177,7 @@ export const Navigation = () => {
                   key={index}
                   variant={item.active ? 'secondary' : 'ghost'}
                   className={`w-full justify-start space-x-2 h-10 text-sm rounded-lg ${item.active ? 'bg-primary/10 text-primary font-semibold' : ''}`}
-                  onClick={() => handleNavigation(item.path, item.onClick)}
+                  onClick={() => handleNavigation(item.path)}
                 >
                   <div className="relative">
                     <Icon className="h-6 w-6" />
@@ -160,6 +191,19 @@ export const Navigation = () => {
                 </Button>
               );
             })}
+
+            {/* Create Button as Dropdown */}
+            <CreateDropdown
+              trigger={
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start space-x-2 h-10 text-sm rounded-lg"
+                >
+                  <PlusSquare className="h-6 w-6" />
+                  <span>Create</span>
+                </Button>
+              }
+            />
 
             {hasMoreItems && (
               <DropdownMenu>
@@ -257,13 +301,35 @@ export const Navigation = () => {
         <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-2 sm:p-3 flex justify-around items-center z-40 md:hidden gap-1 sm:gap-2 h-20 sm:h-24">
           {mobileBottomNavItems.map((item, index) => {
             const Icon = item.icon;
+            
+            if ((item as any).isCreate) {
+              return (
+                <div key={index} className="flex flex-col items-center justify-center relative flex-1">
+                  <CreateDropdown
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 sm:h-10 sm:w-10 relative rounded-lg"
+                      >
+                        <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                      </Button>
+                    }
+                  />
+                  <span className="text-xs mt-0.5 sm:mt-1 text-center leading-tight text-muted-foreground">
+                    {item.label}
+                  </span>
+                </div>
+              );
+            }
+
             return (
               <div key={index} className="flex flex-col items-center justify-center relative flex-1">
                 <Button
                   variant={item.active ? 'secondary' : 'ghost'}
                   size="icon"
                   className={`h-8 w-8 sm:h-10 sm:w-10 relative rounded-lg ${item.active ? 'bg-primary/10 text-primary' : ''}`}
-                  onClick={() => handleNavigation(item.path, item.onClick)}
+                  onClick={() => handleNavigation(item.path)}
                 >
                   <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${item.active ? 'text-primary' : ''}`} />
                   {item.badge && (
@@ -283,13 +349,22 @@ export const Navigation = () => {
 
       {/* Spacer for fixed navigation */}
       <div className="hidden md:block w-64" />
-      {/* Mobile bottom nav spacer - h-24 untuk accommodate icon + label */}
       <div className="md:hidden h-24" />
 
-      {/* Create Post Modal */}
+      {/* Modals */}
       <CreatePostModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        isOpen={showCreatePostModal}
+        onClose={() => setShowCreatePostModal(false)}
+        defaultTab="post"
+      />
+      <CreatePostModal
+        isOpen={showCreateMemeModal}
+        onClose={() => setShowCreateMemeModal(false)}
+        defaultTab="meme"
+      />
+      <CreateStoryModal
+        isOpen={showCreateStoryModal}
+        onClose={() => setShowCreateStoryModal(false)}
       />
     </>
   );

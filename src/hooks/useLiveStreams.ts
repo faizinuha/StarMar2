@@ -7,6 +7,7 @@ export interface LiveStream {
   user_id: string;
   title: string;
   description: string | null;
+  genre: string;
   is_active: boolean;
   viewer_count: number;
   started_at: string;
@@ -33,6 +34,7 @@ export function useActiveStreams() {
 
       return (data || []).map((s: any) => ({
         ...s,
+        genre: s.genre || 'General',
         user: s.profiles ? {
           username: s.profiles.username,
           display_name: s.profiles.display_name,
@@ -48,7 +50,7 @@ export function useCreateStream() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ title, description }: { title: string; description?: string }) => {
+    mutationFn: async ({ title, description, genre }: { title: string; description?: string; genre?: string }) => {
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -57,11 +59,33 @@ export function useCreateStream() {
           user_id: user.id,
           title,
           description: description || null,
-        })
+          genre: genre || 'General',
+        } as any)
         .select()
         .single();
 
       if (error) throw error;
+
+      // Send notification to followers
+      try {
+        const { data: followers } = await supabase
+          .from('followers')
+          .select('follower_id')
+          .eq('following_id', user.id);
+
+        if (followers && followers.length > 0) {
+          const notifications = followers.map(f => ({
+            user_id: f.follower_id,
+            from_user_id: user.id,
+            type: 'live_started',
+            post_id: null,
+          }));
+          await supabase.from('notifications').insert(notifications);
+        }
+      } catch (e) {
+        console.error('Failed to send live notifications:', e);
+      }
+
       return data;
     },
     onSuccess: () => {

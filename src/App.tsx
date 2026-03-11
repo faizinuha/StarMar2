@@ -30,6 +30,7 @@ import Profile from "./pages/Profile";
 import Reelms from "./pages/Reelms";
 import { Settings } from "./pages/Settings";
 import Live from "./pages/Live";
+import RequestVerification from "./pages/RequestVerification";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,6 +84,7 @@ const App = () => (
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/live" element={<Live />} />
+                  <Route path="/settings/verification" element={<RequestVerification />} />
                   <Route
                     path="/chat"
                     element={
