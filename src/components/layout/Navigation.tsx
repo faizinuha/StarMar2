@@ -57,12 +57,12 @@ export const Navigation = () => {
     if (!user) return;
 
     const channel = supabase.channel('realtime-notifications')
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications', 
-          filter: `user_id=eq.${user.id}` 
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
@@ -70,9 +70,9 @@ export const Navigation = () => {
         }
       ).subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      }
+    return () => {
+      supabase.removeChannel(channel);
+    }
   }, [user, queryClient]);
 
   useEffect(() => {
@@ -168,6 +168,8 @@ export const Navigation = () => {
             </span>
           </div>
 
+        
+
           {/* Navigation Items */}
           <div className="space-y-1">
             {navItems.map((item, index) => {
@@ -192,7 +194,7 @@ export const Navigation = () => {
               );
             })}
 
-            {/* Create Button as Dropdown */}
+  {/* Create Button as Dropdown */}
             <CreateDropdown
               trigger={
                 <Button
@@ -301,7 +303,7 @@ export const Navigation = () => {
         <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-2 sm:p-3 flex justify-around items-center z-40 md:hidden gap-1 sm:gap-2 h-20 sm:h-24">
           {mobileBottomNavItems.map((item, index) => {
             const Icon = item.icon;
-            
+
             if ((item as any).isCreate) {
               return (
                 <div key={index} className="flex flex-col items-center justify-center relative flex-1">
