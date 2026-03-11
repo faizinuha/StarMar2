@@ -84,6 +84,7 @@ const App = () => (
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/live" element={<Live />} />
+                  <Route path="/settings/verification" element={<RequestVerification />} />
                   <Route
                     path="/chat"
                     element={
