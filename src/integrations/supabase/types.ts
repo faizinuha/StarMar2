@@ -547,6 +547,7 @@ export type Database = {
           created_at: string
           description: string | null
           ended_at: string | null
+          genre: string | null
           id: string
           is_active: boolean
           started_at: string
@@ -558,6 +559,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           ended_at?: string | null
+          genre?: string | null
           id?: string
           is_active?: boolean
           started_at?: string
@@ -569,6 +571,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           ended_at?: string | null
+          genre?: string | null
           id?: string
           is_active?: boolean
           started_at?: string
@@ -1442,6 +1445,42 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      verification_requests: {
+        Row: {
+          admin_response: string | null
+          created_at: string
+          id: string
+          reason: string
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          reason: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          reason?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
