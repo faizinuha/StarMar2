@@ -374,7 +374,7 @@ export const PostCard = ({ post }: PostCardProps) => {
 
       {isEditModalOpen && <EditPostModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} post={post} />}
       {showRepostModal && <RepostModal isOpen={showRepostModal} onClose={() => setShowRepostModal(false)} post={post} />}
-      {showBookmarkDialog && <BookmarkFolderDialog isOpen={showBookmarkDialog} onClose={() => setShowBookmarkDialog(false)} postId={post.id} onSelect={(folderId) => { createBookmark.mutate({ postId: post.id, folderId }); setShowBookmarkDialog(false); toast({ title: 'Bookmarked!' }); }} />}
+      {showBookmarkDialog && <BookmarkFolderDialog isOpen={showBookmarkDialog} onClose={() => setShowBookmarkDialog(false)} postId={post.id} />}
       {showReportDialog && <ReportDialog isOpen={showReportDialog} onClose={() => setShowReportDialog(false)} postId={post.id} />}
     </>
   );
