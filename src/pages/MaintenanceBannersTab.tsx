@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { Trash2, Plus, Pencil } from 'lucide-react';
 
 const AVAILABLE_PAGES = [
-  { path: '/', label: 'Home (Site-wide)' },
+  { path: '/', label: 'Website (Seluruh Situs)' },
   { path: '/explore', label: 'Explore' },
   { path: '/memes', label: 'Memes' },
   { path: '/chat', label: 'Chat' },
@@ -23,6 +23,7 @@ const AVAILABLE_PAGES = [
   { path: '/settings', label: 'Settings' },
   { path: '/profile', label: 'Profile' },
   { path: '/reelms', label: 'Reelms' },
+  { path: '/live', label: 'Live' },
 ];
 
 export const MaintenanceBannersTab = () => {
