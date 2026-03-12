@@ -108,7 +108,7 @@ export const MaintenanceBannersTab = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Maintenance Banners</CardTitle>
-            <CardDescription>Kelola banner maintenance per halaman. Halaman yang aktif akan diblokir untuk semua pengguna kecuali admin & moderator.</CardDescription>
+            <CardDescription>Kelola banner maintenance per halaman. Jika path "/" diaktifkan dengan tipe maintenance/blocked, seluruh website akan terkunci — hanya admin, moderator, dan akun terverifikasi yang dapat mengakses.</CardDescription>
           </div>
           <Button onClick={startCreate} size="sm" disabled={isCreating}>
             <Plus className="h-4 w-4 mr-1" /> Buat
