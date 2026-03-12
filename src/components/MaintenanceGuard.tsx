@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Lock, Wrench } from 'lucide-react';
@@ -16,25 +16,29 @@ interface MaintenanceEntry {
 
 export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [blocked, setBlocked] = useState(false);
   const [maintenance, setMaintenance] = useState<MaintenanceEntry | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userVerified, setUserVerified] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user role
+  // Fetch user role and verification status
   useEffect(() => {
     const fetchRole = async () => {
       if (!user) {
         setUserRole(null);
+        setUserVerified(null);
         return;
       }
       const { data } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, is_verified')
         .eq('user_id', user.id)
         .single();
       setUserRole(data?.role || 'user');
+      setUserVerified(data?.is_verified || null);
     };
     fetchRole();
   }, [user]);
@@ -44,6 +48,14 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
     const checkMaintenance = async () => {
       setLoading(true);
       const currentPath = location.pathname;
+
+      // Skip maintenance check for auth pages
+      if (currentPath === '/auth' || currentPath === '/auth/callback' || currentPath === '/auth/forgot-password') {
+        setBlocked(false);
+        setMaintenance(null);
+        setLoading(false);
+        return;
+      }
 
       // Fetch active maintenance for this specific path OR site-wide "/"
       const { data, error } = await supabase
@@ -63,7 +75,6 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
       const specificMatch = data.find(d => d.page_path === currentPath);
       const siteWide = data.find(d => d.page_path === '/');
       
-      // Don't apply site-wide maintenance to the home page itself handled separately
       const active = specificMatch || (currentPath !== '/' ? siteWide : data.find(d => d.page_path === '/'));
 
       if (!active) {
@@ -75,22 +86,39 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
 
       setMaintenance(active as MaintenanceEntry);
 
-      // Admin and moderator can bypass
-      const isPrivileged = userRole === 'admin' || userRole === 'moderator';
-      setBlocked(!isPrivileged);
+      // Determine access based on role & verification
+      // Admin: always bypass
+      // Moderator: always bypass
+      // Verified user (any role): bypass
+      // Regular unverified user: blocked
+      const isAdmin = userRole === 'admin';
+      const isModerator = userRole === 'moderator';
+      const isVerified = userVerified === 'verified';
+
+      // For site-wide maintenance (type === 'maintenance' on path '/'):
+      // Only admin, moderator, or verified users can access
+      if (active.page_path === '/' && (active.type === 'maintenance' || active.type === 'blocked')) {
+        setBlocked(!isAdmin && !isModerator && !isVerified);
+      } else {
+        // Per-page maintenance: admin and moderator can bypass
+        setBlocked(!isAdmin && !isModerator);
+      }
+      
       setLoading(false);
     };
 
     checkMaintenance();
-  }, [location.pathname, userRole]);
+  }, [location.pathname, userRole, userVerified]);
 
   if (loading) return <>{children}</>;
 
   if (blocked && maintenance) {
+    const isSiteWide = maintenance.page_path === '/';
+    
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
-        <main className="md:ml-64 min-h-screen flex items-center justify-center pb-20 md:pb-8">
+        {!isSiteWide && <Navigation />}
+        <main className={`${!isSiteWide ? 'md:ml-64' : ''} min-h-screen flex items-center justify-center pb-20 md:pb-8`}>
           <div className="max-w-md mx-auto p-8 text-center space-y-6">
             <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center">
               {maintenance.type === 'blocked' ? (
@@ -103,7 +131,10 @@ export function MaintenanceGuard({ children }: { children: React.ReactNode }) {
             <p className="text-muted-foreground">{maintenance.message}</p>
             <div className="pt-4 border-t border-border">
               <p className="text-sm text-muted-foreground">
-                Halaman ini sedang dalam maintenance. Silakan coba lagi nanti.
+                {isSiteWide 
+                  ? 'Website sedang dalam maintenance. Hanya admin, moderator, dan akun terverifikasi yang dapat mengakses.'
+                  : 'Halaman ini sedang dalam maintenance. Silakan coba lagi nanti.'
+                }
               </p>
             </div>
           </div>
