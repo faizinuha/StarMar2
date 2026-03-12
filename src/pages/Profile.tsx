@@ -123,6 +123,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
   // Liked and Bookmarked posts
   const { data: likedPosts = [], isLoading: likedLoading } = useLikedPosts(profile?.user_id);
   const { data: bookmarkedPosts = [], isLoading: bookmarkedLoading } = useBookmarkedPosts(profile?.user_id);
+  const { data: streamHistory = [] } = useStreamHistory(profile?.user_id);
 
   const pageLoading = isLoading || postsLoading || followLoading || likedLoading || bookmarkedLoading;
 
