@@ -44,7 +44,22 @@ interface ChatMessage {
   avatar?: string;
   text: string;
   timestamp: number;
+  userId?: string;
 }
+
+// Helper to render chat messages with avatars
+const ChatMessageItem = ({ msg }: { msg: ChatMessage }) => (
+  <div className="flex gap-2 text-sm items-start">
+    <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+      <AvatarImage src={msg.avatar || ""} />
+      <AvatarFallback className="text-[10px]">{msg.user?.[0] || "?"}</AvatarFallback>
+    </Avatar>
+    <div>
+      <span className="font-semibold text-primary">{msg.user}</span>
+      <span className="text-foreground ml-1 break-words">{msg.text}</span>
+    </div>
+  </div>
+);
 
 // ── Broadcaster Component ──
 const BroadcasterView = ({
