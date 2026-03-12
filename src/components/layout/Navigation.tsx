@@ -124,13 +124,18 @@ export const Navigation = () => {
 
   const hasMoreItems = profile?.role === 'admin' || profile?.role === 'moderator';
 
-  // Create dropdown menu component
-  const CreateDropdown = ({ trigger }: { trigger: React.ReactNode }) => (
+  // Create dropdown menu component - supports different positioning for mobile vs desktop
+  const CreateDropdown = ({ trigger, mobile = false }: { trigger: React.ReactNode; mobile?: boolean }) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         {trigger}
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-48 bg-popover border border-border z-50" side="right" align="start">
+      <DropdownMenuContent 
+        className="w-48 bg-popover border border-border z-[60]" 
+        side={mobile ? "top" : "right"} 
+        align={mobile ? "center" : "start"}
+        sideOffset={mobile ? 12 : 5}
+      >
         <DropdownMenuItem onClick={() => setShowCreatePostModal(true)} className="cursor-pointer">
           <ImageIcon className="mr-2 h-4 w-4" />
           <span>Post</span>
@@ -308,6 +313,7 @@ export const Navigation = () => {
               return (
                 <div key={index} className="flex flex-col items-center justify-center relative flex-1">
                   <CreateDropdown
+                    mobile
                     trigger={
                       <Button
                         variant="ghost"

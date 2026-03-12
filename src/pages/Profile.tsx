@@ -14,6 +14,7 @@ import { useBookmarkedPosts } from '@/hooks/useBookmarkedPosts';
 import { useCreateConversation } from '@/hooks/useConversations';
 import { useFollowStatus, useToggleFollow } from '@/hooks/useFollow';
 import { useLikedPosts } from '@/hooks/useLikedPosts';
+import { useStreamHistory } from '@/hooks/useLiveStreams';
 import { Post, useUserPosts } from '@/hooks/usePosts';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +30,7 @@ import {
   Lock,
   MapPin,
   MessageCircle,
+  Radio,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -121,6 +123,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
   // Liked and Bookmarked posts
   const { data: likedPosts = [], isLoading: likedLoading } = useLikedPosts(profile?.user_id);
   const { data: bookmarkedPosts = [], isLoading: bookmarkedLoading } = useBookmarkedPosts(profile?.user_id);
+  const { data: streamHistory = [] } = useStreamHistory(profile?.user_id);
 
   const pageLoading = isLoading || postsLoading || followLoading || likedLoading || bookmarkedLoading;
 
@@ -461,27 +464,34 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
 
           {/* Content Tabs */}
           <Tabs defaultValue="posts" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-96 mx-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:w-[500px] mx-auto">
               <TabsTrigger
                 value="posts"
                 className="flex items-center space-x-2"
               >
                 <Grid3X3 className="h-4 w-4" />
-                <span>Posts</span>
+                <span className="hidden sm:inline">Posts</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="live"
+                className="flex items-center space-x-2"
+              >
+                <Radio className="h-4 w-4" />
+                <span className="hidden sm:inline">Live</span>
               </TabsTrigger>
               <TabsTrigger
                 value="saved"
                 className="flex items-center space-x-2"
               >
                 <Bookmark className="h-4 w-4" />
-                <span>Saved</span>
+                <span className="hidden sm:inline">Saved</span>
               </TabsTrigger>
               <TabsTrigger
                 value="liked"
                 className="flex items-center space-x-2"
               >
                 <Heart className="h-4 w-4" />
-                <span>Liked</span>
+                <span className="hidden sm:inline">Liked</span>
               </TabsTrigger>
             </TabsList>
 
@@ -508,6 +518,38 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                   <p className="text-muted-foreground">
                     Pengguna ini belum membuat postingan apa pun.
                   </p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="live" className="space-y-4">
+              {streamHistory.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {streamHistory.map((stream) => (
+                    <Card key={stream.id} className="overflow-hidden">
+                      <div className="aspect-video bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center relative">
+                        <Radio className="w-10 h-10 text-muted-foreground/50" />
+                        {stream.genre && stream.genre !== 'General' && (
+                          <Badge variant="secondary" className="absolute top-2 right-2 text-xs">{stream.genre}</Badge>
+                        )}
+                        <Badge variant="outline" className="absolute top-2 left-2 text-xs">Ended</Badge>
+                      </div>
+                      <div className="p-3">
+                        <h3 className="font-semibold text-sm truncate">{stream.title}</h3>
+                        {stream.description && <p className="text-xs text-muted-foreground truncate mt-1">{stream.description}</p>}
+                        <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+                          <span>{new Date(stream.started_at).toLocaleDateString()}</span>
+                          <span>{stream.viewer_count} viewers</span>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Radio className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Belum ada riwayat live</h3>
+                  <p className="text-muted-foreground">Riwayat siaran langsung akan muncul di sini.</p>
                 </div>
               )}
             </TabsContent>

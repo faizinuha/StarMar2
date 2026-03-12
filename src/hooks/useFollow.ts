@@ -92,9 +92,12 @@ export function useToggleFollow() {
       }
     },
     onSuccess: (newFollowStatus, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["follow-status", user?.id, variables.userId] });
+      // Invalidate all follow-related queries to sync across components
+      queryClient.invalidateQueries({ queryKey: ["follow-status"] });
       queryClient.invalidateQueries({ queryKey: ["profile", variables.userId] });
       queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["actual-follow-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["allProfiles"] });
       
       toast({
         title: newFollowStatus ? "Following!" : "Unfollowed",

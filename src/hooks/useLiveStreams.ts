@@ -45,6 +45,34 @@ export function useActiveStreams() {
   });
 }
 
+export function useStreamHistory(userId?: string) {
+  return useQuery({
+    queryKey: ['stream-history', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('live_streams')
+        .select('*, profiles!live_streams_user_id_fkey(username, display_name, avatar_url)')
+        .eq('user_id', userId!)
+        .eq('is_active', false)
+        .order('ended_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      return (data || []).map((s: any) => ({
+        ...s,
+        genre: s.genre || 'General',
+        user: s.profiles ? {
+          username: s.profiles.username,
+          display_name: s.profiles.display_name,
+          avatar_url: s.profiles.avatar_url,
+        } : null,
+      })) as LiveStream[];
+    },
+  });
+}
+
 export function useCreateStream() {
   const { user } = useAuth();
   const queryClient = useQueryClient();

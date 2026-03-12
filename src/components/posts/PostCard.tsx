@@ -163,14 +163,22 @@ export const PostCard = ({ post }: PostCardProps) => {
 
   const hasMedia = displayImageUrl || (displayMedia && displayMedia.length > 0);
 
-  // Track view when POST (not just video) becomes visible - works for all post types
+  // Determine if current media is video
+  const isCurrentMediaVideo = (() => {
+    if (displayMedia && displayMedia.length > 0) {
+      return displayMedia[currentMediaIndex]?.media_type === 'video';
+    }
+    return displayMediaType === 'video';
+  })();
+
+  // Track view ONLY for video posts + pause video when out of view
   useEffect(() => {
     const target = cardRef.current;
     if (!target) return;
     
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && isCurrentMediaVideo) {
           trackView();
         }
         // Pause video when out of view
@@ -183,7 +191,7 @@ export const PostCard = ({ post }: PostCardProps) => {
     );
     observer.observe(target);
     return () => observer.disconnect();
-  }, [trackView]);
+  }, [trackView, isCurrentMediaVideo]);
 
   const handleLike = () => {
     if (!currentUser) return toast({ title: 'Login required', description: 'You need to be logged in.', variant: 'destructive' });
@@ -359,7 +367,7 @@ export const PostCard = ({ post }: PostCardProps) => {
               <button onClick={handleLike} disabled={likesLoading} className={`flex items-center gap-2 text-sm transition-colors ${isLikedPost ? 'text-red-500' : 'text-muted-foreground hover:text-red-500'}`}><Heart className={`h-6 w-6 ${isLikedPost ? 'fill-red-500' : ''}`} /><span className="font-semibold">{likesCountPost.toLocaleString()}</span></button>
               <button onClick={() => setShowComments(true)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"><MessageCircle className="h-6 w-6" /><span className="font-semibold">{commentsForPost.length.toLocaleString()}</span></button>
               <button onClick={handleRepost} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-green-500 transition-colors"><Repeat className="h-6 w-6" />{repostCount > 0 && <span className="font-semibold">{repostCount}</span>}</button>
-              <span className="flex items-center gap-1 text-sm text-muted-foreground"><Eye className="h-5 w-5" /><span className="font-semibold">{formatViewCount(views)}</span></span>
+              {isCurrentMediaVideo && <span className="flex items-center gap-1 text-sm text-muted-foreground"><Eye className="h-5 w-5" /><span className="font-semibold">{formatViewCount(views)}</span></span>}
               <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handleShare}><Share className="h-6 w-6 hover:text-primary transition-colors" /></Button>
             </div>
             <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handleBookmark} disabled={bookmarksLoading}><Bookmark className={`h-6 w-6 transition-colors ${isBookmarked ? 'fill-orange-500 text-orange-500' : 'hover:text-orange-500'}`} /></Button>
