@@ -463,27 +463,34 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
 
           {/* Content Tabs */}
           <Tabs defaultValue="posts" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-96 mx-auto">
+            <TabsList className="grid w-full grid-cols-4 lg:w-[500px] mx-auto">
               <TabsTrigger
                 value="posts"
                 className="flex items-center space-x-2"
               >
                 <Grid3X3 className="h-4 w-4" />
-                <span>Posts</span>
+                <span className="hidden sm:inline">Posts</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="live"
+                className="flex items-center space-x-2"
+              >
+                <Radio className="h-4 w-4" />
+                <span className="hidden sm:inline">Live</span>
               </TabsTrigger>
               <TabsTrigger
                 value="saved"
                 className="flex items-center space-x-2"
               >
                 <Bookmark className="h-4 w-4" />
-                <span>Saved</span>
+                <span className="hidden sm:inline">Saved</span>
               </TabsTrigger>
               <TabsTrigger
                 value="liked"
                 className="flex items-center space-x-2"
               >
                 <Heart className="h-4 w-4" />
-                <span>Liked</span>
+                <span className="hidden sm:inline">Liked</span>
               </TabsTrigger>
             </TabsList>
 
