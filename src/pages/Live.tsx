@@ -310,10 +310,7 @@ const BroadcasterView = ({
         </div>
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {chatMessages.map((msg) => (
-            <div key={msg.id} className="flex gap-2 text-sm">
-              <span className="font-semibold text-primary shrink-0">{msg.user}:</span>
-              <span className="text-foreground break-words">{msg.text}</span>
-            </div>
+            <ChatMessageItem key={msg.id} msg={msg} />
           ))}
         </div>
         <div className="p-3 border-t border-border flex gap-2">
