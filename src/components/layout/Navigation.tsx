@@ -313,6 +313,7 @@ export const Navigation = () => {
               return (
                 <div key={index} className="flex flex-col items-center justify-center relative flex-1">
                   <CreateDropdown
+                    mobile
                     trigger={
                       <Button
                         variant="ghost"
