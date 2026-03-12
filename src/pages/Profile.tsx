@@ -522,7 +522,38 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
               )}
             </TabsContent>
 
-            <TabsContent value="saved" className="space-y-6">
+            <TabsContent value="live" className="space-y-4">
+              {streamHistory.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {streamHistory.map((stream) => (
+                    <Card key={stream.id} className="overflow-hidden">
+                      <div className="aspect-video bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center relative">
+                        <Radio className="w-10 h-10 text-muted-foreground/50" />
+                        {stream.genre && stream.genre !== 'General' && (
+                          <Badge variant="secondary" className="absolute top-2 right-2 text-xs">{stream.genre}</Badge>
+                        )}
+                        <Badge variant="outline" className="absolute top-2 left-2 text-xs">Ended</Badge>
+                      </div>
+                      <div className="p-3">
+                        <h3 className="font-semibold text-sm truncate">{stream.title}</h3>
+                        {stream.description && <p className="text-xs text-muted-foreground truncate mt-1">{stream.description}</p>}
+                        <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+                          <span>{new Date(stream.started_at).toLocaleDateString()}</span>
+                          <span>{stream.viewer_count} viewers</span>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Radio className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Belum ada riwayat live</h3>
+                  <p className="text-muted-foreground">Riwayat siaran langsung akan muncul di sini.</p>
+                </div>
+              )}
+            </TabsContent>
+
               {bookmarkedPosts.length > 0 ? (
                 <PostGrid
                   posts={bookmarkedPosts as any}
