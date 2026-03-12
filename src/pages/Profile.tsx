@@ -14,6 +14,7 @@ import { useBookmarkedPosts } from '@/hooks/useBookmarkedPosts';
 import { useCreateConversation } from '@/hooks/useConversations';
 import { useFollowStatus, useToggleFollow } from '@/hooks/useFollow';
 import { useLikedPosts } from '@/hooks/useLikedPosts';
+import { useStreamHistory } from '@/hooks/useLiveStreams';
 import { Post, useUserPosts } from '@/hooks/usePosts';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +30,7 @@ import {
   Lock,
   MapPin,
   MessageCircle,
+  Radio,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
