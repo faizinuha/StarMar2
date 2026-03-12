@@ -163,14 +163,22 @@ export const PostCard = ({ post }: PostCardProps) => {
 
   const hasMedia = displayImageUrl || (displayMedia && displayMedia.length > 0);
 
-  // Track view when POST (not just video) becomes visible - works for all post types
+  // Determine if current media is video
+  const isCurrentMediaVideo = (() => {
+    if (displayMedia && displayMedia.length > 0) {
+      return displayMedia[currentMediaIndex]?.media_type === 'video';
+    }
+    return displayMediaType === 'video';
+  })();
+
+  // Track view ONLY for video posts + pause video when out of view
   useEffect(() => {
     const target = cardRef.current;
     if (!target) return;
     
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && isCurrentMediaVideo) {
           trackView();
         }
         // Pause video when out of view
@@ -183,7 +191,7 @@ export const PostCard = ({ post }: PostCardProps) => {
     );
     observer.observe(target);
     return () => observer.disconnect();
-  }, [trackView]);
+  }, [trackView, isCurrentMediaVideo]);
 
   const handleLike = () => {
     if (!currentUser) return toast({ title: 'Login required', description: 'You need to be logged in.', variant: 'destructive' });
