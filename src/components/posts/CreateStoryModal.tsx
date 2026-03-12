@@ -5,12 +5,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { useCreateOptimizedStory } from '@/hooks/useOptimizedStories';
-import { Camera, Upload, X, Zap } from 'lucide-react';
+import { Camera, Check, Loader2, Upload, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { EffectsPicker } from './EffectsPicker';
 import { LocationPicker } from './LocationPicker';
@@ -76,7 +76,6 @@ const CameraView = ({ onCapture, onClose }: { onCapture: (file: File) => void, o
       <canvas ref={canvasRef} className="hidden" />
 
       <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-6">
-        {/* Cancel Button */}
         <Button
           variant="ghost"
           size="icon"
@@ -85,8 +84,6 @@ const CameraView = ({ onCapture, onClose }: { onCapture: (file: File) => void, o
         >
           <X className="h-6 w-6" />
         </Button>
-
-        {/* Capture Button */}
         <Button
           onClick={handleCapture}
           size="lg"
@@ -94,50 +91,101 @@ const CameraView = ({ onCapture, onClose }: { onCapture: (file: File) => void, o
         >
           <Camera className="h-8 w-8" />
         </Button>
-
-        {/* Placeholder for symmetry or flash toggle */}
         <div className="w-12" />
       </div>
     </div>
   );
 };
 
-const EditView = ({ 
-  file, 
-  onSave, 
-  onCancel,
-  onCaptionChange,
-  onLocationChange,
-  onLocationEnable,
-  caption,
-  location,
-  locationEnabled
-}: { 
-  file: File, 
-  onSave: (file: File, caption?: string, location?: string) => void, 
-  onCancel: () => void,
-  onCaptionChange: (caption: string) => void,
-  onLocationChange: (location: string) => void,
-  onLocationEnable: (enabled: boolean) => void,
-  caption: string,
-  location: string,
-  locationEnabled: boolean
-}) => {
+export const CreateStoryModal = ({
+  isOpen,
+  onClose,
+}: CreateStoryModalProps) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [caption, setCaption] = useState('');
+  const [location, setLocation] = useState('');
+  const [locationEnabled, setLocationEnabled] = useState(false);
   const [selectedEffect, setSelectedEffect] = useState<string>();
-  const isVideo = file.type.startsWith('video/');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { mutate: createStory, isPending } = useCreateOptimizedStory();
+  const { toast } = useToast();
 
+  // Generate preview immediately when file is selected
   useEffect(() => {
-    if (file) {
-      const url = URL.createObjectURL(file);
+    if (selectedFile) {
+      const url = URL.createObjectURL(selectedFile);
       setPreview(url);
       return () => URL.revokeObjectURL(url);
+    } else {
+      setPreview(null);
     }
-  }, [file]);
+  }, [selectedFile]);
 
-  const handleApplyEffect = async (effectId: string) => {
-    if (!preview || isVideo) return;
+  // Simulate upload progress
+  useEffect(() => {
+    if (isPending) {
+      setUploadProgress(0);
+      const interval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) { clearInterval(interval); return 90; }
+          return prev + Math.random() * 15;
+        });
+      }, 200);
+      return () => clearInterval(interval);
+    } else {
+      setUploadProgress(0);
+    }
+  }, [isPending]);
 
+  const handleFileSelect = (file: File) => {
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      toast({ title: 'Tipe file tidak valid', description: 'Pilih gambar atau video', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast({ title: 'File terlalu besar', description: 'Maksimal 20MB', variant: 'destructive' });
+      return;
+    }
+    setSelectedFile(file);
+  };
+
+  const handleSubmit = () => {
+    if (!selectedFile) return;
+
+    createStory(
+      { file: selectedFile, mediaType: selectedFile.type, caption: caption || undefined, location: locationEnabled ? location : undefined },
+      {
+        onSuccess: () => {
+          setUploadProgress(100);
+          toast({ title: 'Cerita berhasil dibuat!', description: 'Cerita Anda telah dibagikan.' });
+          setTimeout(handleClose, 300);
+        },
+        onError: (error) => {
+          toast({ title: 'Gagal membuat cerita', description: error.message, variant: 'destructive' });
+        },
+      }
+    );
+  };
+
+  const handleClose = () => {
+    setSelectedFile(null);
+    setPreview(null);
+    setIsCameraOpen(false);
+    setCaption('');
+    setLocation('');
+    setLocationEnabled(false);
+    setSelectedEffect(undefined);
+    setUploadProgress(0);
+    onClose();
+  };
+
+  const handleApplyEffect = (effectId: string) => {
+    if (!preview || selectedFile?.type.startsWith('video/')) return;
+    setSelectedEffect(effectId);
+    
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -150,244 +198,122 @@ const EditView = ({
       applyEffect(effectId, canvas);
       setPreview(canvas.toDataURL());
     };
-    img.src = preview;
+    img.src = URL.createObjectURL(selectedFile!);
   };
 
-  const handleSave = () => {
-    onSave(file, caption, locationEnabled ? location : undefined);
-  }
-
-  if (!preview) return null;
-
-  return (
-    <div className="flex flex-col h-full space-y-4">
-      {/* Preview Area */}
-      <div className="flex-1 min-h-0 relative bg-black rounded-lg overflow-hidden flex items-center justify-center border border-border/50">
-        {isVideo ? (
-          <video
-            src={preview}
-            className="h-full w-full object-contain max-h-[60vh] md:max-h-[500px]"
-            controls
-          />
-        ) : (
-          <img
-            src={preview}
-            alt="Story preview"
-            className="h-full w-full object-contain max-h-[60vh] md:max-h-[500px]"
-          />
-        )}
-
-        {/* X button removed - Dialog provides its own close button */}
-      </div>
-
-      {/* Effects and Content Controls */}
-      <div className="flex flex-col gap-4 bg-background pt-2 space-y-3">
-        {!isVideo && (
-          <div>
-            <Label className="text-xs font-medium mb-2 block">Effect</Label>
-            <EffectsPicker
-              selectedEffect={selectedEffect}
-              onSelectEffect={(effectId) => {
-                setSelectedEffect(effectId);
-                handleApplyEffect(effectId);
-              }}
-            />
-          </div>
-        )}
-
-        <div>
-          <Label className="text-xs font-medium mb-2 block">Caption (Optional)</Label>
-          <Textarea
-            placeholder="Add text to your story..."
-            value={caption}
-            onChange={(e) => onCaptionChange(e.target.value)}
-            className="min-h-[60px] text-sm"
-          />
-        </div>
-
-        <LocationPicker
-          value={location}
-          onChange={onLocationChange}
-          onEnableChange={onLocationEnable}
-          enabled={locationEnabled}
-        />
-
-        <Button 
-          onClick={handleSave} 
-          className="w-full h-12 text-base font-semibold shadow-lg"
-        >
-          <Upload className="mr-2 h-4 w-4" /> Bagikan Cerita
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-export const CreateStoryModal = ({
-  isOpen,
-  onClose,
-}: CreateStoryModalProps) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [caption, setCaption] = useState('');
-  const [location, setLocation] = useState('');
-  const [locationEnabled, setLocationEnabled] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { mutate: createStory, isPending } = useCreateOptimizedStory();
-  const { toast } = useToast();
-
-  const handleFileSelect = (file: File) => {
-    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-      toast({
-        title: 'Tipe file tidak valid',
-        description: 'Silakan pilih file gambar atau video',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (file.size > 20 * 1024 * 1024) {
-      toast({
-        title: 'File terlalu besar',
-        description: 'Silakan pilih file yang lebih kecil dari 20MB',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSelectedFile(file);
-    setIsEditing(true);
-  };
-
-  const handleSubmit = (fileToSubmit?: File, newCaption?: string, newLocation?: string) => {
-    const finalFile = fileToSubmit || selectedFile;
-    if (!finalFile) return;
-
-    createStory(
-      {
-        file: finalFile,
-        mediaType: finalFile.type,
-        caption: newCaption,
-        location: newLocation,
-      },
-      {
-        onSuccess: () => {
-          toast({
-            title: 'Cerita berhasil dibuat!',
-            description: 'Cerita Anda telah berhasil dibagikan.',
-          });
-          handleClose();
-        },
-        onError: (error) => {
-          toast({
-            title: 'Gagal membuat cerita',
-            description: error.message,
-            variant: 'destructive',
-          });
-        },
-      }
-    );
-  };
-
-  const handleClose = () => {
-    setSelectedFile(null);
-    setPreview(null);
-    setIsCameraOpen(false);
-    setIsEditing(false);
-    setCaption('');
-    setLocation('');
-    setLocationEnabled(false);
-    onClose();
-  };
-
-  const handleCapturedFile = (file: File) => {
-    setSelectedFile(file);
-    setIsCameraOpen(false);
-    setIsEditing(true);
-  };
-
-  const renderContent = () => {
-    if (isCameraOpen) {
-      return <CameraView onCapture={handleCapturedFile} onClose={() => setIsCameraOpen(false)} />;
-    }
-
-    if (isEditing && selectedFile) {
-      return (
-        <EditView 
-          file={selectedFile} 
-          onSave={handleSubmit} 
-          onCancel={() => { setIsEditing(false); setSelectedFile(null); }}
-          onCaptionChange={setCaption}
-          onLocationChange={setLocation}
-          onLocationEnable={setLocationEnabled}
-          caption={caption}
-          location={location}
-          locationEnabled={locationEnabled}
-        />
-      );
-    }
-
-    return (
-      <div className="flex flex-col h-full space-y-6 justify-center py-4">
-        <div
-          className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-10 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-all group"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-            <Upload className="h-10 w-10 text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-          <p className="text-xl font-semibold mb-2">Unggah Media</p>
-          <p className="text-sm text-muted-foreground max-w-[200px] mx-auto">
-            Klik untuk memilih foto atau video dari perangkat Anda
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Button
-            variant="outline"
-            className="h-14 text-base hover:bg-muted/50 border-input"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Upload className="h-5 w-5 mr-2" />
-            Pilih File
-          </Button>
-          <Button
-            variant="default"
-            className="h-14 text-base shadow-md"
-            onClick={() => setIsCameraOpen(true)}
-          >
-            <Camera className="h-5 w-5 mr-2" />
-            Kamera
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const isVideo = selectedFile?.type.startsWith('video/');
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md w-full max-h-[90vh] h-[800px] flex flex-col p-6 overflow-hidden sm:rounded-2xl">
-        <DialogHeader className="mb-2 shrink-0">
-          <DialogTitle className="text-xl font-bold">
-            {isCameraOpen ? 'Ambil Foto' : isEditing ? 'Edit Cerita' : 'Buat Cerita Baru'}
-          </DialogTitle>
+      <DialogContent className="max-w-md w-full max-h-[90vh] flex flex-col p-0 overflow-hidden sm:rounded-2xl">
+        {/* Header */}
+        <DialogHeader className="p-4 pb-2 shrink-0 border-b border-border">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg font-bold">
+              {isCameraOpen ? 'Ambil Foto' : selectedFile ? 'Edit Cerita' : 'Buat Cerita'}
+            </DialogTitle>
+            {selectedFile && !isPending && (
+              <Button size="sm" onClick={handleSubmit} className="gap-1">
+                <Upload className="h-4 w-4" /> Bagikan
+              </Button>
+            )}
+          </div>
+          {isPending && (
+            <div className="pt-2">
+              <Progress value={uploadProgress} className="h-1" />
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" /> Mengunggah...
+              </p>
+            </div>
+          )}
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-1">
-          {renderContent()}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {isCameraOpen ? (
+            <div className="h-[60vh]">
+              <CameraView onCapture={(f) => { setSelectedFile(f); setIsCameraOpen(false); }} onClose={() => setIsCameraOpen(false)} />
+            </div>
+          ) : selectedFile && preview ? (
+            <div className="space-y-4 p-4">
+              {/* Preview - compact & immediate */}
+              <div className="relative bg-black rounded-lg overflow-hidden flex items-center justify-center max-h-[40vh]">
+                {isVideo ? (
+                  <video src={preview} className="w-full h-full object-contain max-h-[40vh]" controls />
+                ) : (
+                  <img src={preview} alt="Preview" className="w-full h-full object-contain max-h-[40vh]" />
+                )}
+                {!isPending && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 bg-black/50 text-white rounded-full h-8 w-8 hover:bg-black/70"
+                    onClick={() => { setSelectedFile(null); setPreview(null); }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Quick Controls */}
+              {!isVideo && (
+                <div>
+                  <Label className="text-xs font-medium mb-2 block">Filter</Label>
+                  <EffectsPicker selectedEffect={selectedEffect} onSelectEffect={handleApplyEffect} />
+                </div>
+              )}
+
+              <div>
+                <Label className="text-xs font-medium mb-1 block">Teks (Opsional)</Label>
+                <Textarea
+                  placeholder="Tulis sesuatu..."
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  className="min-h-[50px] text-sm resize-none"
+                  disabled={isPending}
+                />
+              </div>
+
+              <LocationPicker
+                value={location}
+                onChange={setLocation}
+                onEnableChange={setLocationEnabled}
+                enabled={locationEnabled}
+              />
+            </div>
+          ) : (
+            /* File Selection - clean & simple */
+            <div className="p-6 space-y-4">
+              <div
+                className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-all group"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <Upload className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+                <p className="text-lg font-semibold mb-1">Pilih Media</p>
+                <p className="text-sm text-muted-foreground">Foto atau video dari perangkat Anda</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Button variant="outline" className="h-12" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="h-4 w-4 mr-2" /> Pilih File
+                </Button>
+                <Button className="h-12" onClick={() => setIsCameraOpen(true)}>
+                  <Camera className="h-4 w-4 mr-2" /> Kamera
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
-        <Input
+        <input
           ref={fileInputRef}
           type="file"
           accept="image/*,video/*"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) {
-              handleFileSelect(file);
-            }
+            if (file) handleFileSelect(file);
+            if (e.target) e.target.value = '';
           }}
           className="hidden"
         />
