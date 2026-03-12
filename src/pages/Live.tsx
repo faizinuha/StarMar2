@@ -241,6 +241,7 @@ const BroadcasterView = ({
     const msg: ChatMessage = {
       id: crypto.randomUUID(),
       user: user?.user_metadata?.username || "Streamer",
+      avatar: user?.user_metadata?.avatar_url || "",
       text: chatInput.trim(),
       timestamp: Date.now(),
     };
