@@ -554,6 +554,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
               )}
             </TabsContent>
 
+            <TabsContent value="saved" className="space-y-6">
               {bookmarkedPosts.length > 0 ? (
                 <PostGrid
                   posts={bookmarkedPosts as any}
