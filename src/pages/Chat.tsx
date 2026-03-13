@@ -381,19 +381,36 @@ export default function Chat() {
       </Dialog>
 
       <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Chat Baru</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5 text-primary" /> Chat Baru</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Pilih user untuk memulai percakapan</p>
-            <ScrollArea className="h-64 border rounded p-2">
-              {allUsers.map((u: any) => (
+            <Input
+              placeholder="Cari username..."
+              value={newChatSearch}
+              onChange={(e) => setNewChatSearch(e.target.value)}
+            />
+            <ScrollArea className="h-64 border rounded-lg p-2">
+              {allUsers
+                .filter((u: any) => 
+                  !newChatSearch || 
+                  u.username?.toLowerCase().includes(newChatSearch.toLowerCase()) || 
+                  u.display_name?.toLowerCase().includes(newChatSearch.toLowerCase())
+                )
+                .map((u: any) => (
                 <div
                   key={u.user_id}
                   onClick={() => {
-                    setSelectedUser(u.user_id);
-                    handleStartDirectChat();
+                    createConversation({ otherUserId: u.user_id }, {
+                      onSuccess: (id) => {
+                        toast.success('Chat dimulai');
+                        setShowNewChatDialog(false);
+                        setNewChatSearch('');
+                        navigate(`/chat/${id}`);
+                      },
+                      onError: () => toast.error('Gagal membuat conversation'),
+                    });
                   }}
-                  className="flex gap-2 items-center p-2 hover:bg-accent rounded cursor-pointer"
+                  className="flex gap-3 items-center p-2.5 hover:bg-accent rounded-lg cursor-pointer transition-colors"
                 >
                   <Avatar className="h-10 w-10"><AvatarImage src={u.avatar_url} /><AvatarFallback>{u.username?.[0]}</AvatarFallback></Avatar>
                   <div className="flex-1 min-w-0">
@@ -402,10 +419,17 @@ export default function Chat() {
                   </div>
                 </div>
               ))}
+              {allUsers.filter((u: any) => 
+                !newChatSearch || 
+                u.username?.toLowerCase().includes(newChatSearch.toLowerCase()) || 
+                u.display_name?.toLowerCase().includes(newChatSearch.toLowerCase())
+              ).length === 0 && (
+                <p className="text-center text-sm text-muted-foreground py-8">User tidak ditemukan</p>
+              )}
             </ScrollArea>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewChatDialog(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => { setShowNewChatDialog(false); setNewChatSearch(''); }}>Batal</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
