@@ -71,8 +71,10 @@ export default function Chat() {
   const [showGroupDialog, setShowGroupDialog] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [groupName, setGroupName] = useState('');
+  const [groupRules, setGroupRules] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [newChatSearch, setNewChatSearch] = useState('');
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users'],
