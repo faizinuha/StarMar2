@@ -263,7 +263,7 @@ const BroadcasterView = ({
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] md:h-screen gap-0">
       <div className="flex-1 bg-black relative flex items-center justify-center">
-        <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-contain" />
+        <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-contain" style={{ transform: isScreenSharing ? 'none' : 'scaleX(-1)' }} />
 
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
