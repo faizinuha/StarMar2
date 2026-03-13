@@ -414,6 +414,9 @@ const ViewerView = ({
     };
   }, [stream.id]);
 
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const EMOJI_LIST = ['😀','😂','❤️','🔥','👏','🎉','😍','🤣','😭','💯','👀','🙏','💪','✨','🎵','😎','🥳','😱','💀','🤯','👋','🫶','💜','🩷','🩵'];
+
   const sendChat = () => {
     if (!chatInput.trim() || !channelRef.current) return;
     const msg: ChatMessage = {
@@ -426,6 +429,7 @@ const ViewerView = ({
     channelRef.current.send({ type: "broadcast", event: "chat", payload: msg });
     setChatMessages((prev) => [...prev, msg]);
     setChatInput("");
+    setShowEmojiPicker(false);
   };
 
   return (
