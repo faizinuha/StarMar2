@@ -30,12 +30,21 @@ import {
   Lock,
   MapPin,
   MessageCircle,
+  MoreVertical,
   Radio,
+  Share2,
+  Trash2,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient as useQC2 } from '@tanstack/react-query';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // Component to fetch real follower/following counts - only counts users with existing profiles
 const ProfileStats = ({ userId, postsCount, onClickFollowers, onClickFollowing }: { userId: string; postsCount: number; onClickFollowers: () => void; onClickFollowing: () => void }) => {
@@ -526,7 +535,7 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
               {streamHistory.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {streamHistory.map((stream) => (
-                    <Card key={stream.id} className="overflow-hidden">
+                    <Card key={stream.id} className="overflow-hidden relative">
                       <div className="aspect-video bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center relative">
                         <Radio className="w-10 h-10 text-muted-foreground/50" />
                         {stream.genre && stream.genre !== 'General' && (
@@ -535,7 +544,39 @@ const ProfilePageContent = ({ profile, isLoading, error }) => {
                         <Badge variant="outline" className="absolute top-2 left-2 text-xs">Ended</Badge>
                       </div>
                       <div className="p-3">
-                        <h3 className="font-semibold text-sm truncate">{stream.title}</h3>
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-semibold text-sm truncate flex-1">{stream.title}</h3>
+                          {isOwnProfile && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => {
+                                  const url = `${window.location.origin}/profile/${profile.user_id}`;
+                                  if (navigator.share) navigator.share({ title: stream.title, url });
+                                  else { navigator.clipboard.writeText(url); toast.success('Link disalin'); }
+                                }}>
+                                  <Share2 className="h-4 w-4 mr-2" /> Bagikan
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={async () => {
+                                    try {
+                                      await supabase.from('live_streams').delete().eq('id', stream.id).eq('user_id', profile.user_id);
+                                      queryClient.invalidateQueries({ queryKey: ['stream-history'] });
+                                      toast.success('Riwayat live dihapus');
+                                    } catch { toast.error('Gagal menghapus'); }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" /> Hapus
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
                         {stream.description && <p className="text-xs text-muted-foreground truncate mt-1">{stream.description}</p>}
                         <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
                           <span>{new Date(stream.started_at).toLocaleDateString()}</span>

@@ -38,6 +38,7 @@ import {
   MessageSquare,
   ChevronDown,
   AlertCircle,
+  Check,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -71,8 +72,10 @@ export default function Chat() {
   const [showGroupDialog, setShowGroupDialog] = useState(false);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [groupName, setGroupName] = useState('');
+  const [groupRules, setGroupRules] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [newChatSearch, setNewChatSearch] = useState('');
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users'],
@@ -108,13 +111,38 @@ export default function Chat() {
     });
   };
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
     if (!groupName.trim() || selectedMembers.length === 0) return toast.error('Isi nama grup dan pilih anggota');
     createGroup({ name: groupName, memberIds: selectedMembers }, {
-      onSuccess: (id) => {
+      onSuccess: async (id) => {
+        // Send rules as first message if provided
+        const rulesText = groupRules.trim() || 'Selamat datang! Jaga sopan santun dan saling menghormati.';
+        const welcomeMsg = `🎉 Selamat datang di grup "${groupName}"!\n\n📋 Rules:\n${rulesText}`;
+        
+        // Send welcome/rules message
+        try {
+          await supabase.from('messages').insert({
+            conversation_id: id,
+            sender_id: user!.id,
+            content: welcomeMsg,
+          });
+
+          // Send notifications to all members
+          const notifications = selectedMembers.map(memberId => ({
+            user_id: memberId,
+            from_user_id: user!.id,
+            type: 'group_invite',
+            post_id: null,
+          }));
+          await supabase.from('notifications').insert(notifications);
+        } catch (e) {
+          console.error('Failed to send welcome message:', e);
+        }
+
         toast.success('Grup berhasil dibuat');
         setShowGroupDialog(false);
         setGroupName('');
+        setGroupRules('');
         setSelectedMembers([]);
         navigate(`/chat/${id}`);
       },
@@ -306,52 +334,84 @@ export default function Chat() {
       </AlertDialog>
 
       <Dialog open={showGroupDialog} onOpenChange={setShowGroupDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Buat Grup Chat</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Buat Grup Chat</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <Input placeholder="Nama grup" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
-            {followedUsers.length === 0 ? (
-              <div className="text-center p-8 text-sm text-muted-foreground">
-                <p>Anda belum follow siapapun</p>
-                <p className="text-xs mt-2">Follow user terlebih dahulu untuk membuat grup</p>
-              </div>
-            ) : (
-              <ScrollArea className="h-64 border rounded p-2">
-                {followedUsers.map((u: any) => (
-                  <div
-                    key={u.user_id}
-                    onClick={() => setSelectedMembers(p => p.includes(u.user_id) ? p.filter(i => i !== u.user_id) : [...p, u.user_id])}
-                    className="flex gap-2 items-center p-2 hover:bg-accent rounded cursor-pointer"
-                  >
-                    <input type="checkbox" checked={selectedMembers.includes(u.user_id)} readOnly className="pointer-events-none" />
-                    <Avatar className="h-8 w-8"><AvatarImage src={u.avatar_url} /><AvatarFallback>{u.username?.[0]}</AvatarFallback></Avatar>
-                    <p className="text-sm">{u.display_name || u.username}</p>
-                  </div>
-                ))}
-              </ScrollArea>
-            )}
+            <div>
+              <label className="text-sm font-medium mb-1 block">Nama Grup</label>
+              <Input placeholder="Contoh: Teman Sekelas" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Rules Grup (opsional)</label>
+              <Input placeholder="Contoh: Jaga sopan santun" value={groupRules} onChange={(e) => setGroupRules(e.target.value)} />
+              <p className="text-xs text-muted-foreground mt-1">Rules akan dikirim otomatis sebagai pesan pertama di grup</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Pilih Anggota ({selectedMembers.length} dipilih)</label>
+              {followedUsers.length === 0 ? (
+                <div className="text-center p-8 text-sm text-muted-foreground">
+                  <AlertCircle className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
+                  <p>Anda belum follow siapapun</p>
+                  <p className="text-xs mt-2">Follow user terlebih dahulu untuk membuat grup</p>
+                </div>
+              ) : (
+                <ScrollArea className="h-48 border rounded-lg p-2">
+                  {followedUsers.map((u: any) => (
+                    <div
+                      key={u.user_id}
+                      onClick={() => setSelectedMembers(p => p.includes(u.user_id) ? p.filter(i => i !== u.user_id) : [...p, u.user_id])}
+                      className={`flex gap-3 items-center p-2.5 rounded-lg cursor-pointer transition-colors ${selectedMembers.includes(u.user_id) ? 'bg-primary/10 border border-primary/20' : 'hover:bg-accent'}`}
+                    >
+                      <Avatar className="h-9 w-9"><AvatarImage src={u.avatar_url} /><AvatarFallback>{u.username?.[0]}</AvatarFallback></Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{u.display_name || u.username}</p>
+                        <p className="text-xs text-muted-foreground">@{u.username}</p>
+                      </div>
+                      {selectedMembers.includes(u.user_id) && <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center"><Check className="h-3 w-3 text-primary-foreground" /></div>}
+                    </div>
+                  ))}
+                </ScrollArea>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowGroupDialog(false)}>Batal</Button>
-            <Button onClick={handleCreateGroup} disabled={followedUsers.length === 0}>Buat Grup</Button>
+            <Button onClick={handleCreateGroup} disabled={followedUsers.length === 0 || !groupName.trim() || selectedMembers.length === 0}>Buat Grup</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Chat Baru</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5 text-primary" /> Chat Baru</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Pilih user untuk memulai percakapan</p>
-            <ScrollArea className="h-64 border rounded p-2">
-              {allUsers.map((u: any) => (
+            <Input
+              placeholder="Cari username..."
+              value={newChatSearch}
+              onChange={(e) => setNewChatSearch(e.target.value)}
+            />
+            <ScrollArea className="h-64 border rounded-lg p-2">
+              {allUsers
+                .filter((u: any) => 
+                  !newChatSearch || 
+                  u.username?.toLowerCase().includes(newChatSearch.toLowerCase()) || 
+                  u.display_name?.toLowerCase().includes(newChatSearch.toLowerCase())
+                )
+                .map((u: any) => (
                 <div
                   key={u.user_id}
                   onClick={() => {
-                    setSelectedUser(u.user_id);
-                    handleStartDirectChat();
+                    createConversation({ otherUserId: u.user_id }, {
+                      onSuccess: (id) => {
+                        toast.success('Chat dimulai');
+                        setShowNewChatDialog(false);
+                        setNewChatSearch('');
+                        navigate(`/chat/${id}`);
+                      },
+                      onError: () => toast.error('Gagal membuat conversation'),
+                    });
                   }}
-                  className="flex gap-2 items-center p-2 hover:bg-accent rounded cursor-pointer"
+                  className="flex gap-3 items-center p-2.5 hover:bg-accent rounded-lg cursor-pointer transition-colors"
                 >
                   <Avatar className="h-10 w-10"><AvatarImage src={u.avatar_url} /><AvatarFallback>{u.username?.[0]}</AvatarFallback></Avatar>
                   <div className="flex-1 min-w-0">
@@ -360,10 +420,17 @@ export default function Chat() {
                   </div>
                 </div>
               ))}
+              {allUsers.filter((u: any) => 
+                !newChatSearch || 
+                u.username?.toLowerCase().includes(newChatSearch.toLowerCase()) || 
+                u.display_name?.toLowerCase().includes(newChatSearch.toLowerCase())
+              ).length === 0 && (
+                <p className="text-center text-sm text-muted-foreground py-8">User tidak ditemukan</p>
+              )}
             </ScrollArea>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewChatDialog(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => { setShowNewChatDialog(false); setNewChatSearch(''); }}>Batal</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

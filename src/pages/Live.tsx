@@ -236,6 +236,9 @@ const BroadcasterView = ({
     }
   };
 
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const EMOJI_LIST = ['😀','😂','❤️','🔥','👏','🎉','😍','🤣','😭','💯','👀','🙏','💪','✨','🎵','😎','🥳','😱','💀','🤯','👋','🫶','💜','🩷','🩵'];
+
   const sendChat = () => {
     if (!chatInput.trim() || !channelRef.current) return;
     const msg: ChatMessage = {
@@ -248,6 +251,7 @@ const BroadcasterView = ({
     channelRef.current.send({ type: "broadcast", event: "chat", payload: msg });
     setChatMessages((prev) => [...prev, msg]);
     setChatInput("");
+    setShowEmojiPicker(false);
   };
 
   const handleEnd = () => {
@@ -263,7 +267,7 @@ const BroadcasterView = ({
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] md:h-screen gap-0">
       <div className="flex-1 bg-black relative flex items-center justify-center">
-        <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-contain" />
+        <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-contain" style={{ transform: isScreenSharing ? 'none' : 'scaleX(-1)' }} />
 
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
@@ -313,9 +317,19 @@ const BroadcasterView = ({
             <ChatMessageItem key={msg.id} msg={msg} />
           ))}
         </div>
-        <div className="p-3 border-t border-border flex gap-2">
-          <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChat()} placeholder="Say something..." className="text-sm" />
-          <Button size="icon" onClick={sendChat} className="shrink-0"><Send className="w-4 h-4" /></Button>
+        <div className="p-3 border-t border-border space-y-2">
+          {showEmojiPicker && (
+            <div className="flex flex-wrap gap-1 p-2 bg-muted/50 rounded-lg">
+              {EMOJI_LIST.map(e => (
+                <button key={e} className="text-lg hover:scale-125 transition-transform p-0.5" onClick={() => setChatInput(prev => prev + e)}>{e}</button>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button size="icon" variant="ghost" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="shrink-0 text-lg">😀</Button>
+            <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChat()} placeholder="Say something..." className="text-sm" />
+            <Button size="icon" onClick={sendChat} className="shrink-0"><Send className="w-4 h-4" /></Button>
+          </div>
         </div>
       </div>
     </div>
@@ -400,6 +414,9 @@ const ViewerView = ({
     };
   }, [stream.id]);
 
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const EMOJI_LIST = ['😀','😂','❤️','🔥','👏','🎉','😍','🤣','😭','💯','👀','🙏','💪','✨','🎵','😎','🥳','😱','💀','🤯','👋','🫶','💜','🩷','🩵'];
+
   const sendChat = () => {
     if (!chatInput.trim() || !channelRef.current) return;
     const msg: ChatMessage = {
@@ -412,6 +429,7 @@ const ViewerView = ({
     channelRef.current.send({ type: "broadcast", event: "chat", payload: msg });
     setChatMessages((prev) => [...prev, msg]);
     setChatInput("");
+    setShowEmojiPicker(false);
   };
 
   return (
@@ -476,9 +494,19 @@ const ViewerView = ({
             <ChatMessageItem key={msg.id} msg={msg} />
           ))}
         </div>
-        <div className="p-3 border-t border-border flex gap-2">
-          <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChat()} placeholder="Say something..." className="text-sm" />
-          <Button size="icon" onClick={sendChat} className="shrink-0"><Send className="w-4 h-4" /></Button>
+        <div className="p-3 border-t border-border space-y-2">
+          {showEmojiPicker && (
+            <div className="flex flex-wrap gap-1 p-2 bg-muted/50 rounded-lg">
+              {EMOJI_LIST.map(e => (
+                <button key={e} className="text-lg hover:scale-125 transition-transform p-0.5" onClick={() => setChatInput(prev => prev + e)}>{e}</button>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button size="icon" variant="ghost" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="shrink-0 text-lg">😀</Button>
+            <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChat()} placeholder="Say something..." className="text-sm" />
+            <Button size="icon" onClick={sendChat} className="shrink-0"><Send className="w-4 h-4" /></Button>
+          </div>
         </div>
       </div>
     </div>
