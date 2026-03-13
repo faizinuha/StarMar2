@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 export type Language = 'en' | 'id' | 'ja' | 'ko' | 'zh' | 'es' | 'fr' | 'de' | 'ar' | 'hi' | 'pt' | 'ru' | 'th' | 'vi' | 'ms';
 
@@ -20,93 +20,110 @@ export const LANGUAGES: { code: Language; label: string; flag: string }[] = [
   { code: 'ms', label: 'Bahasa Melayu', flag: '🇲🇾' },
 ];
 
-// Static translations for instant display (no API calls needed)
-const TRANSLATIONS: Record<string, Record<Language, string>> = {
-  // Settings page
-  'Settings': { en: 'Settings', id: 'Pengaturan', ja: '設定', ko: '설정', zh: '设置', es: 'Configuración', fr: 'Paramètres', de: 'Einstellungen', ar: 'الإعدادات', hi: 'सेटिंग्स', pt: 'Configurações', ru: 'Настройки', th: 'การตั้งค่า', vi: 'Cài đặt', ms: 'Tetapan' },
-  'Manage your account and preferences.': { en: 'Manage your account and preferences.', id: 'Kelola akun dan preferensi Anda.', ja: 'アカウントと設定を管理します。', ko: '계정과 환경설정을 관리하세요.', zh: '管理您的帐户和偏好设置。', es: 'Administra tu cuenta y preferencias.', fr: 'Gérez votre compte et vos préférences.', de: 'Verwalte dein Konto und Einstellungen.', ar: 'إدارة حسابك وتفضيلاتك.', hi: 'अपने खाते और प्राथमिकताओं को प्रबंधित करें।', pt: 'Gerencie sua conta e preferências.', ru: 'Управляйте своей учетной записью и настройками.', th: 'จัดการบัญชีและการตั้งค่าของคุณ', vi: 'Quản lý tài khoản và tùy chọn của bạn.', ms: 'Urus akaun dan keutamaan anda.' },
-  'Edit Profile': { en: 'Edit Profile', id: 'Edit Profil', ja: 'プロフィール編集', ko: '프로필 수정', zh: '编辑资料', es: 'Editar perfil', fr: 'Modifier le profil', de: 'Profil bearbeiten', ar: 'تعديل الملف', hi: 'प्रोफ़ाइल संपादित करें', pt: 'Editar perfil', ru: 'Редактировать профиль', th: 'แก้ไขโปรไฟล์', vi: 'Chỉnh sửa hồ sơ', ms: 'Edit Profil' },
-  'Appearance': { en: 'Appearance', id: 'Tampilan', ja: '外観', ko: '외관', zh: '外观', es: 'Apariencia', fr: 'Apparence', de: 'Aussehen', ar: 'المظهر', hi: 'दिखावट', pt: 'Aparência', ru: 'Оформление', th: 'ลักษณะ', vi: 'Giao diện', ms: 'Penampilan' },
-  'Security': { en: 'Security', id: 'Keamanan', ja: 'セキュリティ', ko: '보안', zh: '安全', es: 'Seguridad', fr: 'Sécurité', de: 'Sicherheit', ar: 'الأمان', hi: 'सुरक्षा', pt: 'Segurança', ru: 'Безопасность', th: 'ความปลอดภัย', vi: 'Bảo mật', ms: 'Keselamatan' },
-  'Notifications': { en: 'Notifications', id: 'Notifikasi', ja: '通知', ko: '알림', zh: '通知', es: 'Notificaciones', fr: 'Notifications', de: 'Benachrichtigungen', ar: 'الإشعارات', hi: 'सूचनाएं', pt: 'Notificações', ru: 'Уведомления', th: 'การแจ้งเตือน', vi: 'Thông báo', ms: 'Pemberitahuan' },
-  'Account': { en: 'Account', id: 'Akun', ja: 'アカウント', ko: '계정', zh: '账户', es: 'Cuenta', fr: 'Compte', de: 'Konto', ar: 'الحساب', hi: 'खाता', pt: 'Conta', ru: 'Аккаунт', th: 'บัญชี', vi: 'Tài khoản', ms: 'Akaun' },
-  'Danger Zone': { en: 'Danger Zone', id: 'Zona Bahaya', ja: '危険ゾーン', ko: '위험 구역', zh: '危险区', es: 'Zona peligrosa', fr: 'Zone dangereuse', de: 'Gefahrenzone', ar: 'منطقة الخطر', hi: 'खतरनाक क्षेत्र', pt: 'Zona de perigo', ru: 'Опасная зона', th: 'โซนอันตราย', vi: 'Vùng nguy hiểm', ms: 'Zon Bahaya' },
-  'Language': { en: 'Language', id: 'Bahasa', ja: '言語', ko: '언어', zh: '语言', es: 'Idioma', fr: 'Langue', de: 'Sprache', ar: 'اللغة', hi: 'भाषा', pt: 'Idioma', ru: 'Язык', th: 'ภาษา', vi: 'Ngôn ngữ', ms: 'Bahasa' },
-  // Profile section
-  'Profile Information': { en: 'Profile Information', id: 'Informasi Profil', ja: 'プロフィール情報', ko: '프로필 정보', zh: '个人资料', es: 'Información del perfil', fr: 'Informations du profil', de: 'Profilinformationen', ar: 'معلومات الملف', hi: 'प्रोफ़ाइल जानकारी', pt: 'Informações do perfil', ru: 'Информация профиля', th: 'ข้อมูลโปรไฟล์', vi: 'Thông tin hồ sơ', ms: 'Maklumat Profil' },
-  'Update your public profile information.': { en: 'Update your public profile information.', id: 'Perbarui informasi profil publik Anda.', ja: '公開プロフィール情報を更新します。', ko: '공개 프로필 정보를 업데이트하세요.', zh: '更新您的公开资料信息。', es: 'Actualiza la información de tu perfil público.', fr: 'Mettez à jour vos informations de profil public.', de: 'Aktualisiere deine öffentlichen Profilinformationen.', ar: 'حدّث معلومات ملفك العام.', hi: 'अपनी सार्वजनिक प्रोफ़ाइल जानकारी अपडेट करें।', pt: 'Atualize suas informações de perfil público.', ru: 'Обновите информацию публичного профиля.', th: 'อัปเดตข้อมูลโปรไฟล์สาธารณะของคุณ', vi: 'Cập nhật thông tin hồ sơ công khai của bạn.', ms: 'Kemas kini maklumat profil awam anda.' },
-  'Display Name': { en: 'Display Name', id: 'Nama Tampilan', ja: '表示名', ko: '표시 이름', zh: '显示名称', es: 'Nombre para mostrar', fr: "Nom d'affichage", de: 'Anzeigename', ar: 'اسم العرض', hi: 'प्रदर्शन नाम', pt: 'Nome de exibição', ru: 'Отображаемое имя', th: 'ชื่อที่แสดง', vi: 'Tên hiển thị', ms: 'Nama Paparan' },
-  'Bio': { en: 'Bio', id: 'Bio', ja: '自己紹介', ko: '자기소개', zh: '简介', es: 'Biografía', fr: 'Bio', de: 'Bio', ar: 'نبذة', hi: 'जीवनी', pt: 'Bio', ru: 'О себе', th: 'ชีวประวัติ', vi: 'Tiểu sử', ms: 'Bio' },
-  'Save Changes': { en: 'Save Changes', id: 'Simpan Perubahan', ja: '変更を保存', ko: '변경 저장', zh: '保存更改', es: 'Guardar cambios', fr: 'Sauvegarder', de: 'Änderungen speichern', ar: 'حفظ التغييرات', hi: 'बदलाव सहेजें', pt: 'Salvar alterações', ru: 'Сохранить', th: 'บันทึกการเปลี่ยนแปลง', vi: 'Lưu thay đổi', ms: 'Simpan Perubahan' },
-  'Saving...': { en: 'Saving...', id: 'Menyimpan...', ja: '保存中...', ko: '저장 중...', zh: '保存中...', es: 'Guardando...', fr: 'Enregistrement...', de: 'Speichern...', ar: 'جارٍ الحفظ...', hi: 'सहेजा जा रहा है...', pt: 'Salvando...', ru: 'Сохранение...', th: 'กำลังบันทึก...', vi: 'Đang lưu...', ms: 'Menyimpan...' },
-  // Appearance
-  'Choose your preferred theme.': { en: 'Choose your preferred theme.', id: 'Pilih tema favorit Anda.', ja: 'お好みのテーマを選択してください。', ko: '선호하는 테마를 선택하세요.', zh: '选择您喜欢的主题。', es: 'Elige tu tema preferido.', fr: 'Choisissez votre thème préféré.', de: 'Wähle dein bevorzugtes Theme.', ar: 'اختر المظهر المفضل لديك.', hi: 'अपना पसंदीदा थीम चुनें।', pt: 'Escolha seu tema preferido.', ru: 'Выберите предпочтительную тему.', th: 'เลือกธีมที่คุณชอบ', vi: 'Chọn chủ đề yêu thích của bạn.', ms: 'Pilih tema kegemaran anda.' },
-  // Security
-  'Password & Privacy': { en: 'Password & Privacy', id: 'Kata Sandi & Privasi', ja: 'パスワードとプライバシー', ko: '비밀번호 및 개인정보', zh: '密码和隐私', es: 'Contraseña y privacidad', fr: 'Mot de passe et confidentialité', de: 'Passwort & Datenschutz', ar: 'كلمة المرور والخصوصية', hi: 'पासवर्ड और गोपनीयता', pt: 'Senha e privacidade', ru: 'Пароль и конфиденциальность', th: 'รหัสผ่านและความเป็นส่วนตัว', vi: 'Mật khẩu và quyền riêng tư', ms: 'Kata Laluan & Privasi' },
-  'Manage your account privacy and security settings.': { en: 'Manage your account privacy and security settings.', id: 'Kelola pengaturan privasi dan keamanan akun Anda.', ja: 'アカウントのプライバシーとセキュリティ設定を管理します。', ko: '계정 개인정보 및 보안 설정을 관리하세요.', zh: '管理您的帐户隐私和安全设置。', es: 'Gestiona la privacidad y seguridad de tu cuenta.', fr: 'Gérez la confidentialité et la sécurité de votre compte.', de: 'Verwalte die Datenschutz- und Sicherheitseinstellungen deines Kontos.', ar: 'إدارة إعدادات الخصوصية والأمان لحسابك.', hi: 'अपने खाते की गोपनीयता और सुरक्षा सेटिंग्स प्रबंधित करें।', pt: 'Gerencie as configurações de privacidade e segurança da sua conta.', ru: 'Управляйте настройками конфиденциальности и безопасности.', th: 'จัดการการตั้งค่าความเป็นส่วนตัวและความปลอดภัยของบัญชี', vi: 'Quản lý cài đặt quyền riêng tư và bảo mật tài khoản.', ms: 'Urus tetapan privasi dan keselamatan akaun anda.' },
-  'Private Account': { en: 'Private Account', id: 'Akun Privat', ja: 'プライベートアカウント', ko: '비공개 계정', zh: '私密账户', es: 'Cuenta privada', fr: 'Compte privé', de: 'Privates Konto', ar: 'حساب خاص', hi: 'निजी खाता', pt: 'Conta privada', ru: 'Приватный аккаунт', th: 'บัญชีส่วนตัว', vi: 'Tài khoản riêng tư', ms: 'Akaun Peribadi' },
-  'Only approved followers can see your posts.': { en: 'Only approved followers can see your posts.', id: 'Hanya pengikut yang disetujui yang dapat melihat postingan Anda.', ja: '承認されたフォロワーのみが投稿を見ることができます。', ko: '승인된 팔로워만 게시물을 볼 수 있습니다.', zh: '只有批准的关注者才能看到您的帖子。', es: 'Solo los seguidores aprobados pueden ver tus publicaciones.', fr: 'Seuls les abonnés approuvés peuvent voir vos publications.', de: 'Nur genehmigte Follower können deine Beiträge sehen.', ar: 'فقط المتابعون المعتمدون يمكنهم رؤية منشوراتك.', hi: 'केवल स्वीकृत अनुयायी आपकी पोस्ट देख सकते हैं।', pt: 'Apenas seguidores aprovados podem ver suas postagens.', ru: 'Только одобренные подписчики могут видеть ваши публикации.', th: 'เฉพาะผู้ติดตามที่ได้รับการอนุมัติเท่านั้นที่สามารถเห็นโพสต์ของคุณ', vi: 'Chỉ những người theo dõi được chấp thuận mới có thể xem bài đăng của bạn.', ms: 'Hanya pengikut yang diluluskan boleh melihat siaran anda.' },
-  'Change Password': { en: 'Change Password', id: 'Ubah Kata Sandi', ja: 'パスワードを変更', ko: '비밀번호 변경', zh: '更改密码', es: 'Cambiar contraseña', fr: 'Changer le mot de passe', de: 'Passwort ändern', ar: 'تغيير كلمة المرور', hi: 'पासवर्ड बदलें', pt: 'Alterar senha', ru: 'Изменить пароль', th: 'เปลี่ยนรหัสผ่าน', vi: 'Đổi mật khẩu', ms: 'Tukar Kata Laluan' },
-  'Reset Password via Email': { en: 'Reset Password via Email', id: 'Reset Kata Sandi via Email', ja: 'メールでパスワードをリセット', ko: '이메일로 비밀번호 재설정', zh: '通过邮件重置密码', es: 'Restablecer contraseña por email', fr: 'Réinitialiser par email', de: 'Passwort per E-Mail zurücksetzen', ar: 'إعادة تعيين كلمة المرور عبر البريد', hi: 'ईमेल से पासवर्ड रीसेट करें', pt: 'Redefinir senha por email', ru: 'Сбросить пароль по email', th: 'รีเซ็ตรหัสผ่านผ่านอีเมล', vi: 'Đặt lại mật khẩu qua email', ms: 'Set Semula Kata Laluan melalui E-mel' },
-  'Two-Factor Authentication (2FA)': { en: 'Two-Factor Authentication (2FA)', id: 'Autentikasi Dua Faktor (2FA)', ja: '二要素認証 (2FA)', ko: '이중 인증 (2FA)', zh: '两步验证 (2FA)', es: 'Autenticación de dos factores (2FA)', fr: 'Authentification à deux facteurs (2FA)', de: 'Zwei-Faktor-Authentifizierung (2FA)', ar: 'المصادقة الثنائية (2FA)', hi: 'दो-कारक प्रमाणीकरण (2FA)', pt: 'Autenticação de dois fatores (2FA)', ru: 'Двухфакторная аутентификация (2FA)', th: 'การยืนยันตัวตนสองขั้นตอน (2FA)', vi: 'Xác thực hai yếu tố (2FA)', ms: 'Pengesahan Dua Faktor (2FA)' },
-  'Add an extra layer of security to your account.': { en: 'Add an extra layer of security to your account.', id: 'Tambahkan lapisan keamanan ekstra ke akun Anda.', ja: 'アカウントにセキュリティレイヤーを追加します。', ko: '계정에 추가 보안 계층을 추가하세요.', zh: '为您的帐户添加额外的安全层。', es: 'Añade una capa extra de seguridad a tu cuenta.', fr: 'Ajoutez une couche de sécurité supplémentaire à votre compte.', de: 'Füge eine zusätzliche Sicherheitsebene hinzu.', ar: 'أضف طبقة أمان إضافية لحسابك.', hi: 'अपने खाते में सुरक्षा की एक अतिरिक्त परत जोड़ें।', pt: 'Adicione uma camada extra de segurança à sua conta.', ru: 'Добавьте дополнительный уровень безопасности.', th: 'เพิ่มชั้นความปลอดภัยเพิ่มเติมให้กับบัญชีของคุณ', vi: 'Thêm một lớp bảo mật bổ sung cho tài khoản của bạn.', ms: 'Tambahkan lapisan keselamatan tambahan pada akaun anda.' },
-  '2FA is enabled.': { en: '2FA is enabled.', id: '2FA aktif.', ja: '2FAが有効です。', ko: '2FA가 활성화되어 있습니다.', zh: '2FA 已启用。', es: '2FA está habilitado.', fr: '2FA est activé.', de: '2FA ist aktiviert.', ar: 'المصادقة الثنائية مفعلة.', hi: '2FA सक्षम है।', pt: '2FA está ativado.', ru: '2FA включена.', th: '2FA เปิดใช้งานอยู่', vi: '2FA đã được bật.', ms: '2FA telah diaktifkan.' },
-  'Enable 2FA': { en: 'Enable 2FA', id: 'Aktifkan 2FA', ja: '2FAを有効にする', ko: '2FA 활성화', zh: '启用 2FA', es: 'Habilitar 2FA', fr: 'Activer 2FA', de: '2FA aktivieren', ar: 'تفعيل المصادقة الثنائية', hi: '2FA सक्षम करें', pt: 'Ativar 2FA', ru: 'Включить 2FA', th: 'เปิดใช้งาน 2FA', vi: 'Bật 2FA', ms: 'Aktifkan 2FA' },
-  'Disable': { en: 'Disable', id: 'Nonaktifkan', ja: '無効にする', ko: '비활성화', zh: '禁用', es: 'Deshabilitar', fr: 'Désactiver', de: 'Deaktivieren', ar: 'تعطيل', hi: 'अक्षम करें', pt: 'Desativar', ru: 'Отключить', th: 'ปิดใช้งาน', vi: 'Tắt', ms: 'Nyahaktif' },
-  // Notifications
-  'Choose what notifications you want to receive.': { en: 'Choose what notifications you want to receive.', id: 'Pilih notifikasi yang ingin Anda terima.', ja: '受け取りたい通知を選択してください。', ko: '받고 싶은 알림을 선택하세요.', zh: '选择您想要接收的通知。', es: 'Elige qué notificaciones quieres recibir.', fr: 'Choisissez les notifications que vous souhaitez recevoir.', de: 'Wähle die Benachrichtigungen, die du erhalten möchtest.', ar: 'اختر الإشعارات التي تريد تلقيها.', hi: 'चुनें कि आप कौन सी सूचनाएं प्राप्त करना चाहते हैं।', pt: 'Escolha quais notificações deseja receber.', ru: 'Выберите, какие уведомления хотите получать.', th: 'เลือกการแจ้งเตือนที่คุณต้องการรับ', vi: 'Chọn thông báo bạn muốn nhận.', ms: 'Pilih pemberitahuan yang anda mahu terima.' },
-  'Enable Notifications': { en: 'Enable Notifications', id: 'Aktifkan Notifikasi', ja: '通知を有効にする', ko: '알림 활성화', zh: '启用通知', es: 'Habilitar notificaciones', fr: 'Activer les notifications', de: 'Benachrichtigungen aktivieren', ar: 'تفعيل الإشعارات', hi: 'सूचनाएं सक्षम करें', pt: 'Ativar notificações', ru: 'Включить уведомления', th: 'เปิดใช้งานการแจ้งเตือน', vi: 'Bật thông báo', ms: 'Aktifkan Pemberitahuan' },
-  'Likes': { en: 'Likes', id: 'Suka', ja: 'いいね', ko: '좋아요', zh: '点赞', es: 'Me gusta', fr: "J'aime", de: 'Likes', ar: 'إعجابات', hi: 'लाइक', pt: 'Curtidas', ru: 'Лайки', th: 'ถูกใจ', vi: 'Thích', ms: 'Suka' },
-  'Comments': { en: 'Comments', id: 'Komentar', ja: 'コメント', ko: '댓글', zh: '评论', es: 'Comentarios', fr: 'Commentaires', de: 'Kommentare', ar: 'تعليقات', hi: 'टिप्पणियाँ', pt: 'Comentários', ru: 'Комментарии', th: 'ความคิดเห็น', vi: 'Bình luận', ms: 'Komen' },
-  'New Followers': { en: 'New Followers', id: 'Pengikut Baru', ja: '新しいフォロワー', ko: '새 팔로워', zh: '新关注者', es: 'Nuevos seguidores', fr: 'Nouveaux abonnés', de: 'Neue Follower', ar: 'متابعون جدد', hi: 'नए अनुयायी', pt: 'Novos seguidores', ru: 'Новые подписчики', th: 'ผู้ติดตามใหม่', vi: 'Người theo dõi mới', ms: 'Pengikut Baru' },
-  // Account
-  'Account Management': { en: 'Account Management', id: 'Manajemen Akun', ja: 'アカウント管理', ko: '계정 관리', zh: '帐户管理', es: 'Gestión de cuenta', fr: 'Gestion du compte', de: 'Kontoverwaltung', ar: 'إدارة الحساب', hi: 'खाता प्रबंधन', pt: 'Gerenciamento de conta', ru: 'Управление аккаунтом', th: 'การจัดการบัญชี', vi: 'Quản lý tài khoản', ms: 'Pengurusan Akaun' },
-  'Manage how you sign in.': { en: 'Manage how you sign in.', id: 'Kelola cara Anda masuk.', ja: 'サインイン方法を管理します。', ko: '로그인 방법을 관리하세요.', zh: '管理您的登录方式。', es: 'Administra cómo inicias sesión.', fr: 'Gérez vos méthodes de connexion.', de: 'Verwalte deine Anmeldemethoden.', ar: 'إدارة طريقة تسجيل الدخول.', hi: 'अपने साइन इन तरीके प्रबंधित करें।', pt: 'Gerencie como você faz login.', ru: 'Управляйте способами входа.', th: 'จัดการวิธีการเข้าสู่ระบบของคุณ', vi: 'Quản lý cách bạn đăng nhập.', ms: 'Urus cara anda log masuk.' },
-  'Linked': { en: 'Linked', id: 'Terhubung', ja: 'リンク済み', ko: '연결됨', zh: '已链接', es: 'Vinculado', fr: 'Lié', de: 'Verknüpft', ar: 'مرتبط', hi: 'जुड़ा हुआ', pt: 'Vinculado', ru: 'Привязано', th: 'เชื่อมต่อแล้ว', vi: 'Đã liên kết', ms: 'Disambungkan' },
-  'Link': { en: 'Link', id: 'Hubungkan', ja: 'リンク', ko: '연결', zh: '链接', es: 'Vincular', fr: 'Lier', de: 'Verknüpfen', ar: 'ربط', hi: 'जोड़ें', pt: 'Vincular', ru: 'Привязать', th: 'เชื่อมต่อ', vi: 'Liên kết', ms: 'Sambung' },
-  'Unlink': { en: 'Unlink', id: 'Putuskan', ja: 'リンク解除', ko: '연결 해제', zh: '取消链接', es: 'Desvincular', fr: 'Délier', de: 'Trennen', ar: 'إلغاء الربط', hi: 'हटाएं', pt: 'Desvincular', ru: 'Отвязать', th: 'ยกเลิกการเชื่อมต่อ', vi: 'Hủy liên kết', ms: 'Nyahsambung' },
-  // Danger
-  'Be careful, these actions are irreversible.': { en: 'Be careful, these actions are irreversible.', id: 'Hati-hati, tindakan ini tidak dapat dibatalkan.', ja: 'これらのアクションは元に戻せません。', ko: '주의하세요, 이 작업은 되돌릴 수 없습니다.', zh: '注意，这些操作不可逆转。', es: 'Ten cuidado, estas acciones son irreversibles.', fr: 'Attention, ces actions sont irréversibles.', de: 'Vorsicht, diese Aktionen sind unumkehrbar.', ar: 'كن حذرًا، هذه الإجراءات لا يمكن التراجع عنها.', hi: 'सावधान रहें, ये क्रियाएं अपरिवर्तनीय हैं।', pt: 'Cuidado, essas ações são irreversíveis.', ru: 'Будьте осторожны, эти действия необратимы.', th: 'โปรดระวัง การกระทำเหล่านี้ไม่สามารถย้อนกลับได้', vi: 'Cẩn thận, các hành động này không thể hoàn tác.', ms: 'Berhati-hati, tindakan ini tidak boleh diundurkan.' },
-  'Delete My Account': { en: 'Delete My Account', id: 'Hapus Akun Saya', ja: 'アカウントを削除', ko: '계정 삭제', zh: '删除我的帐户', es: 'Eliminar mi cuenta', fr: 'Supprimer mon compte', de: 'Mein Konto löschen', ar: 'حذف حسابي', hi: 'मेरा खाता हटाएं', pt: 'Excluir minha conta', ru: 'Удалить аккаунт', th: 'ลบบัญชีของฉัน', vi: 'Xóa tài khoản', ms: 'Padam Akaun Saya' },
-  'Select Language': { en: 'Select Language', id: 'Pilih Bahasa', ja: '言語を選択', ko: '언어 선택', zh: '选择语言', es: 'Seleccionar idioma', fr: 'Sélectionner la langue', de: 'Sprache auswählen', ar: 'اختر اللغة', hi: 'भाषा चुनें', pt: 'Selecionar idioma', ru: 'Выбрать язык', th: 'เลือกภาษา', vi: 'Chọn ngôn ngữ', ms: 'Pilih Bahasa' },
-  'Change the display language of the app.': { en: 'Change the display language of the app.', id: 'Ubah bahasa tampilan aplikasi.', ja: 'アプリの表示言語を変更します。', ko: '앱의 표시 언어를 변경합니다.', zh: '更改应用的显示语言。', es: 'Cambia el idioma de visualización de la aplicación.', fr: "Modifier la langue d'affichage de l'application.", de: 'Ändere die Anzeigesprache der App.', ar: 'تغيير لغة عرض التطبيق.', hi: 'ऐप की प्रदर्शन भाषा बदलें।', pt: 'Altere o idioma de exibição do aplicativo.', ru: 'Измените язык отображения приложения.', th: 'เปลี่ยนภาษาที่แสดงของแอป', vi: 'Thay đổi ngôn ngữ hiển thị của ứng dụng.', ms: 'Tukar bahasa paparan aplikasi.' },
-};
+// Translation cache to avoid re-translating
+const translationCache = new Map<string, string>();
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (text: string) => string;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LanguageContext = createContext<LanguageContextType>({
+  language: 'id',
+  setLanguage: () => {},
+  t: (text: string) => text,
+});
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
+export const useLanguage = () => useContext(LanguageContext);
+
+// Google Translate via free endpoint
+async function translateText(text: string, targetLang: string): Promise<string> {
+  const cacheKey = `${targetLang}:${text}`;
+  if (translationCache.has(cacheKey)) return translationCache.get(cacheKey)!;
+  
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const translated = data[0]?.map((s: any) => s[0]).join('') || text;
+    translationCache.set(cacheKey, translated);
+    return translated;
+  } catch {
+    return text;
+  }
+}
+
+export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    return (localStorage.getItem('app-language') as Language) || 'en';
+    const saved = localStorage.getItem('app-language');
+    return (saved as Language) || 'id';
   });
 
   const setLanguage = useCallback((lang: Language) => {
-    localStorage.setItem('app-language', lang);
     setLanguageState(lang);
+    localStorage.setItem('app-language', lang);
+    
+    // Apply Google Translate to the page using the meta tag approach
+    // This translates the entire DOM
+    if (lang === 'id' || lang === 'en') {
+      // Remove translate cookie/attribute for default languages
+      document.documentElement.removeAttribute('lang');
+      document.documentElement.lang = lang;
+      // Remove Google Translate frame if exists
+      const frame = document.querySelector('.skiptranslate');
+      if (frame) (frame as HTMLElement).style.display = 'none';
+      document.body.style.top = '0px';
+    } else {
+      document.documentElement.lang = lang;
+    }
   }, []);
 
-  const t = useCallback((key: string): string => {
-    const entry = TRANSLATIONS[key];
-    if (!entry) return key;
-    return entry[language] || entry['en'] || key;
+  // Use Google Translate widget approach for full page translation
+  useEffect(() => {
+    // Add Google Translate script
+    if (!document.getElementById('google-translate-script')) {
+      const script = document.createElement('script');
+      script.id = 'google-translate-script';
+      script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      script.async = true;
+      document.head.appendChild(script);
+
+      (window as any).googleTranslateElementInit = () => {
+        new (window as any).google.translate.TranslateElement(
+          { 
+            pageLanguage: 'id',
+            autoDisplay: false,
+          },
+          'google_translate_element'
+        );
+      };
+    }
+  }, []);
+
+  // When language changes, trigger Google Translate
+  useEffect(() => {
+    const triggerTranslate = () => {
+      const select = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+      if (select) {
+        select.value = language;
+        select.dispatchEvent(new Event('change'));
+      }
+    };
+
+    // Small delay to wait for GT to load
+    const timer = setTimeout(triggerTranslate, 500);
+    return () => clearTimeout(timer);
   }, [language]);
+
+  // Simple pass-through t() function - Google Translate handles the DOM
+  const t = useCallback((text: string) => text, []);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
+      {/* Hidden element for Google Translate */}
+      <div id="google_translate_element" style={{ display: 'none' }} />
       {children}
     </LanguageContext.Provider>
   );
-}
-
-export function useLanguage() {
-  const context = useContext(LanguageContext);
-  if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
-  return context;
-}
+};

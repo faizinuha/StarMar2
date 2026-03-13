@@ -1,8 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
 export function useViews(postId: string) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const viewTrackedRef = useRef<boolean>(false);
 
@@ -26,8 +28,13 @@ export function useViews(postId: string) {
 
   const incrementViewMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await (supabase.rpc as any)('increment_views_count', {
-        post_id: postId,
+      // Use increment_view RPC which prevents duplicate views per user/session
+      const sessionId = `anon-${Math.random().toString(36).slice(2)}`;
+      
+      const { error } = await supabase.rpc('increment_view', {
+        p_post_id: postId,
+        p_viewer_id: user?.id || undefined,
+        p_session_id: !user ? sessionId : undefined,
       });
 
       if (error) {

@@ -494,9 +494,19 @@ const ViewerView = ({
             <ChatMessageItem key={msg.id} msg={msg} />
           ))}
         </div>
-        <div className="p-3 border-t border-border flex gap-2">
-          <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChat()} placeholder="Say something..." className="text-sm" />
-          <Button size="icon" onClick={sendChat} className="shrink-0"><Send className="w-4 h-4" /></Button>
+        <div className="p-3 border-t border-border space-y-2">
+          {showEmojiPicker && (
+            <div className="flex flex-wrap gap-1 p-2 bg-muted/50 rounded-lg">
+              {EMOJI_LIST.map(e => (
+                <button key={e} className="text-lg hover:scale-125 transition-transform p-0.5" onClick={() => setChatInput(prev => prev + e)}>{e}</button>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button size="icon" variant="ghost" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="shrink-0 text-lg">😀</Button>
+            <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChat()} placeholder="Say something..." className="text-sm" />
+            <Button size="icon" onClick={sendChat} className="shrink-0"><Send className="w-4 h-4" /></Button>
+          </div>
         </div>
       </div>
     </div>
