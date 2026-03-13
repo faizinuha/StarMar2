@@ -30,7 +30,10 @@ import {
   Lock,
   MapPin,
   MessageCircle,
+  MoreVertical,
   Radio,
+  Share2,
+  Trash2,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
