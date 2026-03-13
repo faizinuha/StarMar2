@@ -110,13 +110,38 @@ export default function Chat() {
     });
   };
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
     if (!groupName.trim() || selectedMembers.length === 0) return toast.error('Isi nama grup dan pilih anggota');
     createGroup({ name: groupName, memberIds: selectedMembers }, {
-      onSuccess: (id) => {
+      onSuccess: async (id) => {
+        // Send rules as first message if provided
+        const rulesText = groupRules.trim() || 'Selamat datang! Jaga sopan santun dan saling menghormati.';
+        const welcomeMsg = `🎉 Selamat datang di grup "${groupName}"!\n\n📋 Rules:\n${rulesText}`;
+        
+        // Send welcome/rules message
+        try {
+          await supabase.from('messages').insert({
+            conversation_id: id,
+            sender_id: user!.id,
+            content: welcomeMsg,
+          });
+
+          // Send notifications to all members
+          const notifications = selectedMembers.map(memberId => ({
+            user_id: memberId,
+            from_user_id: user!.id,
+            type: 'group_invite',
+            post_id: null,
+          }));
+          await supabase.from('notifications').insert(notifications);
+        } catch (e) {
+          console.error('Failed to send welcome message:', e);
+        }
+
         toast.success('Grup berhasil dibuat');
         setShowGroupDialog(false);
         setGroupName('');
+        setGroupRules('');
         setSelectedMembers([]);
         navigate(`/chat/${id}`);
       },
