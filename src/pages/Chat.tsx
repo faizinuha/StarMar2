@@ -333,34 +333,49 @@ export default function Chat() {
       </AlertDialog>
 
       <Dialog open={showGroupDialog} onOpenChange={setShowGroupDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Buat Grup Chat</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Buat Grup Chat</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <Input placeholder="Nama grup" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
-            {followedUsers.length === 0 ? (
-              <div className="text-center p-8 text-sm text-muted-foreground">
-                <p>Anda belum follow siapapun</p>
-                <p className="text-xs mt-2">Follow user terlebih dahulu untuk membuat grup</p>
-              </div>
-            ) : (
-              <ScrollArea className="h-64 border rounded p-2">
-                {followedUsers.map((u: any) => (
-                  <div
-                    key={u.user_id}
-                    onClick={() => setSelectedMembers(p => p.includes(u.user_id) ? p.filter(i => i !== u.user_id) : [...p, u.user_id])}
-                    className="flex gap-2 items-center p-2 hover:bg-accent rounded cursor-pointer"
-                  >
-                    <input type="checkbox" checked={selectedMembers.includes(u.user_id)} readOnly className="pointer-events-none" />
-                    <Avatar className="h-8 w-8"><AvatarImage src={u.avatar_url} /><AvatarFallback>{u.username?.[0]}</AvatarFallback></Avatar>
-                    <p className="text-sm">{u.display_name || u.username}</p>
-                  </div>
-                ))}
-              </ScrollArea>
-            )}
+            <div>
+              <label className="text-sm font-medium mb-1 block">Nama Grup</label>
+              <Input placeholder="Contoh: Teman Sekelas" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Rules Grup (opsional)</label>
+              <Input placeholder="Contoh: Jaga sopan santun" value={groupRules} onChange={(e) => setGroupRules(e.target.value)} />
+              <p className="text-xs text-muted-foreground mt-1">Rules akan dikirim otomatis sebagai pesan pertama di grup</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Pilih Anggota ({selectedMembers.length} dipilih)</label>
+              {followedUsers.length === 0 ? (
+                <div className="text-center p-8 text-sm text-muted-foreground">
+                  <AlertCircle className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
+                  <p>Anda belum follow siapapun</p>
+                  <p className="text-xs mt-2">Follow user terlebih dahulu untuk membuat grup</p>
+                </div>
+              ) : (
+                <ScrollArea className="h-48 border rounded-lg p-2">
+                  {followedUsers.map((u: any) => (
+                    <div
+                      key={u.user_id}
+                      onClick={() => setSelectedMembers(p => p.includes(u.user_id) ? p.filter(i => i !== u.user_id) : [...p, u.user_id])}
+                      className={`flex gap-3 items-center p-2.5 rounded-lg cursor-pointer transition-colors ${selectedMembers.includes(u.user_id) ? 'bg-primary/10 border border-primary/20' : 'hover:bg-accent'}`}
+                    >
+                      <Avatar className="h-9 w-9"><AvatarImage src={u.avatar_url} /><AvatarFallback>{u.username?.[0]}</AvatarFallback></Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{u.display_name || u.username}</p>
+                        <p className="text-xs text-muted-foreground">@{u.username}</p>
+                      </div>
+                      {selectedMembers.includes(u.user_id) && <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center"><Check className="h-3 w-3 text-primary-foreground" /></div>}
+                    </div>
+                  ))}
+                </ScrollArea>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowGroupDialog(false)}>Batal</Button>
-            <Button onClick={handleCreateGroup} disabled={followedUsers.length === 0}>Buat Grup</Button>
+            <Button onClick={handleCreateGroup} disabled={followedUsers.length === 0 || !groupName.trim() || selectedMembers.length === 0}>Buat Grup</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
