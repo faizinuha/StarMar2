@@ -38,7 +38,13 @@ import {
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient as useQC2 } from '@tanstack/react-query';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // Component to fetch real follower/following counts - only counts users with existing profiles
 const ProfileStats = ({ userId, postsCount, onClickFollowers, onClickFollowing }: { userId: string; postsCount: number; onClickFollowers: () => void; onClickFollowing: () => void }) => {
