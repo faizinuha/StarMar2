@@ -5,8 +5,8 @@ import UserActivityChart from "@/components/admin/UserActivityChart";
 import { MaintenanceBannersTab } from "@/pages/MaintenanceBannersTab";
 import { ReportsTab } from "@/components/admin/ReportsTab";
 import { BanUserDialog } from "@/components/admin/BanUserDialog";
-// Maintenance tasks hooks removed - using only MaintenanceBannersTab
 import { BanAppealsTab } from "@/components/admin/BanAppealsTab";
+import { VerificationRequestsTab } from "@/components/admin/VerificationRequestsTab";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -110,6 +110,41 @@ const AdminContent = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+
+  // Function to fetch profiles from Supabase
+  const fetchProfiles = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      // Process avatar URLs to create signed URLs
+      const processedProfiles = await Promise.all(
+        data.map(async (profile) => {
+          const avatar_url = await processAvatarUrl(profile.avatar_url);
+          return { ...profile, avatar_url } as Profile;
+        })
+      );
+
+      setProfiles(processedProfiles);
+    } catch (error) {
+      console.error('Error fetching profiles:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch profiles.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   const processAvatarUrl = async (url: string | null) => {
     if (!url || url.startsWith('http')) return url;
     try {
@@ -125,7 +160,6 @@ const AdminContent = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      // Fetch all data in parallel
       const [usersRes, postsCountRes, likesCountRes] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("posts").select("id", { count: "exact", head: true }),
@@ -136,28 +170,19 @@ const AdminContent = () => {
       if (postsCountRes.error) throw postsCountRes.error;
       if (likesCountRes.error) throw likesCountRes.error;
 
-      // Process users and their avatars
       const processedUsers = await Promise.all(
         usersRes.data.map(async (user) => {
           const avatar_url = await processAvatarUrl(user.avatar_url);
-          
-          // Fetch actual posts count for this user
           const { count: postsCount } = await supabase
             .from('posts')
             .select('id', { count: 'exact', head: true })
             .eq('user_id', user.user_id);
-          
-          return { 
-            ...user, 
-            avatar_url,
-            posts_count: postsCount || 0 
-          };
+          return { ...user, avatar_url, posts_count: postsCount || 0 };
         })
       );
 
       setUsers(processedUsers as Profile[]);
 
-      // Calculate stats
       const today = new Date().setHours(0, 0, 0, 0);
       const newUsersToday = usersRes.data.filter(u => new Date(u.created_at).setHours(0, 0, 0, 0) === today).length;
 
@@ -167,7 +192,6 @@ const AdminContent = () => {
         totalLikes: likesCountRes.count ?? 0,
         newUsersToday,
       });
-
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       toast({ title: "Error", description: "Failed to fetch dashboard data.", variant: "destructive" });
@@ -180,11 +204,10 @@ const AdminContent = () => {
     fetchDashboardData();
   }, []);
 
-  // Filter and paginate users
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users;
     const query = searchQuery.toLowerCase();
-    return users.filter(user => 
+    return users.filter(user =>
       user.username?.toLowerCase().includes(query) ||
       user.display_name?.toLowerCase().includes(query) ||
       user.user_id.toLowerCase().includes(query)
@@ -197,7 +220,6 @@ const AdminContent = () => {
     return filteredUsers.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredUsers, currentPage]);
 
-  // Reset to page 1 when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
@@ -228,7 +250,6 @@ const AdminContent = () => {
     });
 
     if (error) {
-      console.error("Error deleting user:", error);
       toast({ title: "Error", description: "Failed to delete user.", variant: "destructive" });
     } else {
       toast({ title: "Success", description: `User @${userToDelete.username} has been deleted.` });
@@ -249,10 +270,11 @@ const AdminContent = () => {
         <StatCard title="New Users Today" value={stats.newUsersToday.toLocaleString()} icon={<UserPlus className="h-4 w-4 text-muted-foreground" />} description="Users that signed up today" />
       </div>
       <Tabs defaultValue="users" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="verification">Verification</TabsTrigger>
           <TabsTrigger value="appeals">Ban Appeals</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
         </TabsList>
@@ -266,12 +288,7 @@ const AdminContent = () => {
                 </div>
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search users..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8"
-                  />
+                  <Input placeholder="Search users..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8" />
                 </div>
               </div>
             </CardHeader>
@@ -314,16 +331,12 @@ const AdminContent = () => {
                           </Link>
                         </TableCell>
                         <TableCell className="font-medium">
-                          <Link to={`/profile/${user.user_id}`} className="hover:underline">
-                            {user.username || "N/A"}
-                          </Link>
+                          <Link to={`/profile/${user.user_id}`} className="hover:underline">{user.username || "N/A"}</Link>
                         </TableCell>
                         <TableCell>{user.display_name || "N/A"}</TableCell>
                         <TableCell>{user.posts_count}</TableCell>
                         <TableCell>
-                          <Badge variant={user.role === "admin" ? "destructive" : "outline"}>
-                            {user.role}
-                          </Badge>
+                          <Badge variant={user.role === "admin" ? "destructive" : "outline"}>{user.role}</Badge>
                         </TableCell>
                         <TableCell>
                           {user.is_banned ? (
@@ -338,24 +351,15 @@ const AdminContent = () => {
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                              </Button>
+                              <Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               <DropdownMenuItem onClick={() => handleEditClick(user)}>Edit Roles</DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link to={`/profile/${user.user_id}`}>View Profile</Link>
-                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild><Link to={`/profile/${user.user_id}`}>View Profile</Link></DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => setUserToBan(user)}>
-                                {user.is_banned ? (
-                                  <><ShieldOff className="h-4 w-4 mr-2" /> Unban User</>
-                                ) : (
-                                  <><Ban className="h-4 w-4 mr-2" /> Ban User</>
-                                )}
+                                {user.is_banned ? (<><ShieldOff className="h-4 w-4 mr-2" /> Unban User</>) : (<><Ban className="h-4 w-4 mr-2" /> Ban User</>)}
                               </DropdownMenuItem>
                               <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(user)}>Delete</DropdownMenuItem>
                             </DropdownMenuContent>
@@ -366,32 +370,15 @@ const AdminContent = () => {
                 </TableBody>
               </Table>
 
-              {/* Pagination */}
               {!loading && totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <p className="text-sm text-muted-foreground">
                     Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)} of {filteredUsers.length} users
                   </p>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="text-sm">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></Button>
+                    <span className="text-sm">Page {currentPage} of {totalPages}</span>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></Button>
                   </div>
                 </div>
               )}
@@ -405,6 +392,10 @@ const AdminContent = () => {
         
         <TabsContent value="reports" className="space-y-4">
           <ReportsTab />
+        </TabsContent>
+
+        <TabsContent value="verification" className="space-y-4">
+          <VerificationRequestsTab />
         </TabsContent>
 
         <TabsContent value="appeals" className="space-y-4">

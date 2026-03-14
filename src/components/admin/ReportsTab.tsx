@@ -23,6 +23,9 @@ import { Loader2, AlertTriangle, ExternalLink, Trash2, Image as ImageIcon } from
 import { DeletePostDialog } from './DeletePostDialog';
 import { MemePreviewModal } from './MemePreviewModal';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export const ReportsTab = () => {
   const { reports, isLoading, updateReportStatus } = useReports();
@@ -30,6 +33,7 @@ export const ReportsTab = () => {
   const [deleteDialog, setDeleteDialog] = useState<{ postId: string; reportId: string; reportedUserId: string } | null>(null);
   const [memePreview, setMemePreview] = useState<string | null>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const filteredReports = reports.filter((report) =>
     filterStatus === 'all' ? true : report.status === filterStatus
@@ -37,6 +41,17 @@ export const ReportsTab = () => {
 
   const handleStatusChange = (reportId: string, newStatus: string) => {
     updateReportStatus.mutate({ id: reportId, status: newStatus });
+  };
+
+  const handleDeleteReport = async (reportId: string) => {
+    try {
+      const { error } = await supabase.from('reports').delete().eq('id', reportId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
+      toast.success('Report deleted');
+    } catch (err: any) {
+      toast.error('Failed to delete report: ' + err.message);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -168,7 +183,8 @@ export const ReportsTab = () => {
                           <SelectItem value="rejected">Rejected</SelectItem>
                         </SelectContent>
                       </Select>
-                      {report.post_id && report.status === 'pending' && (
+                      {/* Delete post button - for any post report */}
+                      {report.post_id && (
                         <Button
                           variant="destructive"
                           size="sm"
@@ -177,10 +193,21 @@ export const ReportsTab = () => {
                             reportId: report.id,
                             reportedUserId: report.reported_user_id!
                           })}
+                          title="Delete reported post"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
+                      {/* Delete report record itself */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteReport(report.id)}
+                        title="Delete this report"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

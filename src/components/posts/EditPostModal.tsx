@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Post, useUpdatePost } from '@/hooks/usePosts';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -47,6 +48,13 @@ export const EditPostModal = ({
     },
   });
 
+  // Reset form when post changes (fixes stale content bug)
+  useEffect(() => {
+    if (isOpen && post) {
+      form.reset({ content: post.content || '' });
+    }
+  }, [isOpen, post, form]);
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await updatePostMutation.mutateAsync({
@@ -64,6 +72,10 @@ export const EditPostModal = ({
     }
   };
 
+  // Determine media to show
+  const mediaItems = post.media && post.media.length > 0 ? post.media : 
+    post.image_url ? [{ media_url: post.image_url, media_type: post.media_type || 'image' }] : [];
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -73,13 +85,13 @@ export const EditPostModal = ({
             Make changes to your post here. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
-        {post.media_type?.startsWith('video/') ? (
+        {mediaItems.length > 0 && (
           <div className="rounded-lg overflow-hidden my-4">
-            <video src={post.image_url} controls className="w-full max-h-[300px] object-cover"></video>
-          </div>
-        ) : (
-          <div className="rounded-lg overflow-hidden my-4">
-            <img src={post.image_url} alt="Post" className="w-full max-h-[300px] object-cover" />
+            {mediaItems[0].media_type === 'video' || mediaItems[0].media_type?.startsWith('video/') ? (
+              <video src={mediaItems[0].media_url} controls className="w-full max-h-[300px] object-cover" />
+            ) : (
+              <img src={mediaItems[0].media_url} alt="Post" className="w-full max-h-[300px] object-cover" />
+            )}
           </div>
         )}
         <Form {...form}>
