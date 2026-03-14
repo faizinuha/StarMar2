@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Check, X, Eye } from 'lucide-react';
+import { Check, X, Eye, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface BanAppeal {
@@ -51,7 +51,6 @@ export const BanAppealsTab = () => {
 
       if (error) throw error;
 
-      // Fetch profiles for each appeal
       const appealsWithProfiles = await Promise.all(
         data.map(async (appeal) => {
           const { data: profile } = await supabase
@@ -87,7 +86,7 @@ export const BanAppealsTab = () => {
 
       if (appealError) throw appealError;
 
-      // If approved, unban the user using security definer function
+      // If approved, unban the user
       if (approved) {
         const { error: unbanError } = await supabase.rpc('admin_update_profile', {
           target_user_id: appeal.user_id,
@@ -101,7 +100,6 @@ export const BanAppealsTab = () => {
 
         if (unbanError) throw unbanError;
 
-        // Send notification to user
         await supabase.from('user_notifications').insert({
           user_id: appeal.user_id,
           title: 'Ban Appeal Approved',
@@ -109,7 +107,6 @@ export const BanAppealsTab = () => {
           type: 'info',
         });
       } else {
-        // Send rejection notification
         await supabase.from('user_notifications').insert({
           user_id: appeal.user_id,
           title: 'Ban Appeal Rejected',
@@ -136,6 +133,17 @@ export const BanAppealsTab = () => {
       toast.error(`Failed: ${error.message}`);
     },
   });
+
+  const deleteAppeal = async (appealId: string) => {
+    try {
+      const { error } = await supabase.from('ban_appeals').delete().eq('id', appealId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['ban-appeals'] });
+      toast.success('Appeal record deleted');
+    } catch (err: any) {
+      toast.error('Failed to delete: ' + err.message);
+    }
+  };
 
   const handleRespond = (approved: boolean) => {
     if (!selectedAppeal || !responseText.trim()) {
@@ -209,10 +217,21 @@ export const BanAppealsTab = () => {
                     <TableCell>{getStatusBadge(appeal.status)}</TableCell>
                     <TableCell>{format(new Date(appeal.created_at), 'PP')}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm" onClick={() => setSelectedAppeal(appeal)}>
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="outline" size="sm" onClick={() => setSelectedAppeal(appeal)}>
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => deleteAppeal(appeal.id)}
+                          title="Delete appeal record"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

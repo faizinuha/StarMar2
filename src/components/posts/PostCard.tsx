@@ -15,17 +15,20 @@ import { usePostComments as useComments } from '@/hooks/useComments';
 import { useLikes } from '@/hooks/useLikes';
 import { useViews } from '@/hooks/useViews';
 import { useDeletePost } from '@/hooks/useProfile';
+import { useFollowStatus, useToggleFollow } from '@/hooks/useFollow';
 import {
   Bookmark,
   Eye,
   Flag,
   Heart,
-  Laugh,
   MessageCircle,
   MoreHorizontal,
+  Pencil,
   Play,
   Repeat,
-  Share
+  Share,
+  UserMinus,
+  UserPlus,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -125,6 +128,10 @@ export const PostCard = ({ post }: PostCardProps) => {
     return count.toString();
   };
 
+  // Follow status for non-own posts
+  const { data: isFollowing = false } = useFollowStatus(post.user_id);
+  const toggleFollowMutation = useToggleFollow();
+
   const {
     bookmarks,
     isLoading: bookmarksLoading,
@@ -218,6 +225,11 @@ export const PostCard = ({ post }: PostCardProps) => {
     else { navigator.clipboard.writeText(url); toast({ title: 'Link copied to clipboard!' }); }
   };
 
+  const handleFollowToggle = () => {
+    if (!currentUser) return toast({ title: 'Login required', variant: 'destructive' });
+    toggleFollowMutation.mutate({ userId: post.user_id, isFollowing: isFollowing });
+  };
+
   const initialContent = post?.content ?? '';
   const isLongCaption = initialContent.length > 150;
   const displayContent = showFullCaption || !isLongCaption ? initialContent : `${initialContent.substring(0, 150)}...`;
@@ -228,8 +240,16 @@ export const PostCard = ({ post }: PostCardProps) => {
   return (
     <>
       <Card ref={cardRef} className="post-card bg-card border-b-2">
+        {/* Repost indicator header */}
+        {post.is_repost && (
+          <div className="flex items-center gap-2 px-4 pt-3 pb-1 text-xs text-muted-foreground">
+            <Repeat className="h-3.5 w-3.5" />
+            <span className="font-medium">{post.user.displayName} reposted</span>
+          </div>
+        )}
+
         {/* Header */}
-        <div className="flex items-center justify-between p-4">
+        <div className="flex items-center justify-between p-4 pt-3">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
               <AvatarImage src={post.user.avatar} alt={post.user.displayName} />
@@ -238,16 +258,24 @@ export const PostCard = ({ post }: PostCardProps) => {
             <div>
               <div className="flex items-center gap-2">
                 <p className="font-semibold text-sm">{post.user.displayName}</p>
-                <Laugh className="h-4 w-4 text-primary" />
                 {post.user.is_verified === 'verified' && (
-                  <span className="inline-flex items-center gap-0.2 text-xs text-blue-500 font-medium">
-                    <svg className="h-5 w-5 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  <span className="inline-flex items-center text-blue-500">
+                    <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                   </span>
                 )}
-                {post.is_repost && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Repeat className="h-3 w-3" /> reposted
-                  </span>
+                {/* Follow button inline - only for non-own posts */}
+                {!isOwnPost && currentUser && (
+                  <button
+                    onClick={handleFollowToggle}
+                    disabled={toggleFollowMutation.isPending}
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full transition-colors ${
+                      isFollowing
+                        ? 'bg-muted text-muted-foreground hover:bg-destructive/10 hover:text-destructive'
+                        : 'bg-primary/10 text-primary hover:bg-primary/20'
+                    }`}
+                  >
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </button>
                 )}
               </div>
               <div className="flex items-center space-x-1 text-xs text-muted-foreground">
@@ -262,12 +290,20 @@ export const PostCard = ({ post }: PostCardProps) => {
             <DropdownMenuContent align="end">
               {isOwnPost ? (
                 <>
-                  <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>Edit Post</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
+                    <Pencil className="h-4 w-4 mr-2" />Edit Post
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleDelete} className="text-destructive">Delete Post</DropdownMenuItem>
                 </>
               ) : (
                 <>
-                  <DropdownMenuItem>Follow @{post.user.username}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleFollowToggle} disabled={toggleFollowMutation.isPending}>
+                    {isFollowing ? (
+                      <><UserMinus className="h-4 w-4 mr-2" />Unfollow @{post.user.username}</>
+                    ) : (
+                      <><UserPlus className="h-4 w-4 mr-2" />Follow @{post.user.username}</>
+                    )}
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setShowReportDialog(true)} className="text-destructive"><Flag className="h-4 w-4 mr-2" />Report</DropdownMenuItem>
                 </>
@@ -286,8 +322,25 @@ export const PostCard = ({ post }: PostCardProps) => {
           </div>
         )}
 
+        {/* Original post quote for reposts (text-only reposts) */}
+        {post.is_repost && post.original_post && (
+          <div className="mx-4 mb-3 border border-border rounded-lg p-3 bg-muted/30">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={post.original_post.user.avatar} />
+                <AvatarFallback className="text-[10px]">{post.original_post.user.username?.[0]}</AvatarFallback>
+              </Avatar>
+              <span className="font-semibold text-xs">{post.original_post.user.displayName}</span>
+              <span className="text-xs text-muted-foreground">@{post.original_post.user.username}</span>
+            </div>
+            {post.original_post.content && (
+              <p className="text-sm text-foreground/80 line-clamp-3">{post.original_post.content}</p>
+            )}
+          </div>
+        )}
+
         {/* Media Area */}
-        {hasMedia ? (
+        {hasMedia && (
           <div className="aspect-square overflow-hidden bg-black flex items-center justify-center relative group">
             {displayMedia && displayMedia.length > 0 ? (
               <>
@@ -336,29 +389,8 @@ export const PostCard = ({ post }: PostCardProps) => {
             ) : (
               <img src={displayImageUrl} alt="Post content" className="w-full h-full object-contain" loading="lazy" />
             )}
-
-            {post.is_repost && post.original_post && (
-              <div className="absolute bottom-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs backdrop-blur-sm flex items-center gap-2">
-                <Avatar className="h-4 w-4">
-                  <AvatarImage src={post.original_post.user.avatar} />
-                  <AvatarFallback>{post.original_post.user.username[0]}</AvatarFallback>
-                </Avatar>
-                <span>@{post.original_post.user.username}</span>
-              </div>
-            )}
           </div>
-        ) : post.is_repost && post.original_post && post.original_post.content ? (
-          <div className="px-4 py-3 bg-secondary/20 border-l-4 border-primary/50 mx-4 mb-2">
-            <div className="flex items-center gap-2 mb-1 text-sm text-muted-foreground">
-              <Avatar className="h-4 w-4">
-                <AvatarImage src={post.original_post.user.avatar} />
-                <AvatarFallback>{post.original_post.user.username[0]}</AvatarFallback>
-              </Avatar>
-              <span className="font-semibold">@{post.original_post.user.username}</span>
-            </div>
-            <PostCaption content={post.original_post.content} />
-          </div>
-        ) : null}
+        )}
 
         {/* Actions */}
         <div className="p-4 space-y-3">
