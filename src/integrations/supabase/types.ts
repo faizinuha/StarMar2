@@ -789,6 +789,42 @@ export type Database = {
           },
         ]
       }
+      moderator_applications: {
+        Row: {
+          admin_response: string | null
+          created_at: string
+          id: string
+          reason: string
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          reason: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          reason?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           comment_id: string | null
@@ -1445,6 +1481,39 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      user_warnings: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          mute_until: string | null
+          reason: string
+          type: string
+          user_id: string
+          warned_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          mute_until?: string | null
+          reason: string
+          type?: string
+          user_id: string
+          warned_by: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          mute_until?: string | null
+          reason?: string
+          type?: string
+          user_id?: string
+          warned_by?: string
+        }
+        Relationships: []
       }
       verification_requests: {
         Row: {

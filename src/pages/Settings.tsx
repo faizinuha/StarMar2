@@ -22,7 +22,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Camera, Github, Laptop, Loader2, Mail, Moon,
   ShieldAlert, Sun, Palette, Bell, KeyRound, User as UserIcon,
-  Users, Globe, Link2, Unlink2, CheckCircle2,
+  Users, Globe, Link2, Unlink2, CheckCircle2, Shield,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -253,6 +253,7 @@ export const Settings = () => {
     { id: TABS.NOTIFICATIONS, label: t('Notifications'), icon: Bell },
     { id: TABS.ACCOUNT, label: t('Account'), icon: Users },
     { id: 'verification', label: t('Verification'), icon: CheckCircle2, path: '/settings/verification' },
+    { id: 'mod-apply', label: t('Apply as Moderator'), icon: Shield },
     { id: TABS.DANGER, label: t('Danger Zone'), icon: ShieldAlert, className: 'text-destructive hover:text-destructive hover:bg-destructive/10' },
   ];
 
@@ -479,6 +480,8 @@ export const Settings = () => {
             </CardContent>
           </Card>
         );
+      case 'mod-apply':
+        return <ModeratorApplySection userId={user.id} currentRole={profile?.role} />;
       case TABS.DANGER:
         return (
           <Card className="border-destructive">
@@ -573,5 +576,115 @@ export const Settings = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+};
+
+// Moderator Application Section
+const ModeratorApplySection = ({ userId, currentRole }: { userId: string; currentRole?: string | null }) => {
+  const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [existingApp, setExistingApp] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const check = async () => {
+      const { data } = await supabase
+        .from('moderator_applications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (data && data.length > 0) setExistingApp(data[0]);
+      setLoading(false);
+    };
+    check();
+  }, [userId]);
+
+  const handleSubmit = async () => {
+    if (!reason.trim()) {
+      toast({ title: 'Error', description: 'Berikan alasan kenapa kamu ingin jadi moderator.', variant: 'destructive' });
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase.from('moderator_applications').insert({
+      user_id: userId,
+      reason,
+    });
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Submitted!', description: 'Permohonan moderator kamu telah dikirim.' });
+      setExistingApp({ status: 'pending', reason });
+    }
+    setSubmitting(false);
+  };
+
+  if (loading) return <Card><CardContent className="py-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></CardContent></Card>;
+
+  if (currentRole === 'moderator' || currentRole === 'admin') {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Moderator Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Kamu sudah menjadi <span className="font-semibold text-foreground">{currentRole}</span>. Akses Dashboard melalui menu navigasi.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (existingApp) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Moderator Application</CardTitle>
+          <CardDescription>Status permohonan kamu.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Status:</span>
+            <span className={cn(
+              "px-2 py-1 rounded text-xs font-semibold",
+              existingApp.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+              existingApp.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+              'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+            )}>
+              {existingApp.status}
+            </span>
+          </div>
+          <p className="text-sm"><span className="font-medium">Alasan:</span> {existingApp.reason}</p>
+          {existingApp.admin_response && (
+            <p className="text-sm text-muted-foreground italic border-l-2 border-primary pl-2">
+              Response: {existingApp.admin_response}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Apply as Moderator</CardTitle>
+        <CardDescription>Moderator bisa mengelola report, verifikasi, dan memberikan warning kepada user.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label>Alasan kamu ingin menjadi Moderator</Label>
+          <Textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Jelaskan kenapa kamu cocok menjadi moderator..."
+            rows={4}
+          />
+        </div>
+        <Button onClick={handleSubmit} disabled={submitting}>
+          {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Submitting...</> : 'Submit Application'}
+        </Button>
+      </CardContent>
+    </Card>
   );
 };

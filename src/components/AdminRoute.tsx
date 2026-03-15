@@ -2,15 +2,15 @@ import { ReactNode, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigate } from 'react-router-dom';
 
+export type DashboardRole = 'admin' | 'moderator' | null;
+
 const AdminRoute = ({ children }: { children: JSX.Element }) => {
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<DashboardRole>(null);
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    const checkRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
         const { data, error } = await supabase
@@ -19,16 +19,15 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
           .eq('user_id', user.id)
           .single();
 
-        if (error) {
-          console.error('Error fetching profile:', error);
-        } else if (data && data.role === 'admin') {
-          setIsAdmin(true);
+        if (!error && data) {
+          if (data.role === 'admin') setRole('admin');
+          else if (data.role === 'moderator') setRole('moderator');
         }
       }
       setLoading(false);
     };
 
-    checkAdmin();
+    checkRole();
   }, []);
 
   if (loading) {
@@ -39,7 +38,10 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
     );
   }
 
-  return isAdmin ? children : <Navigate to="/" />;
+  if (!role) return <Navigate to="/" />;
+
+  return children;
 };
 
 export default AdminRoute;
+export { AdminRoute };
