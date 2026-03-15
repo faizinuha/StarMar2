@@ -221,7 +221,7 @@ const AdminContent = () => {
       </div>
 
       <Tabs defaultValue={isAdmin ? "users" : "reports"} className="space-y-4">
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-8' : 'grid-cols-3'}`}>
+        <TabsList className="flex flex-wrap gap-1 h-auto">
           {isAdmin && <TabsTrigger value="users">Users</TabsTrigger>}
           {isAdmin && <TabsTrigger value="analytics">Analytics</TabsTrigger>}
           <TabsTrigger value="reports">Reports</TabsTrigger>
