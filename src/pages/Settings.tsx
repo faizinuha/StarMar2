@@ -22,7 +22,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Camera, Github, Laptop, Loader2, Mail, Moon,
   ShieldAlert, Sun, Palette, Bell, KeyRound, User as UserIcon,
-  Users, Globe, Link2, Unlink2, CheckCircle2,
+  Users, Globe, Link2, Unlink2, CheckCircle2, Shield,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
