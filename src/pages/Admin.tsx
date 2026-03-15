@@ -229,7 +229,7 @@ const AdminContent = () => {
           {isAdmin && <TabsTrigger value="appeals">Ban Appeals</TabsTrigger>}
           {isAdmin && <TabsTrigger value="mod-applications">Mod Applications</TabsTrigger>}
           {isAdmin && <TabsTrigger value="maintenance">Maintenance</TabsTrigger>}
-          <TabsTrigger value="users-readonly">{isAdmin ? '' : 'Users'}</TabsTrigger>
+          {!isAdmin && <TabsTrigger value="users-readonly">Users</TabsTrigger>}
         </TabsList>
 
         {/* Users tab - admin only full control */}
