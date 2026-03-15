@@ -253,6 +253,7 @@ export const Settings = () => {
     { id: TABS.NOTIFICATIONS, label: t('Notifications'), icon: Bell },
     { id: TABS.ACCOUNT, label: t('Account'), icon: Users },
     { id: 'verification', label: t('Verification'), icon: CheckCircle2, path: '/settings/verification' },
+    { id: 'mod-apply', label: t('Apply as Moderator'), icon: Shield },
     { id: TABS.DANGER, label: t('Danger Zone'), icon: ShieldAlert, className: 'text-destructive hover:text-destructive hover:bg-destructive/10' },
   ];
 
