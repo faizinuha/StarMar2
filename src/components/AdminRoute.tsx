@@ -40,7 +40,6 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
 
   if (!role) return <Navigate to="/" />;
 
-  // Clone children and pass role as prop
   return children;
 };
 
