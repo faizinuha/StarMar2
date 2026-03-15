@@ -480,6 +480,8 @@ export const Settings = () => {
             </CardContent>
           </Card>
         );
+      case 'mod-apply':
+        return <ModeratorApplySection userId={user.id} currentRole={profile?.role} />;
       case TABS.DANGER:
         return (
           <Card className="border-destructive">
