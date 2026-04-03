@@ -67,57 +67,23 @@ export function useProfile(userId?: string) {
       }
 
       if (data) {
-        const processUrl = async (
-          url: string | undefined | null
-        ): Promise<string | undefined | null> => {
+        const getPublicUrl = (url: string | null | undefined): string | null => {
           if (!url) return null;
-
-          // If it's an external URL (e.g., Google), not a Supabase storage URL, leave it as is.
-          if (
-            url.startsWith('http') &&
-            !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')
-          ) {
+          // External URL — keep as is
+          if (url.startsWith('http') && !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
             return url;
           }
-
-          // It's either a path or a Supabase URL. Let's get the path.
-          let path = url;
-          if (url.startsWith('http')) {
-            try {
-              const urlObject = new URL(url);
-              const pathParts = urlObject.pathname.split('/avatars/');
-              if (pathParts.length > 1) {
-                path = pathParts[1];
-              } else {
-                return url; // Cannot extract path
-              }
-            } catch (e) {
-              return url; // Not a valid URL
-            }
+          // Already a full Supabase public URL
+          if (url.startsWith('http') && url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
+            return url;
           }
-
-          try {
-            const { data: signedUrlData, error } = await supabase.storage
-              .from('avatars')
-              .createSignedUrl(path, 3153600000); // 100 years
-
-            if (error || !signedUrlData) {
-              // Try public URL as fallback
-              const { data: publicUrlData } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(path);
-              return publicUrlData?.publicUrl || null;
-            }
-
-            return signedUrlData.signedUrl;
-          } catch (e) {
-            return null;
-          }
+          // It's a storage path — build public URL
+          const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(url);
+          return publicUrlData?.publicUrl || null;
         };
 
-        data.avatar_url =
-          (await processUrl(data.avatar_url)) || data.avatar_url;
-        data.cover_img = (await processUrl(data.cover_img)) || data.cover_img;
+        data.avatar_url = getPublicUrl(data.avatar_url) || data.avatar_url;
+        data.cover_img = getPublicUrl(data.cover_img) || data.cover_img;
       }
 
       return data as Profile;
@@ -146,56 +112,20 @@ export function useProfileByUsername(username?: string) {
       }
 
       if (data) {
-        const processUrl = async (
-          url: string | undefined | null
-        ): Promise<string | undefined | null> => {
+        const getPublicUrl = (url: string | null | undefined): string | null => {
           if (!url) return null;
-
-          // If it's an external URL (e.g., Google), not a Supabase storage URL, leave it as is.
-          if (
-            url.startsWith('http') &&
-            !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')
-          ) {
+          if (url.startsWith('http') && !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
             return url;
           }
-
-          // It's either a path or a Supabase URL. Let's get the path.
-          let path = url;
-          if (url.startsWith('http')) {
-            try {
-              const urlObject = new URL(url);
-              const pathParts = urlObject.pathname.split('/avatars/');
-              if (pathParts.length > 1) {
-                path = pathParts[1];
-              } else {
-                return url; // Cannot extract path
-              }
-            } catch (e) {
-              return url; // Not a valid URL
-            }
+          if (url.startsWith('http') && url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
+            return url;
           }
-
-          try {
-            const { data: signedUrlData, error } = await supabase.storage
-              .from('avatars')
-              .createSignedUrl(path, 3153600000); // 100 years
-
-            if (error || !signedUrlData) {
-              const { data: publicUrlData } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(path);
-              return publicUrlData?.publicUrl || null;
-            }
-
-            return signedUrlData.signedUrl;
-          } catch (e) {
-            return null;
-          }
+          const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(url);
+          return publicUrlData?.publicUrl || null;
         };
 
-        data.avatar_url =
-          (await processUrl(data.avatar_url)) || data.avatar_url;
-        data.cover_img = (await processUrl(data.cover_img)) || data.cover_img;
+        data.avatar_url = getPublicUrl(data.avatar_url) || data.avatar_url;
+        data.cover_img = getPublicUrl(data.cover_img) || data.cover_img;
       }
 
       return data as Profile;
@@ -263,74 +193,42 @@ export function useAllPosts() {
 
       if (error) throw error;
 
-      const processUrl = async (
-        url: string | undefined | null
-      ): Promise<string | undefined | null> => {
+      const getPublicUrl = (url: string | null | undefined): string | null => {
         if (!url) return null;
-        if (
-          url.startsWith('http') &&
-          !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')
-        ) {
+        if (url.startsWith('http') && !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
           return url;
         }
-        let path = url;
-        if (url.startsWith('http')) {
-          try {
-            const urlObject = new URL(url);
-            const pathParts = urlObject.pathname.split('/avatars/');
-            if (pathParts.length > 1) {
-              path = pathParts[1];
-            } else {
-              return url;
-            }
-          } catch (e) {
-            return url;
-          }
+        if (url.startsWith('http') && url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
+          return url;
         }
-
-        try {
-          const { data: signedUrlData, error } = await supabase.storage
-            .from('avatars')
-            .createSignedUrl(path, 3153600000);
-
-          if (error || !signedUrlData) {
-            const { data: publicUrlData } = supabase.storage
-              .from('avatars')
-              .getPublicUrl(path);
-            return publicUrlData?.publicUrl || null;
-          }
-          return signedUrlData.signedUrl;
-        } catch (e) {
-          return null;
-        }
+        const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(url);
+        return publicUrlData?.publicUrl || null;
       };
 
-      const processedData = await Promise.all(
-        data.map(async (post: any) => {
-          const avatarUrl = await processUrl(post.profiles?.avatar_url);
-          return {
-            id: post.id,
-            content: post.caption || '',
-            location: post.location,
-            created_at: post.created_at,
-            likes: post.likes_count || 0,
-            comments: post.comments_count || 0,
-            isLiked: post.user_likes.some(
-              (like: { user_id: string }) => like.user_id === user?.id
-            ),
-            isBookmarked: false, // TODO: Implement bookmark logic
-            image_url: post.post_media?.[0]?.media_url,
-            media_type: post.post_media?.[0]?.media_type,
-            user: {
-              username: post.profiles?.username || '',
-              displayName:
-                post.profiles?.display_name || post.profiles?.username || '',
-              avatar: avatarUrl || '',
-            },
-            user_id: post.user_id,
-          };
-        })
-      );
+      const processedData = data.map((post: any) => {
+        const avatarUrl = getPublicUrl(post.profiles?.avatar_url);
+        return {
+          id: post.id,
+          content: post.caption || '',
+          location: post.location,
+          created_at: post.created_at,
+          likes: post.likes_count || 0,
+          comments: post.comments_count || 0,
+          isLiked: post.user_likes.some(
+            (like: { user_id: string }) => like.user_id === user?.id
+          ),
+          isBookmarked: false,
+          image_url: post.post_media?.[0]?.media_url,
+          media_type: post.post_media?.[0]?.media_type,
+          user: {
+            username: post.profiles?.username || '',
+            displayName:
+              post.profiles?.display_name || post.profiles?.username || '',
+            avatar: avatarUrl || '',
+          },
+          user_id: post.user_id,
+        };
+      });
 
       return processedData as Post[];
     },

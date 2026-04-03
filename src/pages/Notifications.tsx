@@ -185,16 +185,26 @@ export const Notifications = () => {
   const markAllRead = useMutation({
     mutationFn: async () => {
       if (!user) return;
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false);
+      // Update both tables in parallel
+      const [standardResult, systemResult] = await Promise.all([
+        supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false),
+        supabase
+          .from('user_notifications')
+          .update({ is_read: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false),
+      ]);
 
-      if (error) throw error;
+      if (standardResult.error) throw standardResult.error;
+      if (systemResult.error) throw systemResult.error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
     },
   });
 
@@ -214,8 +224,8 @@ export const Notifications = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      // Invalidate query untuk memperbarui UI
       queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
     },
     onError: (error) => {
       console.error("Failed to mark notification as read:", error);
