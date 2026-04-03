@@ -112,56 +112,20 @@ export function useProfileByUsername(username?: string) {
       }
 
       if (data) {
-        const processUrl = async (
-          url: string | undefined | null
-        ): Promise<string | undefined | null> => {
+        const getPublicUrl = (url: string | null | undefined): string | null => {
           if (!url) return null;
-
-          // If it's an external URL (e.g., Google), not a Supabase storage URL, leave it as is.
-          if (
-            url.startsWith('http') &&
-            !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')
-          ) {
+          if (url.startsWith('http') && !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
             return url;
           }
-
-          // It's either a path or a Supabase URL. Let's get the path.
-          let path = url;
-          if (url.startsWith('http')) {
-            try {
-              const urlObject = new URL(url);
-              const pathParts = urlObject.pathname.split('/avatars/');
-              if (pathParts.length > 1) {
-                path = pathParts[1];
-              } else {
-                return url; // Cannot extract path
-              }
-            } catch (e) {
-              return url; // Not a valid URL
-            }
+          if (url.startsWith('http') && url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
+            return url;
           }
-
-          try {
-            const { data: signedUrlData, error } = await supabase.storage
-              .from('avatars')
-              .createSignedUrl(path, 3153600000); // 100 years
-
-            if (error || !signedUrlData) {
-              const { data: publicUrlData } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(path);
-              return publicUrlData?.publicUrl || null;
-            }
-
-            return signedUrlData.signedUrl;
-          } catch (e) {
-            return null;
-          }
+          const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(url);
+          return publicUrlData?.publicUrl || null;
         };
 
-        data.avatar_url =
-          (await processUrl(data.avatar_url)) || data.avatar_url;
-        data.cover_img = (await processUrl(data.cover_img)) || data.cover_img;
+        data.avatar_url = getPublicUrl(data.avatar_url) || data.avatar_url;
+        data.cover_img = getPublicUrl(data.cover_img) || data.cover_img;
       }
 
       return data as Profile;
