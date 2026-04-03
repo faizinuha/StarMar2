@@ -224,8 +224,8 @@ export const Notifications = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      // Invalidate query untuk memperbarui UI
       queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] });
     },
     onError: (error) => {
       console.error("Failed to mark notification as read:", error);
