@@ -616,8 +616,14 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
           )}
         </div>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon"><Phone className="h-5 w-5" /></Button>
-          <Button variant="ghost" size="icon"><Video className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => {
+            const memberIds = currentConversation?.members.map(m => m.user_id) || [];
+            startCall(conversationId, 'audio', memberIds);
+          }}><Phone className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => {
+            const memberIds = currentConversation?.members.map(m => m.user_id) || [];
+            startCall(conversationId, 'video', memberIds);
+          }}><Video className="h-5 w-5" /></Button>
           {currentConversation?.is_group && (
             <Button variant="ghost" size="icon" onClick={() => setShowGroupInfo(true)}><MoreVertical className="h-5 w-5" /></Button>
           )}
