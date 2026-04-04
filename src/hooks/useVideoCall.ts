@@ -338,7 +338,7 @@ export function useVideoCall() {
           to_user_id: p.user_id,
           signal_type: 'offer',
           signal_data: { sdp: offer },
-        });
+        } as any);
       }
 
       setCallState(prev => ({ ...prev, status: 'active' }));
