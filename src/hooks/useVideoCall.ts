@@ -205,7 +205,7 @@ export function useVideoCall() {
           to_user_id: from_user_id,
           signal_type: 'answer',
           signal_data: { sdp: answer },
-        });
+        } as any);
       }
     } else if (signal_type === 'answer') {
       const pc = peerConnectionsRef.current.get(from_user_id);
