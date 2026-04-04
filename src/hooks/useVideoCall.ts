@@ -19,7 +19,6 @@ interface CallState {
 
 export function useVideoCall() {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   
   const [callState, setCallState] = useState<CallState>({
     sessionId: null,
