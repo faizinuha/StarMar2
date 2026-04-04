@@ -372,7 +372,7 @@ export function useVideoCall() {
         to_user_id: peerId,
         signal_type: 'hangup',
         signal_data: {},
-      });
+      } as any);
     });
 
     await supabase.from('call_sessions')
