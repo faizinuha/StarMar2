@@ -450,6 +450,8 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
   const { conversations } = useConversations();
   const { mutate: sendMessage } = useSendMessage();
   const { data: groupMembers = [] } = useGetGroupMembers(conversationId);
+  const { getUserRole } = useGroupRoles(conversationId);
+  const { callState, localStream, remoteStreams, startCall, acceptCall, rejectCall, endCall, toggleMute, toggleVideo, flipCamera, toggleScreenShare } = useVideoCall();
   const queryClient = useQueryClient();
 
   const [newMessage, setNewMessage] = useState('');
@@ -471,9 +473,13 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
   const conversationName = currentConversation?.is_group ? currentConversation.name || 'Group Chat' : otherUser?.display_name || otherUser?.username || 'Unknown';
   const conversationAvatar = currentConversation?.is_group ? currentConversation.avatar_url : otherUser?.avatar_url;
 
-  // Check apakah user masih member grup
+  // Check membership & chat mode
   const isUserMember = currentConversation?.members?.some(m => m.user_id === user?.id);
   const isGroupChat = currentConversation?.is_group;
+  const chatMode = (currentConversation as any)?.chat_mode || 'open';
+  const myGroupRole = user ? getUserRole(user.id) : 'member';
+  const isRestrictedAndCantChat = chatMode === 'restricted' && myGroupRole === 'member' && isGroupChat;
+  const canSendMessage = isUserMember && !isRestrictedAndCantChat;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
