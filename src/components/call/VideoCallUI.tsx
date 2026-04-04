@@ -60,12 +60,13 @@ function VideoStream({ stream, muted = false, className = '' }: { stream: MediaS
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
+    const el = videoRef.current;
+    if (el && stream) {
+      el.srcObject = stream;
     }
     return () => {
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
+      if (el) {
+        el.srcObject = null;
       }
     };
   }, [stream]);
