@@ -95,14 +95,15 @@ export function VideoCallUI({
   onFlipCamera,
   onToggleScreenShare,
 }: VideoCallUIProps) {
-  if (callState.status === 'idle' || !callState.sessionId) return null;
+  if (!callState.sessionId) return null;
 
   const isIncoming = callState.status === 'ringing';
   const isActive = callState.status === 'active' || callState.status === 'connecting';
+  const isOpen = callState.status === 'ringing' || callState.status === 'active' || callState.status === 'connecting';
 
   return (
-    <Dialog open={callState.status !== 'idle'} onOpenChange={() => {}}>
-      <DialogContent className="max-w-4xl h-[85vh] p-0 bg-black border-0 overflow-hidden" hideClose>
+    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <DialogContent className="max-w-4xl h-[85vh] p-0 bg-black border-0 overflow-hidden [&>button]:hidden">
         {/* Incoming call screen */}
         {isIncoming && (
           <div className="flex flex-col items-center justify-center h-full text-white gap-6">
