@@ -171,7 +171,7 @@ export function useVideoCall() {
           to_user_id: remoteUserId,
           signal_type: 'ice-candidate',
           signal_data: { candidate: event.candidate.toJSON() },
-        });
+        } as any);
       }
     };
 
