@@ -746,9 +746,9 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             className="flex-1 cute-input"
-            disabled={!isUserMember && isGroupChat}
+            disabled={!canSendMessage}
           />
-          <Button onClick={handleSend} size="icon" disabled={!isUserMember && isGroupChat}><Send className="h-5 w-5" /></Button>
+          <Button onClick={handleSend} size="icon" disabled={!canSendMessage}><Send className="h-5 w-5" /></Button>
         </div>
       </div>
 
