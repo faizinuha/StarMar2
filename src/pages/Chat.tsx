@@ -3,7 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversations, useCreateConversation, Conversation } from '@/hooks/useConversations';
 import { useFavoriteConversations } from '@/hooks/useFavorites';
-import { useCreateGroup, useGetGroupMembers, useFollowedUsers, useDeleteGroup } from '@/hooks/useGroupChat';
+import { useCreateGroup, useGetGroupMembers, useFollowedUsers } from '@/hooks/useGroupChat';
+import { useGroupRoles } from '@/hooks/useGroupRoles';
+import { useVideoCall } from '@/hooks/useVideoCall';
+import { VideoCallUI } from '@/components/call/VideoCallUI';
 import { GroupInfoDrawer } from '@/components/GroupInfoDrawer';
 import { useMessages, useSendMessage, Message } from '@/hooks/useMessages';
 import { supabase } from '@/integrations/supabase/client';
@@ -450,6 +453,8 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
   const { conversations } = useConversations();
   const { mutate: sendMessage } = useSendMessage();
   const { data: groupMembers = [] } = useGetGroupMembers(conversationId);
+  const { getUserRole } = useGroupRoles(conversationId);
+  const { callState, localStream, remoteStreams, startCall, acceptCall, rejectCall, endCall, toggleMute, toggleVideo, flipCamera, toggleScreenShare } = useVideoCall();
   const queryClient = useQueryClient();
 
   const [newMessage, setNewMessage] = useState('');
@@ -471,9 +476,13 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
   const conversationName = currentConversation?.is_group ? currentConversation.name || 'Group Chat' : otherUser?.display_name || otherUser?.username || 'Unknown';
   const conversationAvatar = currentConversation?.is_group ? currentConversation.avatar_url : otherUser?.avatar_url;
 
-  // Check apakah user masih member grup
+  // Check membership & chat mode
   const isUserMember = currentConversation?.members?.some(m => m.user_id === user?.id);
   const isGroupChat = currentConversation?.is_group;
+  const chatMode = (currentConversation as any)?.chat_mode || 'open';
+  const myGroupRole = user ? getUserRole(user.id) : 'member';
+  const isRestrictedAndCantChat = chatMode === 'restricted' && myGroupRole === 'member' && isGroupChat;
+  const canSendMessage = isUserMember && !isRestrictedAndCantChat;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -607,8 +616,14 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
           )}
         </div>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon"><Phone className="h-5 w-5" /></Button>
-          <Button variant="ghost" size="icon"><Video className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => {
+            const memberIds = currentConversation?.members.map(m => m.user_id) || [];
+            startCall(conversationId, 'audio', memberIds);
+          }}><Phone className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => {
+            const memberIds = currentConversation?.members.map(m => m.user_id) || [];
+            startCall(conversationId, 'video', memberIds);
+          }}><Video className="h-5 w-5" /></Button>
           {currentConversation?.is_group && (
             <Button variant="ghost" size="icon" onClick={() => setShowGroupInfo(true)}><MoreVertical className="h-5 w-5" /></Button>
           )}
@@ -687,10 +702,16 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
 
       {/* Input area */}
       <div className="border-t p-3 bg-background">
-        {!isUserMember && isGroupChat && (
+        {(!isUserMember && isGroupChat) && (
           <div className="mb-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-center gap-2 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <p>Anda bukan anggota grup. Tidak dapat mengirim pesan.</p>
+          </div>
+        )}
+        {isRestrictedAndCantChat && isUserMember && (
+          <div className="mb-3 p-3 bg-muted border rounded-lg flex items-center gap-2 text-sm text-muted-foreground">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <p>Mode terbatas: hanya Admin & Moderator yang bisa chat.</p>
           </div>
         )}
         {replyingTo && (
@@ -714,20 +735,20 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
           </div>
         )}
         <div className="flex items-center gap-2">
-          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} disabled={!isUserMember && isGroupChat} />
-          <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={!isUserMember && isGroupChat}><Paperclip className="h-5 w-5" /></Button>
-          <Button variant="ghost" size="icon" onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} disabled={!isUserMember && isGroupChat}>
+          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} disabled={!canSendMessage} />
+          <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={!canSendMessage}><Paperclip className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} disabled={!canSendMessage}>
             {isRecording ? <Square className="h-5 w-5 text-destructive" /> : <Mic className="h-5 w-5" />}
           </Button>
           <Input
-            placeholder={isUserMember || !isGroupChat ? "Ketik pesan..." : "Anda bukan anggota grup"}
+            placeholder={canSendMessage ? "Ketik pesan..." : "Tidak dapat mengirim pesan"}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             className="flex-1 cute-input"
-            disabled={!isUserMember && isGroupChat}
+            disabled={!canSendMessage}
           />
-          <Button onClick={handleSend} size="icon" disabled={!isUserMember && isGroupChat}><Send className="h-5 w-5" /></Button>
+          <Button onClick={handleSend} size="icon" disabled={!canSendMessage}><Send className="h-5 w-5" /></Button>
         </div>
       </div>
 
