@@ -702,10 +702,16 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
 
       {/* Input area */}
       <div className="border-t p-3 bg-background">
-        {!isUserMember && isGroupChat && (
+        {(!isUserMember && isGroupChat) && (
           <div className="mb-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-center gap-2 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <p>Anda bukan anggota grup. Tidak dapat mengirim pesan.</p>
+          </div>
+        )}
+        {isRestrictedAndCantChat && isUserMember && (
+          <div className="mb-3 p-3 bg-muted border rounded-lg flex items-center gap-2 text-sm text-muted-foreground">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <p>Mode terbatas: hanya Admin & Moderator yang bisa chat.</p>
           </div>
         )}
         {replyingTo && (
@@ -729,13 +735,13 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
           </div>
         )}
         <div className="flex items-center gap-2">
-          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} disabled={!isUserMember && isGroupChat} />
-          <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={!isUserMember && isGroupChat}><Paperclip className="h-5 w-5" /></Button>
-          <Button variant="ghost" size="icon" onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} disabled={!isUserMember && isGroupChat}>
+          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} disabled={!canSendMessage} />
+          <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={!canSendMessage}><Paperclip className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" onMouseDown={startRecording} onMouseUp={stopRecording} onMouseLeave={stopRecording} disabled={!canSendMessage}>
             {isRecording ? <Square className="h-5 w-5 text-destructive" /> : <Mic className="h-5 w-5" />}
           </Button>
           <Input
-            placeholder={isUserMember || !isGroupChat ? "Ketik pesan..." : "Anda bukan anggota grup"}
+            placeholder={canSendMessage ? "Ketik pesan..." : "Tidak dapat mengirim pesan"}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
