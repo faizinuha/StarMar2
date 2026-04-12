@@ -28,6 +28,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMfa } from './useMfa';
 import { SocialLinksEditor, SocialLink } from '@/components/settings/SocialLinksEditor';
+import { CountrySelect } from '@/components/ui/country-select';
 import { cn } from '@/lib/utils';
 
 interface UserSettings {
@@ -68,6 +69,7 @@ export const Settings = () => {
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
   const [bio, setBio] = useState(profile?.bio || '');
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [country, setCountry] = useState('');
   const [uploading, setUploading] = useState(false);
   const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -95,6 +97,7 @@ export const Settings = () => {
     if (profile) {
       setDisplayName(profile.display_name || '');
       setBio(profile.bio || '');
+      setCountry((profile as any).country || '');
       try {
         const links = (profile as any).social_links;
         setSocialLinks(Array.isArray(links) ? links : []);
@@ -136,7 +139,7 @@ export const Settings = () => {
 
   const handleProfileUpdate = async () => {
     try {
-      await updateProfile.mutateAsync({ display_name: displayName, bio, social_links: socialLinks } as any);
+      await updateProfile.mutateAsync({ display_name: displayName, bio, social_links: socialLinks, country } as any);
       toast({ title: 'Profile updated successfully!' });
     } catch (error: any) {
       toast({ title: 'Error updating profile', description: error.message, variant: 'destructive' });
@@ -281,6 +284,7 @@ export const Settings = () => {
               <div className="space-y-4 pt-4">
                 <div><Label htmlFor="display-name">{t('Display Name')}</Label><Input id="display-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your display name" /></div>
                 <div><Label htmlFor="bio">{t('Bio')}</Label><Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell us about yourself" rows={3} /></div>
+                <div><Label>{t('Country')}</Label><CountrySelect value={country} onChange={setCountry} /></div>
                 <Separator />
                 <SocialLinksEditor links={socialLinks} onChange={setSocialLinks} maxLinks={6} />
                 <Button onClick={handleProfileUpdate} disabled={updateProfile.isPending}>{updateProfile.isPending ? t('Saving...') : t('Save Changes')}</Button>
