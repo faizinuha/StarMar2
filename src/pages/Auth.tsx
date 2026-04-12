@@ -1,4 +1,5 @@
 import nekoPawLogo from '@/assets/Logo/NekoPaw.png';
+import { CountrySelect } from '@/components/ui/country-select';
 import loginSound from '@/assets/sounds/login.wav';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -45,6 +46,7 @@ export function Auth() {
     password: '',
     confirmPassword: '',
     displayName: '',
+    country: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -193,7 +195,7 @@ export function Auth() {
   const toggleForm = () => {
     setIsLogin(!isLogin);
     setErrors({});
-    setFormData({ username: '', email: '', password: '', confirmPassword: '', displayName: '' });
+    setFormData({ username: '', email: '', password: '', confirmPassword: '', displayName: '', country: '' });
   };
 
   const handleDownloadConfirm = () => {
@@ -262,7 +264,7 @@ export function Auth() {
                   ))}
                 </div>
                 <Separator />
-                <Button variant="secondary" className="w-full" onClick={() => { setShowAccountSelection(false); setFormData({ username: '', email: '', password: '', confirmPassword: '', displayName: '' }); }}>
+                <Button variant="secondary" className="w-full" onClick={() => { setShowAccountSelection(false); setFormData({ username: '', email: '', password: '', confirmPassword: '', displayName: '', country: '' }); }}>
                   Login with another account
                 </Button>
               </CardContent>
@@ -301,9 +303,17 @@ export function Auth() {
                     {!isLogin && (
                       <PasswordField id="confirmPassword" label="Confirm Password" value={formData.confirmPassword} onChange={(e) => handleInputChange('confirmPassword', e.target.value)} error={errors.confirmPassword} />
                     )}
-                  </div>
+                   </div>
                   {!isLogin && (
-                    <p className="text-sm text-muted-foreground">Password must be at least 8 characters.</p>
+                    <div>
+                      <label className="text-sm font-medium flex items-center gap-2 mb-2">
+                        🌍 <span>Country</span>
+                      </label>
+                      <CountrySelect value={formData.country} onChange={(v) => handleInputChange('country', v)} />
+                    </div>
+                  )}
+                  {!isLogin && (
+                     <p className="text-sm text-muted-foreground">Password must be at least 8 characters.</p>
                   )}
                   <Button type="submit" className="w-full gradient-button" disabled={isLoading}>
                     {isLoading ? 'Please wait...' : isLogin ? user ? 'Add Account' : 'Sign In' : 'Create Account'}
