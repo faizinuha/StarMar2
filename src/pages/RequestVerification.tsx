@@ -17,6 +17,16 @@ const RequestVerification = () => {
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const { data: userProfile } = useQuery({
+    queryKey: ['profile-role', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase.from('profiles').select('role, is_verified').eq('user_id', user.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const { data: existingRequest, isLoading } = useQuery({
     queryKey: ['verification-request', user?.id],
     queryFn: async () => {
@@ -33,6 +43,9 @@ const RequestVerification = () => {
     },
     enabled: !!user,
   });
+
+  // Redirect admin/moderator yang sudah verified
+  const isAlreadyVerified = userProfile?.is_verified === 'verified' || userProfile?.role === 'admin' || userProfile?.role === 'moderator';
 
   const handleSubmit = async () => {
     if (!user || !reason.trim()) {
@@ -55,6 +68,38 @@ const RequestVerification = () => {
   };
 
   if (!user) return null;
+
+  if (isAlreadyVerified) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="max-w-2xl mx-auto px-4 py-8">
+          <div className="mb-6 flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <BadgeCheck className="h-6 w-6 text-primary" />
+                Sudah Terverifikasi
+              </h1>
+            </div>
+          </div>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <BadgeCheck className="h-16 w-16 text-primary mx-auto mb-4" />
+              <h2 className="text-xl font-bold mb-2">Akun Anda Sudah Terverifikasi</h2>
+              <p className="text-muted-foreground">
+                {userProfile?.role === 'admin' ? 'Anda adalah Admin.' :
+                 userProfile?.role === 'moderator' ? 'Anda adalah Moderator.' :
+                 'Akun Anda sudah memiliki badge verifikasi.'}
+              </p>
+              <Button className="mt-4" onClick={() => navigate('/settings')}>Kembali ke Settings</Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

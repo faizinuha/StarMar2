@@ -799,6 +799,21 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
           isLoading={isLoading}
         />
       )}
+
+      {/* Video/Phone Call UI */}
+      <VideoCallUI
+        callState={callState}
+        localStream={localStream}
+        remoteStreams={remoteStreams}
+        callerProfile={otherUser ? { display_name: otherUser.display_name, username: otherUser.username, avatar_url: otherUser.avatar_url } : null}
+        onAccept={acceptCall}
+        onReject={rejectCall}
+        onEnd={endCall}
+        onToggleMute={toggleMute}
+        onToggleVideo={toggleVideo}
+        onFlipCamera={flipCamera}
+        onToggleScreenShare={toggleScreenShare}
+      />
     </div>
   );
 }
