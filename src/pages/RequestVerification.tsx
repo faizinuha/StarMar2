@@ -47,6 +47,26 @@ const RequestVerification = () => {
   // Redirect admin/moderator yang sudah verified
   const isAlreadyVerified = userProfile?.is_verified === 'verified' || userProfile?.role === 'admin' || userProfile?.role === 'moderator';
 
+  const handleSubmit = async () => {
+    if (!user || !reason.trim()) {
+      toast({ title: 'Mohon isi alasan verifikasi', variant: 'destructive' });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('verification_requests')
+        .insert({ user_id: user.id, reason: reason.trim() } as any);
+      if (error) throw error;
+      toast({ title: 'Pengajuan verifikasi berhasil dikirim!' });
+      setReason('');
+    } catch (error: any) {
+      toast({ title: 'Gagal mengirim pengajuan', description: error.message, variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (!user) return null;
 
   if (isAlreadyVerified) {
@@ -80,26 +100,6 @@ const RequestVerification = () => {
       </div>
     );
   }
-
-  const handleSubmit = async () => {
-    if (!user || !reason.trim()) {
-      toast({ title: 'Mohon isi alasan verifikasi', variant: 'destructive' });
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from('verification_requests')
-        .insert({ user_id: user.id, reason: reason.trim() } as any);
-      if (error) throw error;
-      toast({ title: 'Pengajuan verifikasi berhasil dikirim!' });
-      setReason('');
-    } catch (error: any) {
-      toast({ title: 'Gagal mengirim pengajuan', description: error.message, variant: 'destructive' });
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
