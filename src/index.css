@@ -2,131 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NekoPaw Design System - Kawaii cat-themed social media with baby blue pastel */
+/* NekoPaw Design System - Japanese aesthetic: Sky Blue (水色) + Pure White (白) */
 
 @layer base {
   :root {
-    /* Core theme colors - Light mode - Soft Blue Pastel */
-    --background: 200 40% 96%;
-    --foreground: 210 25% 20%;
+    /* Core theme - Light mode - 水色 (Mizuiro) Sky Blue + White */
+    --background: 200 50% 97%;
+    --foreground: 215 30% 18%;
     
-    /* Surface colors - Softer, less pure white */
-    --card: 200 35% 98%;
-    --card-foreground: 210 25% 20%;
-    --popover: 200 35% 97%;
-    --popover-foreground: 210 25% 20%;
+    /* Surface - Clean white with subtle blue tint */
+    --card: 200 30% 99%;
+    --card-foreground: 215 30% 18%;
+    --popover: 200 25% 99%;
+    --popover-foreground: 215 30% 18%;
     
-    /* Brand colors - Baby Blue Pastel - Comfortable */
-    --primary: 200 75% 62%;
+    /* Brand - 水色 (Mizuiro) + 空色 (Sorairo) Sky Blue */
+    --primary: 195 85% 55%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 200 70% 80%;
-    --primary-dark: 200 75% 48%;
+    --primary-light: 195 80% 78%;
+    --primary-dark: 195 85% 42%;
     
-    --accent: 200 50% 85%;
-    --accent-foreground: 210 25% 25%;
-    --accent-light: 200 50% 90%;
-    --accent-dark: 200 50% 70%;
+    --accent: 195 45% 90%;
+    --accent-foreground: 215 30% 22%;
+    --accent-light: 195 40% 94%;
+    --accent-dark: 195 45% 75%;
     
-    /* Gradient combinations */
-    --gradient-primary: linear-gradient(135deg, hsl(200 75% 62%), hsl(210 70% 55%));
-    --gradient-subtle: linear-gradient(135deg, hsl(200 35% 94%), hsl(200 40% 96%));
-    --gradient-card: linear-gradient(135deg, hsl(200 35% 98% / 0.9), hsl(200 40% 96% / 0.6));
-    --gradient-kawaii: linear-gradient(135deg, hsl(200 75% 75%), hsl(330 60% 78%));
+    /* Gradients - 空 (Sky) inspired */
+    --gradient-primary: linear-gradient(135deg, hsl(195 85% 55%), hsl(205 80% 50%));
+    --gradient-subtle: linear-gradient(135deg, hsl(195 40% 95%), hsl(200 45% 97%));
+    --gradient-card: linear-gradient(135deg, hsl(200 30% 99% / 0.95), hsl(195 40% 97% / 0.7));
+    --gradient-kawaii: linear-gradient(135deg, hsl(195 85% 68%), hsl(320 55% 78%));
     
-    /* Neutral system */
-    --secondary: 200 30% 92%;
-    --secondary-foreground: 210 25% 28%;
-    --muted: 200 25% 90%;
-    --muted-foreground: 200 20% 50%;
+    /* Neutral - Clean with slight warmth */
+    --secondary: 195 25% 93%;
+    --secondary-foreground: 215 25% 25%;
+    --muted: 195 20% 92%;
+    --muted-foreground: 210 15% 48%;
     
-    /* Interactive states */
-    --border: 200 30% 88%;
-    --input: 200 30% 92%;
-    --ring: 200 75% 62%;
-    --destructive: 0 72% 60%;
+    /* Interactive */
+    --border: 195 25% 88%;
+    --input: 195 25% 93%;
+    --ring: 195 85% 55%;
+    --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;
     
-    /* Glass morphism */
-    --glass: 200 40% 96% / 0.6;
-    --glass-border: 200 40% 85% / 0.25;
+    /* Glassmorphism - 霧 (Kiri/Mist) */
+    --glass: 195 40% 97% / 0.65;
+    --glass-border: 195 35% 85% / 0.3;
     
-    /* Shadows - soft blue tint */
-    --shadow-soft: 0 4px 6px -1px hsl(200 40% 50% / 0.06), 0 2px 4px -1px hsl(200 40% 50% / 0.03);
-    --shadow-medium: 0 10px 15px -3px hsl(200 40% 50% / 0.08), 0 4px 6px -2px hsl(200 40% 50% / 0.04);
-    --shadow-large: 0 25px 50px -12px hsl(200 40% 50% / 0.12);
-    --shadow-glow: 0 0 30px hsl(200 75% 62% / 0.2);
+    /* Shadows - soft sky blue */
+    --shadow-soft: 0 4px 6px -1px hsl(195 40% 50% / 0.06), 0 2px 4px -1px hsl(195 40% 50% / 0.03);
+    --shadow-medium: 0 10px 15px -3px hsl(195 40% 50% / 0.08), 0 4px 6px -2px hsl(195 40% 50% / 0.04);
+    --shadow-large: 0 25px 50px -12px hsl(195 40% 50% / 0.12);
+    --shadow-glow: 0 0 30px hsl(195 85% 55% / 0.2);
     
     --radius: 0.5rem;
 
-    --sidebar-background: 200 35% 96%;
-    --sidebar-foreground: 210 25% 22%;
-    --sidebar-primary: 200 75% 62%;
+    --sidebar-background: 195 30% 97%;
+    --sidebar-foreground: 215 25% 20%;
+    --sidebar-primary: 195 85% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 200 35% 90%;
-    --sidebar-accent-foreground: 210 25% 20%;
-    --sidebar-border: 200 30% 88%;
-    --sidebar-ring: 200 75% 62%;
+    --sidebar-accent: 195 30% 92%;
+    --sidebar-accent-foreground: 215 25% 20%;
+    --sidebar-border: 195 25% 88%;
+    --sidebar-ring: 195 85% 55%;
   }
 
   .dark {
-    /* Dark theme - Cozy dark with baby blue accents */
-    --background: 215 25% 8%;
-    --foreground: 200 20% 95%;
+    /* Dark mode - 夜空 (Yozora/Night Sky) + Mizuiro accents */
+    --background: 215 28% 7%;
+    --foreground: 195 20% 95%;
     
-    /* Surface colors */
-    --card: 215 25% 11%;
-    --card-foreground: 200 20% 95%;
-    --popover: 215 25% 13%;
-    --popover-foreground: 200 20% 95%;
+    --card: 215 28% 10%;
+    --card-foreground: 195 20% 95%;
+    --popover: 215 25% 12%;
+    --popover-foreground: 195 20% 95%;
     
-    /* Brand colors - Baby Blue on dark - Matched with light mode */
-    --primary: 200 75% 62%;
-    --primary-foreground: 215 25% 8%;
-    --primary-light: 200 75% 75%;
-    --primary-dark: 200 75% 48%;
+    /* Brand stays vibrant in dark */
+    --primary: 195 85% 55%;
+    --primary-foreground: 215 28% 7%;
+    --primary-light: 195 80% 72%;
+    --primary-dark: 195 85% 42%;
     
-    --accent: 215 20% 18%;
-    --accent-foreground: 200 20% 95%;
-    --accent-light: 215 20% 25%;
-    --accent-dark: 215 20% 12%;
+    --accent: 215 22% 16%;
+    --accent-foreground: 195 20% 95%;
+    --accent-light: 215 20% 22%;
+    --accent-dark: 215 22% 11%;
     
-    /* Updated gradients for dark mode */
-    --gradient-primary: linear-gradient(135deg, hsl(200 75% 62%), hsl(210 70% 55%));
-    --gradient-subtle: linear-gradient(135deg, hsl(215 25% 10%), hsl(215 25% 14%));
-    --gradient-card: linear-gradient(135deg, hsl(215 25% 11% / 0.9), hsl(215 25% 14% / 0.6));
-    --gradient-kawaii: linear-gradient(135deg, hsl(200 75% 60%), hsl(330 50% 65%));
+    --gradient-primary: linear-gradient(135deg, hsl(195 85% 55%), hsl(205 80% 48%));
+    --gradient-subtle: linear-gradient(135deg, hsl(215 28% 9%), hsl(215 25% 13%));
+    --gradient-card: linear-gradient(135deg, hsl(215 28% 10% / 0.9), hsl(215 25% 13% / 0.6));
+    --gradient-kawaii: linear-gradient(135deg, hsl(195 80% 58%), hsl(320 50% 60%));
     
-    /* Neutral system */
-    --secondary: 215 20% 16%;
-    --secondary-foreground: 200 20% 90%;
-    --muted: 215 20% 16%;
-    --muted-foreground: 200 15% 55%;
+    --secondary: 215 22% 14%;
+    --secondary-foreground: 195 20% 90%;
+    --muted: 215 22% 14%;
+    --muted-foreground: 200 15% 52%;
     
-    /* Interactive states */
-    --border: 215 20% 20%;
-    --input: 215 20% 16%;
-    --ring: 200 75% 62%;
-    --destructive: 0 72% 55%;
+    --border: 215 22% 18%;
+    --input: 215 22% 14%;
+    --ring: 195 85% 55%;
+    --destructive: 0 72% 52%;
     --destructive-foreground: 0 0% 100%;
     
-    /* Glass morphism for dark */
-    --glass: 215 25% 15% / 0.4;
-    --glass-border: 200 30% 40% / 0.15;
+    --glass: 215 28% 13% / 0.45;
+    --glass-border: 195 30% 38% / 0.15;
     
-    /* Dark shadows with blue tint */
     --shadow-soft: 0 4px 6px -1px hsl(215 30% 5% / 0.4), 0 2px 4px -1px hsl(215 30% 5% / 0.2);
     --shadow-medium: 0 10px 15px -3px hsl(215 30% 5% / 0.5), 0 4px 6px -2px hsl(215 30% 5% / 0.3);
     --shadow-large: 0 25px 50px -12px hsl(215 30% 5% / 0.7);
-    --shadow-glow: 0 0 30px hsl(200 75% 62% / 0.15);
+    --shadow-glow: 0 0 30px hsl(195 85% 55% / 0.15);
 
-    --sidebar-background: 215 25% 9%;
-    --sidebar-foreground: 200 20% 90%;
-    --sidebar-primary: 200 75% 62%;
-    --sidebar-primary-foreground: 215 25% 8%;
-    --sidebar-accent: 215 20% 16%;
-    --sidebar-accent-foreground: 200 20% 90%;
-    --sidebar-border: 215 20% 20%;
-    --sidebar-ring: 200 75% 62%;
+    --sidebar-background: 215 28% 8%;
+    --sidebar-foreground: 195 20% 90%;
+    --sidebar-primary: 195 85% 55%;
+    --sidebar-primary-foreground: 215 28% 7%;
+    --sidebar-accent: 215 22% 14%;
+    --sidebar-accent-foreground: 195 20% 90%;
+    --sidebar-border: 215 22% 18%;
+    --sidebar-ring: 195 85% 55%;
   }
 }
 
@@ -151,7 +145,6 @@
     letter-spacing: -0.3px;
   }
 
-  /* Typography improvements for soft, comfortable reading */
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight;
     letter-spacing: -0.5px;
@@ -174,13 +167,11 @@
     @apply text-base leading-relaxed;
   }
 
-  /* Links styling */
   a {
     @apply text-primary hover:text-primary/80 transition-colors duration-200;
     text-decoration: none;
   }
 
-  /* Button base styling */
   button {
     font-family: inherit;
     letter-spacing: -0.2px;
@@ -188,7 +179,6 @@
 }
 
 @layer components {
-  /* NekoPaw Component Styles */
   .nekopaw-gradient {
     background: var(--gradient-primary);
   }
@@ -201,7 +191,6 @@
     background: var(--gradient-kawaii);
   }
   
-  /* Legacy alias */
   .starmar-gradient {
     background: var(--gradient-primary);
   }
@@ -216,7 +205,6 @@
     border: 1px solid hsl(var(--glass-border));
   }
   
-  /* Post Card with improved styling */
   .post-card {
     @apply bg-card border border-primary/10 rounded-lg overflow-hidden transition-all duration-300;
     box-shadow: var(--shadow-soft);
@@ -227,7 +215,6 @@
     transform: translateY(-2px);
   }
   
-  /* Gradient Button with cat theme */
   .gradient-button {
     @apply text-primary-foreground font-medium rounded-full px-6 py-3 transition-all duration-300 cursor-pointer;
     background: var(--gradient-primary);
@@ -251,14 +238,12 @@
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
-  /* Cat paw print decoration */
   .paw-accent::after {
     content: "🐾";
     font-size: 0.75em;
     margin-left: 0.25em;
   }
 
-  /* Cute Input Styling */
   .cute-input {
     @apply rounded-lg border border-primary/20 px-4 py-3 focus-within:border-primary/50 transition-all duration-200 bg-card text-foreground placeholder:text-muted-foreground;
   }
@@ -267,12 +252,10 @@
     @apply shadow-sm;
   }
 
-  /* Cute Card with shadow */
   .cute-card {
     @apply rounded-lg bg-card border border-primary/10 shadow-sm hover:shadow-md transition-all duration-200 p-6;
   }
 
-  /* Kawaii Badge */
   .kawaii-badge {
     @apply rounded-full px-3 py-1 text-xs font-semibold bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-1;
   }
@@ -281,17 +264,14 @@
     @apply whitespace-nowrap;
   }
 
-  /* Floating Animation */
   .float-animation {
     animation: float 3s ease-in-out infinite;
   }
 
-  /* Paw Print Background */
   .paw-background {
     position: relative;
   }
 
-  /* Small paw decorations (used in Auth and Chat) */
   .small-paw {
     position: absolute;
     opacity: 0.12;
@@ -319,7 +299,6 @@
     transform: rotate(15deg);
   }
 
-  /* Paw overlay for avatar */
   .avatar-paw {
     position: absolute;
     top: -6px;
@@ -334,7 +313,6 @@
     z-index: 50;
   }
 
-  /* Cat eye decoration */
   .cat-eyes {
     @apply inline-flex gap-2;
   }
@@ -344,12 +322,10 @@
     margin: 0 0.25em;
   }
 
-  /* Smooth transitions for all interactive elements */
   button, [role="button"], input, textarea, select, a {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Soft focus states */
   :focus-visible {
     @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
   }
@@ -358,7 +334,6 @@
     @apply ring-offset-background;
   }
 
-  /* Smooth scrollbar for webkit browsers */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -372,23 +347,19 @@
     @apply bg-primary/40 rounded-full hover:bg-primary/60 transition-colors;
   }
 
-  /* Cute input placeholder styling */
   input::placeholder,
   textarea::placeholder {
     @apply text-muted-foreground/60;
   }
 
-  /* Selection styling */
   ::selection {
     @apply bg-primary/30 text-foreground;
   }
 
-  /* Loading skeleton with shimmer */
   .skeleton {
     @apply animate-pulse rounded bg-muted;
   }
 
-  /* Soft shadow utilities */
   .shadow-soft {
     box-shadow: var(--shadow-soft);
   }
@@ -405,14 +376,12 @@
     box-shadow: var(--shadow-glow);
   }
 
-  /* Glassmorphism utilities */
   .glass {
     background: hsl(var(--glass));
     backdrop-filter: blur(20px);
     border: 1px solid hsl(var(--glass-border));
   }
 
-  /* Responsive text sizing */
   @media (max-width: 640px) {
     body {
       font-size: 14px;
@@ -498,42 +467,4 @@
   0%, 100% { transform: rotate(0deg); }
   25% { transform: rotate(-10deg); }
   75% { transform: rotate(10deg); }
-}
-
-@keyframes soft-glow {
-  0% { box-shadow: 0 0 15px hsl(var(--primary) / 0.15); }
-  50% { box-shadow: 0 0 25px hsl(var(--primary) / 0.25); }
-  100% { box-shadow: 0 0 15px hsl(var(--primary) / 0.15); }
-}
-
-.animate-heart-beat {
-  animation: heart-beat 0.6s ease-in-out;
-}
-
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.4s ease-out;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite;
-}
-
-.animate-cat-blink {
-  animation: cat-blink 3s ease-in-out infinite;
-}
-
-.animate-paw-wave {
-  animation: paw-wave 1s ease-in-out infinite;
-}
-
-.animate-soft-glow {
-  animation: soft-glow 3s ease-in-out infinite;
 }
