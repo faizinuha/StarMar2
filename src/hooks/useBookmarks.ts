@@ -68,7 +68,11 @@ export const useBookmarks = () => {
 
       const { data, error } = await supabase
         .from('bookmarks')
-        .insert([{ user_id: user.id, post_id: postId, folder_id: targetFolderId || null }])
+        .insert([{
+          user_id: user.id,
+          post_id: postId,
+          ...(targetFolderId ? { folder_id: targetFolderId } : {}),
+        }])
         .select()
         .single();
 
