@@ -35,6 +35,7 @@ interface VideoCallUIProps {
   onFlipCamera: () => void;
   onToggleScreenShare: () => void;
   onInvite?: (userId: string) => void;
+  currentUserId?: string;
 }
 
 // Wave animation for ringing
@@ -94,12 +95,14 @@ export function VideoCallUI({
   onToggleVideo,
   onFlipCamera,
   onToggleScreenShare,
+  currentUserId,
 }: VideoCallUIProps) {
   if (!callState.sessionId) return null;
 
-  const isIncoming = callState.status === 'ringing';
+  const isOutgoing = callState.status === 'ringing' && callState.callerId === currentUserId;
+  const isIncoming = callState.status === 'ringing' && !isOutgoing;
   const isActive = callState.status === 'active' || callState.status === 'connecting';
-  const isOpen = callState.status === 'ringing' || callState.status === 'active' || callState.status === 'connecting';
+  const isOpen = isIncoming || isOutgoing || isActive;
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
@@ -237,7 +240,7 @@ export function VideoCallUI({
         )}
 
         {/* Outgoing call (waiting) */}
-        {callState.status === 'ringing' && callState.callerId === callState.callerId && !isIncoming && (
+        {isOutgoing && (
           <div className="flex flex-col items-center justify-center h-full text-white gap-6">
             <Avatar className="h-24 w-24 border-4 border-white/20 animate-pulse">
               <AvatarFallback className="text-2xl bg-primary/20">

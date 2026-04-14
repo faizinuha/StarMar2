@@ -813,6 +813,7 @@ function ChatDetailArea({ conversationId, onBack }: ChatDetailAreaProps) {
         onToggleVideo={toggleVideo}
         onFlipCamera={flipCamera}
         onToggleScreenShare={toggleScreenShare}
+        currentUserId={user?.id}
       />
     </div>
   );
