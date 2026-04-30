@@ -25,8 +25,10 @@ export interface OptimizedPost {
 
 const POSTS_PER_PAGE = 10;
 
-const processUrl = async (url: string | undefined | null): Promise<string | undefined | null> => {
+// Use getPublicUrl (stable, no expiry) — prevents avatar blinking / disappearing in feed
+const processUrl = (url: string | undefined | null): string | null => {
   if (!url) return null;
+  // External URL — keep as is
   if (url.startsWith('http') && !url.includes('ogbzhbwfucgjiafhsxab.supabase.co')) {
     return url;
   }
@@ -38,16 +40,15 @@ const processUrl = async (url: string | undefined | null): Promise<string | unde
       if (pathParts.length > 1) {
         path = pathParts[1];
       } else {
+        // Already a full Supabase URL but not in avatars bucket — return as is
         return url;
       }
-    } catch (e) {
+    } catch {
       return url;
     }
   }
-  const { data: signedUrlData } = await supabase.storage
-    .from('avatars')
-    .createSignedUrl(path, 99999999);
-  return signedUrlData ? signedUrlData.signedUrl : url;
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+  return data?.publicUrl || url;
 };
 
 export function useOptimizedPosts() {
@@ -102,7 +103,7 @@ export function useOptimizedPosts() {
       // Process URLs in parallel
       const processedData = await Promise.all(
         postsWithMedia.map(async (post: any) => {
-          const avatarUrl = await processUrl(post.profiles?.avatar_url);
+          const avatarUrl = processUrl(post.profiles?.avatar_url);
           const sortedMedia = (post.post_media || []).sort(
             (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
           );
@@ -181,7 +182,7 @@ export function usePostDetail(postId: string) {
 
       if (postError) throw postError;
 
-      const avatarUrl = await processUrl(post.profiles?.avatar_url);
+      const avatarUrl = processUrl(post.profiles?.avatar_url);
       const sortedMedia = (post.post_media || []).sort(
         (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
       );

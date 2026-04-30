@@ -106,14 +106,34 @@ export const Settings = () => {
     }
   }, [profile]);
 
+  // Sync linked providers from auth identities + listen for changes after link/unlink
   useEffect(() => {
-    if (user?.identities) {
-      const providers = user.identities.map(id => id.provider).filter(p => p) as string[];
-      if (user.email && !providers.includes('email')) {
+    const syncProviders = (u: typeof user | null | undefined) => {
+      if (!u) {
+        setLinkedProviders([]);
+        return;
+      }
+      const providers = (u.identities || [])
+        .map((id) => id.provider)
+        .filter((p): p is string => !!p);
+      // Email provider isn't always in identities — derive from auth email
+      if (u.email && !providers.includes('email')) {
         providers.push('email');
       }
-      setLinkedProviders(providers);
-    }
+      setLinkedProviders(Array.from(new Set(providers)));
+      setLinkingProvider(null);
+    };
+
+    syncProviders(user);
+
+    // Re-sync whenever auth state changes (e.g. after linkIdentity OAuth callback)
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // Pull fresh user (identities may have just changed)
+      const { data } = await supabase.auth.getUser();
+      syncProviders(data.user as any);
+    });
+
+    return () => sub.subscription.unsubscribe();
   }, [user]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -435,7 +455,19 @@ export const Settings = () => {
             <CardHeader><CardTitle>{t('Account Management')}</CardTitle><CardDescription>{t('Manage how you sign in.')}</CardDescription></CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                You are currently signed in with <span className="font-semibold capitalize text-primary">{user?.app_metadata.provider || 'email'}</span>.
+                {linkedProviders.length > 0 ? (
+                  <>
+                    {t('Connected sign-in methods')}:{' '}
+                    {linkedProviders.map((p, i) => (
+                      <span key={p}>
+                        {i > 0 && ', '}
+                        <span className="font-semibold capitalize text-primary">{p}</span>
+                      </span>
+                    ))}
+                  </>
+                ) : (
+                  <>You are currently signed in with <span className="font-semibold capitalize text-primary">{user?.app_metadata.provider || 'email'}</span>.</>
+                )}
               </p>
               <div className="space-y-2">
                 {[
