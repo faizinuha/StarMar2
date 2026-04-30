@@ -22,7 +22,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Camera, Github, Laptop, Loader2, Mail, Moon,
   ShieldAlert, Sun, Palette, Bell, KeyRound, User as UserIcon,
-  Users, Globe, Link2, Unlink2, CheckCircle2, Shield,
+  Users, Globe, Link2, Unlink2, CheckCircle2, Shield, Download, Database, Trash2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -45,6 +45,7 @@ const TABS = {
   SECURITY: 'security',
   NOTIFICATIONS: 'notifications',
   ACCOUNT: 'account',
+  DATA: 'data',
   DANGER: 'danger',
 };
 
@@ -255,6 +256,7 @@ export const Settings = () => {
     { id: TABS.SECURITY, label: t('Security'), icon: KeyRound },
     { id: TABS.NOTIFICATIONS, label: t('Notifications'), icon: Bell },
     { id: TABS.ACCOUNT, label: t('Account'), icon: Users },
+    { id: TABS.DATA, label: t('Data & Cache'), icon: Database },
     { id: 'verification', label: t('Verification'), icon: CheckCircle2, path: '/settings/verification' },
     { id: 'mod-apply', label: t('Apply as Moderator'), icon: Shield },
     { id: TABS.DANGER, label: t('Danger Zone'), icon: ShieldAlert, className: 'text-destructive hover:text-destructive hover:bg-destructive/10' },
