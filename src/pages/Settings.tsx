@@ -455,7 +455,19 @@ export const Settings = () => {
             <CardHeader><CardTitle>{t('Account Management')}</CardTitle><CardDescription>{t('Manage how you sign in.')}</CardDescription></CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                You are currently signed in with <span className="font-semibold capitalize text-primary">{user?.app_metadata.provider || 'email'}</span>.
+                {linkedProviders.length > 0 ? (
+                  <>
+                    {t('Connected sign-in methods')}:{' '}
+                    {linkedProviders.map((p, i) => (
+                      <span key={p}>
+                        {i > 0 && ', '}
+                        <span className="font-semibold capitalize text-primary">{p}</span>
+                      </span>
+                    ))}
+                  </>
+                ) : (
+                  <>You are currently signed in with <span className="font-semibold capitalize text-primary">{user?.app_metadata.provider || 'email'}</span>.</>
+                )}
               </p>
               <div className="space-y-2">
                 {[
