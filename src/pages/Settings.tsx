@@ -106,14 +106,34 @@ export const Settings = () => {
     }
   }, [profile]);
 
+  // Sync linked providers from auth identities + listen for changes after link/unlink
   useEffect(() => {
-    if (user?.identities) {
-      const providers = user.identities.map(id => id.provider).filter(p => p) as string[];
-      if (user.email && !providers.includes('email')) {
+    const syncProviders = (u: typeof user | null | undefined) => {
+      if (!u) {
+        setLinkedProviders([]);
+        return;
+      }
+      const providers = (u.identities || [])
+        .map((id) => id.provider)
+        .filter((p): p is string => !!p);
+      // Email provider isn't always in identities — derive from auth email
+      if (u.email && !providers.includes('email')) {
         providers.push('email');
       }
-      setLinkedProviders(providers);
-    }
+      setLinkedProviders(Array.from(new Set(providers)));
+      setLinkingProvider(null);
+    };
+
+    syncProviders(user);
+
+    // Re-sync whenever auth state changes (e.g. after linkIdentity OAuth callback)
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // Pull fresh user (identities may have just changed)
+      const { data } = await supabase.auth.getUser();
+      syncProviders(data.user as any);
+    });
+
+    return () => sub.subscription.unsubscribe();
   }, [user]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
