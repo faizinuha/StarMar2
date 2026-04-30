@@ -70,72 +70,83 @@ export const SimpleCreatePostModal = ({ isOpen, onClose }: SimpleCreatePostModal
       return;
     }
 
+    // Snapshot current state, then close UI immediately to avoid freeze perception
+    const snapCaption = caption;
+    const snapFiles = [...files];
+    const snapTrack = selectedTrack;
+
     setUploading(true);
 
-    try {
-      const uploadPromises = files.map(async (file, index) => {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}/${Date.now()}-${index}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('posts').upload(fileName, file);
-        if (uploadError) throw uploadError;
-        const { data } = supabase.storage.from('posts').getPublicUrl(fileName);
-        return { url: data.publicUrl, type: file.type.startsWith('image/') ? 'image' : 'video' };
-      });
+    // Run upload work in background (does not block UI)
+    (async () => {
+      try {
+        const uploadedFiles = await Promise.all(
+          snapFiles.map(async (file, index) => {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.id}/${Date.now()}-${index}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage.from('posts').upload(fileName, file);
+            if (uploadError) throw uploadError;
+            const { data } = supabase.storage.from('posts').getPublicUrl(fileName);
+            return { url: data.publicUrl, type: file.type.startsWith('image/') ? 'image' : 'video' };
+          })
+        );
 
-      const uploadedFiles = await Promise.all(uploadPromises);
-
-      // Build caption with music info
-      let fullCaption = caption;
-      if (selectedTrack) {
-        fullCaption += `\n🎵 ${selectedTrack.name} - ${selectedTrack.artist}`;
-      }
-
-      const { data: post, error: postError } = await supabase
-        .from('posts')
-        .insert({ user_id: user.id, caption: fullCaption, likes_count: 0, comments_count: 0 })
-        .select('id')
-        .single();
-
-      if (postError) throw postError;
-      if (!post) throw new Error("Failed to create post record");
-
-      if (uploadedFiles.length > 0) {
-        const mediaInserts = uploadedFiles.map((file, index) => ({
-          post_id: post.id,
-          media_url: file.url,
-          media_type: file.type,
-          order_index: index,
-        }));
-        const { error: mediaError } = await supabase.from('post_media').insert(mediaInserts);
-        if (mediaError) throw mediaError;
-      }
-
-      // Handle Hashtags
-      const hashtagRegex = /#(\w+)/g;
-      const hashtags = caption.match(hashtagRegex)?.map(tag => tag.substring(1).toLowerCase()) || [];
-      const uniqueHashtags = [...new Set(hashtags)];
-
-      if (uniqueHashtags.length > 0) {
-        for (const tag of uniqueHashtags) {
-          const { data: tagData } = await supabase.from('hashtags').upsert({ name: tag }, { onConflict: 'name' }).select('id').single();
-          if (tagData) {
-            await supabase.from('post_hashtags').insert({ post_id: post.id, hashtag_id: tagData.id }).select();
-          }
+        let fullCaption = snapCaption;
+        if (snapTrack) {
+          fullCaption += `\n🎵 ${snapTrack.name} - ${snapTrack.artist}`;
         }
+
+        const { data: post, error: postError } = await supabase
+          .from('posts')
+          .insert({ user_id: user.id, caption: fullCaption, likes_count: 0, comments_count: 0 })
+          .select('id')
+          .single();
+
+        if (postError) throw postError;
+        if (!post) throw new Error("Failed to create post record");
+
+        if (uploadedFiles.length > 0) {
+          const mediaInserts = uploadedFiles.map((file, index) => ({
+            post_id: post.id,
+            media_url: file.url,
+            media_type: file.type,
+            order_index: index,
+          }));
+          const { error: mediaError } = await supabase.from('post_media').insert(mediaInserts);
+          if (mediaError) throw mediaError;
+        }
+
+        // Hashtag handling — fire and forget, don't block close
+        const hashtagRegex = /#(\w+)/g;
+        const hashtags = snapCaption.match(hashtagRegex)?.map(tag => tag.substring(1).toLowerCase()) || [];
+        const uniqueHashtags = [...new Set(hashtags)];
+        if (uniqueHashtags.length > 0) {
+          Promise.all(uniqueHashtags.map(async (tag) => {
+            const { data: tagData } = await supabase.from('hashtags').upsert({ name: tag }, { onConflict: 'name' }).select('id').single();
+            if (tagData) {
+              await supabase.from('post_hashtags').insert({ post_id: post.id, hashtag_id: tagData.id });
+            }
+          })).catch((e) => console.error('hashtag sync failed', e));
+        }
+
+        toast({ title: "Post created successfully!" });
+      } catch (error: any) {
+        console.error(error);
+        toast({ title: "Error creating post", description: error.message, variant: "destructive" });
+      } finally {
+        setUploading(false);
       }
+    })();
 
-      toast({ title: "Post created successfully!" });
-      handleClose();
-
-    } catch (error: any) {
-      console.error(error);
-      toast({ title: "Error creating post", description: error.message, variant: "destructive" });
-    } finally {
-      setUploading(false);
-    }
+    // Close modal immediately so the page doesn't appear to freeze
+    handleClose();
   };
 
   const handleClose = () => {
+    // Revoke object URLs to free memory
+    previews.forEach((url) => {
+      try { URL.revokeObjectURL(url); } catch {}
+    });
     setCaption('');
     setFiles([]);
     setPreviews([]);

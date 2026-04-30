@@ -9,6 +9,7 @@ import { BanAppealsTab } from "@/components/admin/BanAppealsTab";
 import { VerificationRequestsTab } from "@/components/admin/VerificationRequestsTab";
 import { ModeratorApplicationsTab } from "@/components/admin/ModeratorApplicationsTab";
 import { WarnMuteDialog } from "@/components/admin/WarnMuteDialog";
+import { AdminSeedContentTab } from "@/components/admin/AdminSeedContentTab";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -229,6 +230,7 @@ const AdminContent = () => {
           {isAdmin && <TabsTrigger value="appeals">Ban Appeals</TabsTrigger>}
           {isAdmin && <TabsTrigger value="mod-applications">Mod Applications</TabsTrigger>}
           {isAdmin && <TabsTrigger value="maintenance">Maintenance</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="seed">Seed Content</TabsTrigger>}
           {!isAdmin && <TabsTrigger value="users-readonly">Users</TabsTrigger>}
         </TabsList>
 
@@ -300,6 +302,12 @@ const AdminContent = () => {
         {isAdmin && (
           <TabsContent value="maintenance" className="space-y-4">
             <MaintenanceTab />
+          </TabsContent>
+        )}
+
+        {isAdmin && (
+          <TabsContent value="seed" className="space-y-4">
+            <AdminSeedContentTab />
           </TabsContent>
         )}
       </Tabs>
