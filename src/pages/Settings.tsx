@@ -696,3 +696,92 @@ const ModeratorApplySection = ({ userId, currentRole }: { userId: string; curren
     </Card>
   );
 };
+
+// ============================================================
+// Data & Cache management tab
+// ============================================================
+const DataAndCacheTab = ({ userId, email }: { userId: string; email?: string }) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [exporting, setExporting] = useState(false);
+  const [clearing, setClearing] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const tables = ['profiles', 'posts', 'memes', 'stories', 'comments', 'likes', 'bookmarks', 'follows'] as const;
+      const exportData: Record<string, any> = {
+        exported_at: new Date().toISOString(),
+        user: { id: userId, email },
+      };
+      for (const table of tables) {
+        try {
+          const { data } = await supabase.from(table as any).select('*').eq('user_id', userId);
+          exportData[table] = data || [];
+        } catch (e) {
+          exportData[table] = { error: (e as Error).message };
+        }
+      }
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `starmar-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: 'Export ready', description: 'Your data has been downloaded as a JSON file.' });
+    } catch (e: any) {
+      toast({ title: 'Export failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleClearCache = () => {
+    setClearing(true);
+    try {
+      queryClient.clear();
+      try {
+        localStorage.removeItem('STARMAR_QUERY_CACHE_V1');
+      } catch {}
+      toast({ title: 'Cache cleared', description: 'All cached data has been removed.' });
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Download className="h-5 w-5" /> Export Data</CardTitle>
+          <CardDescription>
+            Download semua data milikmu (profile, post, meme, story, komentar, like, bookmark, follow) dalam format JSON.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={handleExport} disabled={exporting}>
+            {exporting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Exporting...</> : <><Download className="h-4 w-4 mr-2" /> Export My Data</>}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" /> Cache</CardTitle>
+          <CardDescription>
+            Aplikasi menyimpan cache lokal supaya halaman tidak perlu memuat ulang setiap kali kamu kembali. Hapus cache jika data terlihat tidak konsisten.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" onClick={handleClearCache} disabled={clearing}>
+            <Trash2 className="h-4 w-4 mr-2" /> Clear Cache
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
