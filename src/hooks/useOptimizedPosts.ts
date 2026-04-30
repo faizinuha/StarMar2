@@ -103,7 +103,7 @@ export function useOptimizedPosts() {
       // Process URLs in parallel
       const processedData = await Promise.all(
         postsWithMedia.map(async (post: any) => {
-          const avatarUrl = await processUrl(post.profiles?.avatar_url);
+          const avatarUrl = processUrl(post.profiles?.avatar_url);
           const sortedMedia = (post.post_media || []).sort(
             (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
           );
@@ -182,7 +182,7 @@ export function usePostDetail(postId: string) {
 
       if (postError) throw postError;
 
-      const avatarUrl = await processUrl(post.profiles?.avatar_url);
+      const avatarUrl = processUrl(post.profiles?.avatar_url);
       const sortedMedia = (post.post_media || []).sort(
         (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
       );
